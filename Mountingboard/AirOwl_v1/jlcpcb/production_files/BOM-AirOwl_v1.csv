@@ -1,9 +1,0 @@
-Comment,Designator,Footprint,LCSC
-10K,R2,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,
-10K,R1,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,
-Conn_01x06,J2,PinHeader_1x06_P2.54mm_Vertical,
-USB_C_Receptacle_PowerOnly_6P,J4,MOLEX_2171780001,
-USB_C_Receptacle_PowerOnly_6P,J1,USB-C_6P_Vertical_THT,
-SS34,D2,D_SMA,
-CoreSE,U1,CoreS3,
-Conn_01x02,J3,JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical,

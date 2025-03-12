@@ -1,0 +1,10 @@
+Command: /home/upeya/.espressif/python_env/idf5.5_py3.12_env/bin/python /home/upeya/esp-idf/tools/idf_monitor.py -p /dev/ttyACM0 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 /home/upeya/esp-idf/examples/air_owl_firmware/build/air_owl_firmware.elf /home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader/bootloader.elf -m '/home/upeya/.espressif/python_env/idf5.5_py3.12_env/bin/python' '/home/upeya/esp-idf/tools/idf.py'
+[0;33m--- esp-idf-monitor 1.5.0 on /dev/ttyACM0 115200[0m
+[0;33m--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H[0m
+[0;33m--- 0x40048d1c: uart_rx_one_char in ROM
+[0m
+[0;33m--- 0x403c8700: _stext at ??:?
+[0m
+[0;33m--- 0x403c8924: call_start_cpu0 at /home/upeya/esp-idf/components/bootloader/subproject/main/bootloader_start.c:25
+[0m
+[0m

@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/home/upeya/esp-idf/examples/air_owl_firmware/build/CMakeFiles/bootloader
+/home/upeya/esp-idf/examples/air_owl_firmware/build/CMakeFiles/bootloader.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/CMakeFiles/bootloader-complete.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule

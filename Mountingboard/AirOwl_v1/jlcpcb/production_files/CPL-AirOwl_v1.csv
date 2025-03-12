@@ -1,9 +1,0 @@
-Designator,Val,Package,Mid X,Mid Y,Rotation,Layer
-D2,SS34,D_SMA,86.2,-87.8,270.0,bottom
-J1,USB_C_Receptacle_PowerOnly_6P,USB-C_6P_Vertical_THT,88.0,-93.52,0.0,bottom
-J2,Conn_01x06,PinHeader_1x06_P2.54mm_Vertical,65.6,-130.25,0.0,top
-J3,Conn_01x02,JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical,65.7,-110.9,270.0,bottom
-J4,USB_C_Receptacle_PowerOnly_6P,MOLEX_2171780001,88.0,-99.1,180.0,bottom
-R1,10K,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,65.6,-119.7,180.0,top
-R2,10K,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,65.6,-117.4,180.0,top
-U1,CoreSE,CoreS3,68.950014,-61.069581,180.0,bottom

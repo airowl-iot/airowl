@@ -1,0 +1,41 @@
+Command: ninja flash
+CMake Error at /home/upeya/esp-idf/tools/cmake/component.cmake:229 (message):
+  CMake Warning (dev) at build_properties.temp.cmake:8:
+
+    Syntax Warning in cmake code at column 106
+
+  
+
+    Argument not separated from preceding token by whitespace.
+
+  Call Stack (most recent call first):
+
+    /home/upeya/esp-idf/tools/cmake/scripts/component_get_requirements.cmake:3 (include)
+
+  This warning is for project developers.  Use -Wno-dev to suppress it.
+
+  
+
+  CMake Error at
+  /home/upeya/esp-idf/examples/air_owl_firmware/components/ui_display/CMakeLists.txt:4:
+
+
+    Parse error.  Expected a command name, got unquoted argument with text
+    "5clear".
+
+  Call Stack (most recent call first):
+
+    /home/upeya/esp-idf/tools/cmake/scripts/component_get_requirements.cmake:107 (include)
+    /home/upeya/esp-idf/tools/cmake/scripts/component_get_requirements.cmake:160 (__component_get_requirements)
+
+  
+
+  
+
+Call Stack (most recent call first):
+  /home/upeya/esp-idf/tools/cmake/build.cmake:645 (__component_get_requirements)
+  /home/upeya/esp-idf/tools/cmake/project.cmake:735 (idf_build_process)
+  CMakeLists.txt:3 (project)
+
+
+ninja: error: rebuilding 'build.ninja': subcommand failed

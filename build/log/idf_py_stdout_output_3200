@@ -1,0 +1,470 @@
+Command: /home/upeya/.espressif/python_env/idf5.5_py3.12_env/bin/python /home/upeya/esp-idf/tools/idf_monitor.py -p /dev/ttyACM0 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 /home/upeya/esp-idf/examples/air_owl_firmware/build/air_owl_firmware.elf /home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader/bootloader.elf -m '/home/upeya/.espressif/python_env/idf5.5_py3.12_env/bin/python' '/home/upeya/esp-idf/tools/idf.py'
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40048ee5
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x15d0
+load:0x403c8700,len:0xd20
+load:0x403cb700,len:0x2f60
+entry 0x403c8924
+[0;32mI (24) boot: ESP-IDF v5.5-dev-2182-ga6c3a9cbbb-dirty 2nd stage bootloader[0m
+[0;32mI (25) boot: compile time Mar 11 2025 00:12:02[0m
+[0;32mI (25) boot: Multicore bootloader[0m
+[0;32mI (27) boot: chip revision: v0.2[0m
+[0;32mI (30) boot: efuse block revision: v1.3[0m
+[0;32mI (33) boot.esp32s3: Boot SPI Speed : 80MHz[0m
+[0;32mI (37) boot.esp32s3: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32s3: SPI Flash Size : 2MB[0m
+[0;32mI (45) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (52) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (58) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (71) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (78) boot: End of partition table[0m
+[0;32mI (81) esp_image: segment 0: paddr=00010020 vaddr=3c090020 size=1bd5ch (114012) map[0m
+[0;32mI (109) esp_image: segment 1: paddr=0002bd84 vaddr=3fc99f00 size=04294h ( 17044) load[0m
+[0;32mI (112) esp_image: segment 2: paddr=00030020 vaddr=42000020 size=8a7f4h (567284) map[0m
+[0;32mI (213) esp_image: segment 3: paddr=000ba81c vaddr=3fc9e194 size=00714h (  1812) load[0m
+[0;32mI (214) esp_image: segment 4: paddr=000baf38 vaddr=40374000 size=15e60h ( 89696) load[0m
+[0;32mI (236) esp_image: segment 5: paddr=000d0da0 vaddr=600fe000 size=0001ch (    28) load[0m
+[0;32mI (245) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (245) boot: Disabling RNG early entropy source...[0m
+[0;32mI (255) cpu_start: Multicore app[0m
+[0;32mI (265) cpu_start: Pro cpu start user code[0m
+[0;32mI (265) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (265) app_init: Application information:[0m
+[0;32mI (265) app_init: Project name:     air_owl_firmware[0m
+[0;32mI (269) app_init: App version:      v5.5-dev-2182-ga6c3a9cbbb-dirty[0m
+[0;32mI (275) app_init: Compile time:     Mar 11 2025 00:11:34[0m
+[0;32mI (280) app_init: ELF file SHA256:  8a46111dd...[0m
+[0;32mI (285) app_init: ESP-IDF:          v5.5-dev-2182-ga6c3a9cbbb-dirty[0m
+[0;32mI (291) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (295) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (299) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (302) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (309) heap_init: At 3FCA2530 len 000471E0 (284 KiB): RAM[0m
+[0;32mI (314) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (319) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (324) heap_init: At 600FE01C len 00001FCC (7 KiB): RTCRAM[0m
+[0;32mI (331) spi_flash: detected chip: generic[0m
+[0;32mI (333) spi_flash: flash io: dio[0m
+[0;33mW (336) spi_flash: Detected size(16384k) larger than the size in the binary image header(2048k). Using the size in the binary image header.[0m
+[0;32mI (349) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (355) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (362) main_task: Started on CPU0[0m
+[0;32mI (372) main_task: Calling app_main()[0m
+[0;32mI (392) wifi_manager: Starting WiFi manager in AP mode...[0m
+[0;32mI (392) pp: pp rom version: e7ae62f[0m
+[0;32mI (392) net80211: net80211 rom version: e7ae62f[0m
+[0;32mI (402) wifi:wifi driver task: 3fca72c8, prio:23, stack:6656, core=0[0m
+[0;32mI (402) wifi:wifi firmware version: fe7fdd4[0m
+[0;32mI (402) wifi:wifi certification version: v7.0[0m
+[0;32mI (402) wifi:config NVS flash: enabled[0m
+[0;32mI (412) wifi:config nano formatting: disabled[0m
+[0;32mI (412) wifi:Init data frame dynamic rx buffer num: 32[0m
+[0;32mI (422) wifi:Init static rx mgmt buffer num: 5[0m
+[0;32mI (422) wifi:Init management short buffer num: 32[0m
+[0;32mI (422) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (432) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (432) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (442) wifi:Init static rx buffer num: 10[0m
+[0;32mI (442) wifi:Init dynamic rx buffer num: 32[0m
+[0;32mI (452) wifi_init: rx ba win: 6[0m
+[0;32mI (452) wifi_init: accept mbox: 6[0m
+[0;32mI (452) wifi_init: tcpip mbox: 32[0m
+[0;32mI (452) wifi_init: udp mbox: 6[0m
+[0;32mI (462) wifi_init: tcp mbox: 6[0m
+[0;32mI (462) wifi_init: tcp tx win: 5760[0m
+[0;32mI (462) wifi_init: tcp rx win: 5760[0m
+[0;32mI (472) wifi_init: tcp mss: 1440[0m
+[0;32mI (472) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (472) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (482) phy_init: phy_version 700,8582a7fd,Feb 10 2025,20:13:11[0m
+[0;32mI (522) wifi:mode : softAP (30:30:f9:00:9d:1d)[0m
+[0;32mI (522) wifi:Total power save buffer number: 16[0m
+[0;32mI (522) wifi:Init max length of beacon: 752/752[0m
+[0;32mI (522) wifi:Init max length of beacon: 752/752[0m
+[0;32mI (522) wifi_manager: Event: base=WIFI_EVENT, id=43[0m
+[0;32mI (532) wifi_manager: WiFi AP started. SSID:AirOwl_AP Password:password123[0m
+[0;32mI (532) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+[0;32mI (542) wifi_manager: Event: base=WIFI_EVENT, id=12[0m
+[0;32mI (552) web_server: Starting HTTP Server[0m
+[0;32mI (552) ui_display: UI display initialized.[0m
+[0;32mI (562) sensor_module: Sensor module initialized.[0m
+[0;32mI (562) ui_display: Display Update:[0m
+PM1: 0.00 ug/m3
+PM2.5: 0.00 ug/m3
+PM4: 0.00 ug/m3
+PM10: 0.00 ug/m3
+TVOC: 0.00 ppb
+Temp: 25.00 C
+Humidity: 50.00%
+[0;32mI (572) sensor_module: Sensor Readings: PM1: 3.30, PM2.5: 4.30, PM4: 6.20, PM10: 12.90, TVOC: 20.00, Temp: 20.80, Humidity: 95.20[0m
+[0;32mI (592) main_task: Returned from app_main()[0m
+[0;32mI (2572) ui_display: Display Update:[0m
+PM1: 3.30 ug/m3
+PM2.5: 4.30 ug/m3
+PM4: 6.20 ug/m3
+PM10: 12.90 ug/m3
+TVOC: 20.00 ppb
+Temp: 20.80 C
+Humidity: 95.20%
+[0;32mI (3592) sensor_module: Sensor Readings: PM1: 0.60, PM2.5: 5.60, PM4: 1.90, PM10: 11.10, TVOC: 35.10, Temp: 24.30, Humidity: 60.50[0m
+[0;32mI (4572) ui_display: Display Update:[0m
+PM1: 0.60 ug/m3
+PM2.5: 5.60 ug/m3
+PM4: 1.90 ug/m3
+PM10: 11.10 ug/m3
+TVOC: 35.10 ppb
+Temp: 24.30 C
+Humidity: 60.50%
+[0;32mI (6572) ui_display: Display Update:[0m
+PM1: 0.60 ug/m3
+PM2.5: 5.60 ug/m3
+PM4: 1.90 ug/m3
+PM10: 11.10 ug/m3
+TVOC: 35.10 ppb
+Temp: 24.30 C
+Humidity: 60.50%
+[0;32mI (6592) sensor_module: Sensor Readings: PM1: 0.80, PM2.5: 9.30, PM4: 3.00, PM10: 16.60, TVOC: 16.90, Temp: 23.20, Humidity: 61.70[0m
+[0;32mI (8572) ui_display: Display Update:[0m
+PM1: 0.80 ug/m3
+PM2.5: 9.30 ug/m3
+PM4: 3.00 ug/m3
+PM10: 16.60 ug/m3
+TVOC: 16.90 ppb
+Temp: 23.20 C
+Humidity: 61.70%
+[0;32mI (9592) sensor_module: Sensor Readings: PM1: 4.70, PM2.5: 7.20, PM4: 6.80, PM10: 18.00, TVOC: 22.30, Temp: 24.90, Humidity: 99.20[0m
+[0;32mI (10572) ui_display: Display Update:[0m
+PM1: 4.70 ug/m3
+PM2.5: 7.20 ug/m3
+PM4: 6.80 ug/m3
+PM10: 18.00 ug/m3
+TVOC: 22.30 ppb
+Temp: 24.90 C
+Humidity: 99.20%
+[0;32mI (12572) ui_display: Display Update:[0m
+PM1: 4.70 ug/m3
+PM2.5: 7.20 ug/m3
+PM4: 6.80 ug/m3
+PM10: 18.00 ug/m3
+TVOC: 22.30 ppb
+Temp: 24.90 C
+Humidity: 99.20%
+[0;32mI (12592) sensor_module: Sensor Readings: PM1: 1.40, PM2.5: 6.90, PM4: 5.10, PM10: 2.70, TVOC: 19.00, Temp: 22.40, Humidity: 43.50[0m
+[0;32mI (14572) ui_display: Display Update:[0m
+PM1: 1.40 ug/m3
+PM2.5: 6.90 ug/m3
+PM4: 5.10 ug/m3
+PM10: 2.70 ug/m3
+TVOC: 19.00 ppb
+Temp: 22.40 C
+Humidity: 43.50%
+[0;32mI (15592) sensor_module: Sensor Readings: PM1: 2.00, PM2.5: 4.40, PM4: 11.00, PM10: 6.20, TVOC: 48.40, Temp: 26.30, Humidity: 70.10[0m
+[0;32mI (16572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 4.40 ug/m3
+PM4: 11.00 ug/m3
+PM10: 6.20 ug/m3
+TVOC: 48.40 ppb
+Temp: 26.30 C
+Humidity: 70.10%
+[0;32mI (18572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 4.40 ug/m3
+PM4: 11.00 ug/m3
+PM10: 6.20 ug/m3
+TVOC: 48.40 ppb
+Temp: 26.30 C
+Humidity: 70.10%
+[0;32mI (18592) sensor_module: Sensor Readings: PM1: 1.00, PM2.5: 3.60, PM4: 7.60, PM10: 3.10, TVOC: 42.90, Temp: 29.70, Humidity: 77.50[0m
+[0;32mI (20572) ui_display: Display Update:[0m
+PM1: 1.00 ug/m3
+PM2.5: 3.60 ug/m3
+PM4: 7.60 ug/m3
+PM10: 3.10 ug/m3
+TVOC: 42.90 ppb
+Temp: 29.70 C
+Humidity: 77.50%
+[0;32mI (21592) sensor_module: Sensor Readings: PM1: 4.10, PM2.5: 9.00, PM4: 14.40, PM10: 13.40, TVOC: 42.50, Temp: 22.90, Humidity: 43.00[0m
+[0;32mI (22572) ui_display: Display Update:[0m
+PM1: 4.10 ug/m3
+PM2.5: 9.00 ug/m3
+PM4: 14.40 ug/m3
+PM10: 13.40 ug/m3
+TVOC: 42.50 ppb
+Temp: 22.90 C
+Humidity: 43.00%
+[0;32mI (24572) ui_display: Display Update:[0m
+PM1: 4.10 ug/m3
+PM2.5: 9.00 ug/m3
+PM4: 14.40 ug/m3
+PM10: 13.40 ug/m3
+TVOC: 42.50 ppb
+Temp: 22.90 C
+Humidity: 43.00%
+[0;32mI (24592) sensor_module: Sensor Readings: PM1: 2.70, PM2.5: 2.60, PM4: 9.30, PM10: 13.40, TVOC: 10.40, Temp: 26.00, Humidity: 44.90[0m
+[0;32mI (26572) ui_display: Display Update:[0m
+PM1: 2.70 ug/m3
+PM2.5: 2.60 ug/m3
+PM4: 9.30 ug/m3
+PM10: 13.40 ug/m3
+TVOC: 10.40 ppb
+Temp: 26.00 C
+Humidity: 44.90%
+[0;32mI (27592) sensor_module: Sensor Readings: PM1: 2.00, PM2.5: 5.60, PM4: 3.20, PM10: 17.20, TVOC: 11.30, Temp: 29.00, Humidity: 30.90[0m
+[0;32mI (28572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 5.60 ug/m3
+PM4: 3.20 ug/m3
+PM10: 17.20 ug/m3
+TVOC: 11.30 ppb
+Temp: 29.00 C
+Humidity: 30.90%
+[0;32mI (30572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 5.60 ug/m3
+PM4: 3.20 ug/m3
+PM10: 17.20 ug/m3
+TVOC: 11.30 ppb
+Temp: 29.00 C
+Humidity: 30.90%
+[0;32mI (30592) sensor_module: Sensor Readings: PM1: 1.90, PM2.5: 0.50, PM4: 4.50, PM10: 4.90, TVOC: 32.70, Temp: 21.90, Humidity: 59.70[0m
+[0;32mI (32572) ui_display: Display Update:[0m
+PM1: 1.90 ug/m3
+PM2.5: 0.50 ug/m3
+PM4: 4.50 ug/m3
+PM10: 4.90 ug/m3
+TVOC: 32.70 ppb
+Temp: 21.90 C
+Humidity: 59.70%
+[0;32mI (33592) sensor_module: Sensor Readings: PM1: 2.40, PM2.5: 9.60, PM4: 9.90, PM10: 15.60, TVOC: 18.40, Temp: 29.30, Humidity: 54.50[0m
+[0;32mI (34572) ui_display: Display Update:[0m
+PM1: 2.40 ug/m3
+PM2.5: 9.60 ug/m3
+PM4: 9.90 ug/m3
+PM10: 15.60 ug/m3
+TVOC: 18.40 ppb
+Temp: 29.30 C
+Humidity: 54.50%
+[0;32mI (36572) ui_display: Display Update:[0m
+PM1: 2.40 ug/m3
+PM2.5: 9.60 ug/m3
+PM4: 9.90 ug/m3
+PM10: 15.60 ug/m3
+TVOC: 18.40 ppb
+Temp: 29.30 C
+Humidity: 54.50%
+[0;32mI (36592) sensor_module: Sensor Readings: PM1: 0.70, PM2.5: 0.60, PM4: 5.90, PM10: 15.40, TVOC: 35.20, Temp: 26.50, Humidity: 38.30[0m
+[0;32mI (38572) ui_display: Display Update:[0m
+PM1: 0.70 ug/m3
+PM2.5: 0.60 ug/m3
+PM4: 5.90 ug/m3
+PM10: 15.40 ug/m3
+TVOC: 35.20 ppb
+Temp: 26.50 C
+Humidity: 38.30%
+[0;32mI (39592) sensor_module: Sensor Readings: PM1: 3.80, PM2.5: 0.10, PM4: 4.00, PM10: 13.00, TVOC: 33.70, Temp: 29.50, Humidity: 55.60[0m
+[0;32mI (40572) ui_display: Display Update:[0m
+PM1: 3.80 ug/m3
+PM2.5: 0.10 ug/m3
+PM4: 4.00 ug/m3
+PM10: 13.00 ug/m3
+TVOC: 33.70 ppb
+Temp: 29.50 C
+Humidity: 55.60%
+[0;32mI (42572) ui_display: Display Update:[0m
+PM1: 3.80 ug/m3
+PM2.5: 0.10 ug/m3
+PM4: 4.00 ug/m3
+PM10: 13.00 ug/m3
+TVOC: 33.70 ppb
+Temp: 29.50 C
+Humidity: 55.60%
+[0;32mI (42592) sensor_module: Sensor Readings: PM1: 1.30, PM2.5: 1.10, PM4: 2.70, PM10: 4.20, TVOC: 10.60, Temp: 26.80, Humidity: 71.20[0m
+[0;32mI (44572) ui_display: Display Update:[0m
+PM1: 1.30 ug/m3
+PM2.5: 1.10 ug/m3
+PM4: 2.70 ug/m3
+PM10: 4.20 ug/m3
+TVOC: 10.60 ppb
+Temp: 26.80 C
+Humidity: 71.20%
+[0;32mI (45592) sensor_module: Sensor Readings: PM1: 0.10, PM2.5: 1.00, PM4: 8.00, PM10: 5.80, TVOC: 7.10, Temp: 23.10, Humidity: 41.40[0m
+[0;32mI (46572) ui_display: Display Update:[0m
+PM1: 0.10 ug/m3
+PM2.5: 1.00 ug/m3
+PM4: 8.00 ug/m3
+PM10: 5.80 ug/m3
+TVOC: 7.10 ppb
+Temp: 23.10 C
+Humidity: 41.40%
+[0;32mI (48572) ui_display: Display Update:[0m
+PM1: 0.10 ug/m3
+PM2.5: 1.00 ug/m3
+PM4: 8.00 ug/m3
+PM10: 5.80 ug/m3
+TVOC: 7.10 ppb
+Temp: 23.10 C
+Humidity: 41.40%
+[0;32mI (48592) sensor_module: Sensor Readings: PM1: 4.70, PM2.5: 6.40, PM4: 14.70, PM10: 2.50, TVOC: 43.80, Temp: 23.10, Humidity: 81.80[0m
+[0;32mI (50572) ui_display: Display Update:[0m
+PM1: 4.70 ug/m3
+PM2.5: 6.40 ug/m3
+PM4: 14.70 ug/m3
+PM10: 2.50 ug/m3
+TVOC: 43.80 ppb
+Temp: 23.10 C
+Humidity: 81.80%
+[0;32mI (51592) sensor_module: Sensor Readings: PM1: 3.70, PM2.5: 5.10, PM4: 3.70, PM10: 11.30, TVOC: 17.90, Temp: 29.50, Humidity: 65.00[0m
+[0;32mI (52572) ui_display: Display Update:[0m
+PM1: 3.70 ug/m3
+PM2.5: 5.10 ug/m3
+PM4: 3.70 ug/m3
+PM10: 11.30 ug/m3
+TVOC: 17.90 ppb
+Temp: 29.50 C
+Humidity: 65.00%
+[0;32mI (54572) ui_display: Display Update:[0m
+PM1: 3.70 ug/m3
+PM2.5: 5.10 ug/m3
+PM4: 3.70 ug/m3
+PM10: 11.30 ug/m3
+TVOC: 17.90 ppb
+Temp: 29.50 C
+Humidity: 65.00%
+[0;32mI (54592) sensor_module: Sensor Readings: PM1: 0.00, PM2.5: 1.30, PM4: 11.20, PM10: 13.40, TVOC: 27.30, Temp: 24.70, Humidity: 72.10[0m
+[0;32mI (56572) ui_display: Display Update:[0m
+PM1: 0.00 ug/m3
+PM2.5: 1.30 ug/m3
+PM4: 11.20 ug/m3
+PM10: 13.40 ug/m3
+TVOC: 27.30 ppb
+Temp: 24.70 C
+Humidity: 72.10%
+[0;32mI (57592) sensor_module: Sensor Readings: PM1: 3.00, PM2.5: 4.00, PM4: 5.70, PM10: 7.80, TVOC: 22.60, Temp: 20.30, Humidity: 39.70[0m
+[0;32mI (58572) ui_display: Display Update:[0m
+PM1: 3.00 ug/m3
+PM2.5: 4.00 ug/m3
+PM4: 5.70 ug/m3
+PM10: 7.80 ug/m3
+TVOC: 22.60 ppb
+Temp: 20.30 C
+Humidity: 39.70%
+[0;32mI (60572) ui_display: Display Update:[0m
+PM1: 3.00 ug/m3
+PM2.5: 4.00 ug/m3
+PM4: 5.70 ug/m3
+PM10: 7.80 ug/m3
+TVOC: 22.60 ppb
+Temp: 20.30 C
+Humidity: 39.70%
+[0;32mI (60592) sensor_module: Sensor Readings: PM1: 0.80, PM2.5: 9.30, PM4: 8.80, PM10: 3.80, TVOC: 8.50, Temp: 29.30, Humidity: 68.80[0m
+[0;32mI (62572) ui_display: Display Update:[0m
+PM1: 0.80 ug/m3
+PM2.5: 9.30 ug/m3
+PM4: 8.80 ug/m3
+PM10: 3.80 ug/m3
+TVOC: 8.50 ppb
+Temp: 29.30 C
+Humidity: 68.80%
+[0;32mI (63592) sensor_module: Sensor Readings: PM1: 2.00, PM2.5: 1.10, PM4: 14.60, PM10: 18.70, TVOC: 21.00, Temp: 20.90, Humidity: 98.70[0m
+[0;32mI (64572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 1.10 ug/m3
+PM4: 14.60 ug/m3
+PM10: 18.70 ug/m3
+TVOC: 21.00 ppb
+Temp: 20.90 C
+Humidity: 98.70%
+[0;32mI (66572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 1.10 ug/m3
+PM4: 14.60 ug/m3
+PM10: 18.70 ug/m3
+TVOC: 21.00 ppb
+Temp: 20.90 C
+Humidity: 98.70%
+[0;32mI (66592) sensor_module: Sensor Readings: PM1: 1.80, PM2.5: 0.30, PM4: 2.30, PM10: 10.00, TVOC: 17.40, Temp: 20.50, Humidity: 58.30[0m
+[0;32mI (68572) ui_display: Display Update:[0m
+PM1: 1.80 ug/m3
+PM2.5: 0.30 ug/m3
+PM4: 2.30 ug/m3
+PM10: 10.00 ug/m3
+TVOC: 17.40 ppb
+Temp: 20.50 C
+Humidity: 58.30%
+[0;32mI (69592) sensor_module: Sensor Readings: PM1: 0.20, PM2.5: 7.00, PM4: 3.70, PM10: 10.20, TVOC: 41.00, Temp: 20.50, Humidity: 91.00[0m
+[0;32mI (70572) ui_display: Display Update:[0m
+PM1: 0.20 ug/m3
+PM2.5: 7.00 ug/m3
+PM4: 3.70 ug/m3
+PM10: 10.20 ug/m3
+TVOC: 41.00 ppb
+Temp: 20.50 C
+Humidity: 91.00%
+[0;32mI (72572) ui_display: Display Update:[0m
+PM1: 0.20 ug/m3
+PM2.5: 7.00 ug/m3
+PM4: 3.70 ug/m3
+PM10: 10.20 ug/m3
+TVOC: 41.00 ppb
+Temp: 20.50 C
+Humidity: 91.00%
+[0;32mI (72592) sensor_module: Sensor Readings: PM1: 0.00, PM2.5: 9.60, PM4: 4.20, PM10: 18.50, TVOC: 36.00, Temp: 24.70, Humidity: 92.40[0m
+[0;32mI (74572) ui_display: Display Update:[0m
+PM1: 0.00 ug/m3
+PM2.5: 9.60 ug/m3
+PM4: 4.20 ug/m3
+PM10: 18.50 ug/m3
+TVOC: 36.00 ppb
+Temp: 24.70 C
+Humidity: 92.40%
+[0;32mI (75592) sensor_module: Sensor Readings: PM1: 3.10, PM2.5: 5.80, PM4: 8.60, PM10: 1.90, TVOC: 40.00, Temp: 21.50, Humidity: 95.50[0m
+[0;32mI (76572) ui_display: Display Update:[0m
+PM1: 3.10 ug/m3
+PM2.5: 5.80 ug/m3
+PM4: 8.60 ug/m3
+PM10: 1.90 ug/m3
+TVOC: 40.00 ppb
+Temp: 21.50 C
+Humidity: 95.50%
+[0;32mI (78572) ui_display: Display Update:[0m
+PM1: 3.10 ug/m3
+PM2.5: 5.80 ug/m3
+PM4: 8.60 ug/m3
+PM10: 1.90 ug/m3
+TVOC: 40.00 ppb
+Temp: 21.50 C
+Humidity: 95.50%
+[0;32mI (78592) sensor_module: Sensor Readings: PM1: 3.20, PM2.5: 7.40, PM4: 6.10, PM10: 0.60, TVOC: 10.20, Temp: 26.80, Humidity: 56.50[0m
+[0;32mI (80572) ui_display: Display Update:[0m
+PM1: 3.20 ug/m3
+PM2.5: 7.40 ug/m3
+PM4: 6.10 ug/m3
+PM10: 0.60 ug/m3
+TVOC: 10.20 ppb
+Temp: 26.80 C
+Humidity: 56.50%
+[0;32mI (81592) sensor_module: Sensor Readings: PM1: 2.00, PM2.5: 1.80, PM4: 12.30, PM10: 8.90, TVOC: 10.60, Temp: 21.90, Humidity: 53.00[0m
+[0;32mI (82572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 1.80 ug/m3
+PM4: 12.30 ug/m3
+PM10: 8.90 ug/m3
+TVOC: 10.60 ppb
+Temp: 21.90 C
+Humidity: 53.00%
+[0;32mI (84572) ui_display: Display Update:[0m
+PM1: 2.00 ug/m3
+PM2.5: 1.80 ug/m3
+PM4: 12.30 ug/m3
+PM10: 8.90 ug/m3
+TVOC: 10.60 ppb
+Temp: 21.90 C
+Humidity: 53.00%
+[0;32mI (84592) sensor_module: Sensor Readings: PM1: 0.50, PM2.5: 3.20, PM4: 14.30, PM10: 17.40, TVOC: 9.50, Temp: 21.00, Humidity: 57.30[0m

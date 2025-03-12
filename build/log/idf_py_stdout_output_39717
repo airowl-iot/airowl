@@ -1,0 +1,7 @@
+Command: ninja flash
+[0/1] Re-running CMake...
+-- Minimal build - OFF
+-- Building ESP-IDF components for target esp32s3
+-- Configuring incomplete, errors occurred!
+FAILED: build.ninja 
+/usr/bin/cmake --regenerate-during-build -S/home/upeya/esp-idf/examples/air_owl_firmware -B/home/upeya/esp-idf/examples/air_owl_firmware/build
