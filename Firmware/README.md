@@ -37,6 +37,27 @@ Click on Open Project button as highlighted in the above picture and locate the 
 
 ![alt text](md_images/opening_firmware_repo.png)
 
+
+## ⚙️ Enabling Matter Support on Airowl
+
+
+### 📂 Step A: Add the Matter Library
+1. Go to the following directory:
+
+- **For Ubuntu :** /home/.platformio/packages/framework-arduinoespressif32/libraries
+- **For Mac :** /User/"YOUR-USER"/.platformio/packages/framework-arduinoespressif32/libraries
+- **For Windows :** C:\Users\\"YOUR-USER"\\.platformio\packages\framework-arduinoespressif32\libraries
+
+2. Inside the `libraries` folder, locate or create a folder named **Matter**.
+3. Copy the **Matter** folder from the source code (`/Firmware/Matter`) and paste it inside `libraries/Matter`.
+
+### 🔄 Step B: Build the Firmware
+1. After adding the Matter library, **build** the firmware in PlatformIO.
+
+🚀 **Your Airowl device now supports Matter and is ready for smart home integration!**
+
+---
+
 ### Step 3  Uploading to the device using PlatformIO
 
 
@@ -47,6 +68,64 @@ Once the platformio.ini file is loaded, ensure that Airowl is connected to your 
 The terminal displays the upload status and on Successful upload displays the following :
 
 ![alt text](md_images/image.png)
+
+
+# Airowl Matter Device - Smart Home Integration
+
+Airowl is a **Matter-compatible** device designed for seamless integration into various smart home ecosystems, including **Apple Home, Google Home, Amazon Alexa, Samsung SmartThings, Home Assistant and Other Supported Matter Ecosystem**. Unlike other devices that require a physical pairing button, Airowl **automatically enters pairing mode** after connecting to Wi-Fi using Wi-Fi Manager.
+
+---
+
+## 🔗 Supported Smart Home Ecosystems
+
+Airowl can be added to the following **Matter-compatible** smart home platforms:
+
+- **Apple Home**  
+- **Google Home**  
+- **Amazon Alexa**  
+- **Samsung SmartThings**  
+- **Home Assistant**
+- **Other Supported Matter Ecosystem**
+---
+
+## 📲 Pairing Airowl with Apple Home
+
+### Step 1: Power on the Airowl Device
+- Connect the device to a **power source**.
+- The device will create a **Wi-Fi hotspot** (e.g., **"Airowl-Setup"**).
+
+### Step 2: Connect to Airowl’s Wi-Fi and Configure  
+1. **Open Wi-Fi settings** on your phone and connect to **Airowl’s Wi-Fi** (SSID shown on the device).  
+2. Once connected, a **Wi-Fi Manager portal** will open automatically. If not, go to **`192.168.4.1`** in a browser.  
+3. Select your **home Wi-Fi network** and enter the password.  
+4. Tap **Connect**, and Airowl will join your network.  
+
+🚀 **At this point, the device automatically enters pairing mode!**  
+
+### Step 3: Open Apple Home App  
+1. Open the **Apple Home** app on your iPhone.  
+2. Tap the **“+” (Add Accessory)** button in the top-right corner.  
+3. Select **“Add Accessory.”**  
+
+### Step 4: Scan the Matter QR Code
+
+- Locate the **Matter QR Code** (on the device or in the documentation).
+- Use your **iPhone camera** to scan the QR code.
+- If there's no QR code, tap **“More Options”** and select the device from the list.
+
+#### Matter QR Code:
+![Matter QR Code](https://github.com/user-attachments/assets/b20d4f47-a8df-47d8-b352-2c6976f97780)
+
+#### Manual Pairing Code:
+`34970112332`
+
+
+### Step 5: Complete Setup  
+- **Apple Home** will detect the Airowl device and guide you through the pairing process.  
+- Assign it a **room** and a **custom name** (e.g., **"Living Room Air Sensor"**).  
+- The device will now appear in **Apple Home**.  
+
+---
 
 ## Squareline Studio
 
