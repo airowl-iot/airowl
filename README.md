@@ -16,6 +16,7 @@ This repository serves as the source of the complete Airowl, consisting of its f
 
 This file provides instructions to assemble the individual components of the Airowl, along with its Bill of Materials (BOM).
 
+
 ## The BOM for the Airowl is as Follows:
 
 | SR. | ITEM DESCRIPTION       | NOTES                                  | Qty | Product Links                                                 |
