@@ -1,0 +1,197 @@
+[0;32mI (111) esp_image: segment 1: paddr=0002fcdc vaddr=3fc99700 sizeESP-ROM:esp32s3-20210327[0m
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x4037acfa
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3810,len:0x154c
+load:0x403c9700,len:0x4
+load:0x403c9704,len:0xcec
+load:0x403cc700,len:0x2ec4
+entry 0x403c9918
+[0;32mI (26) boot: ESP-IDF v5.2.5 2nd stage bootloader[0m
+[0;32mI (27) boot: compile time Mar 17 2025 22:12:35[0m
+[0;32mI (27) boot: Multicore bootloader[0m
+[0;32mI (27) boot: chip revision: v0.2[0m
+[0;32mI (30) boot: efuse block revision: v1.3[0m
+[0;32mI (33) boot.esp32s3: Boot SPI Speed : 80MHz[0m
+[0;32mI (37) boot.esp32s3: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32s3: SPI Flash Size : 2MB[0m
+[0;32mI (45) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (52) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (58) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (71) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (78) boot: End of partition table[0m
+[0;32mI (81) esp_image: segment 0: paddr=00010020 vaddr=3c0a0020 size=1fcb4h (130228) map[0m
+[0;32mI (111) esp_image: segment 1: paddr=0002fcdc vaddr=3fc99700 size=0033ch (   828) load[0m
+[0;32mI (112) esp_image: segment 2: paddr=00030020 vaddr=42000020 size=96a14h (616980) map[0m
+[0;32mI (224) esp_image: segment 3: paddr=000c6a3c vaddr=3fc99a3c size=043f4h ( 17396) load[0m
+[0;32mI (228) esp_image: segment 4: paddr=000cae38 vaddr=40374000 size=156d4h ( 87764) load[0m
+[0;32mI (256) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (256) boot: Disabling RNG early entropy source...[0m
+[0;32mI (266) cpu_start: Multicore app[0m
+[0;32mI (275) cpu_start: Pro cpu start user code[0m
+[0;32mI (275) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (276) cpu_start: Application information:[0m
+[0;32mI (276) cpu_start: Project name:     air_owl_firmware[0m
+[0;32mI (280) cpu_start: App version:      v5.2.5[0m
+[0;32mI (284) cpu_start: Compile time:     Mar 17 2025 22:12:00[0m
+[0;32mI (289) cpu_start: ELF file SHA256:  6ab9d7d06...[0m
+[0;32mI (294) cpu_start: ESP-IDF:          v5.2.5[0m
+[0;32mI (298) cpu_start: Min chip rev:     v0.0[0m
+[0;32mI (301) cpu_start: Max chip rev:     v0.99 [0m
+[0;32mI (305) cpu_start: Chip rev:         v0.2[0m
+[0;32mI (309) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (316) heap_init: At 3FCA1A48 len 00047CC8 (287 KiB): RAM[0m
+[0;32mI (321) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (326) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (331) heap_init: At 600FE010 len 00001FD8 (7 KiB): RTCRAM[0m
+[0;32mI (337) spi_flash: detected chip: generic[0m
+[0;32mI (340) spi_flash: flash io: dio[0m
+[0;33mW (343) spi_flash: Detected size(16384k) larger than the size in the binary image header(2048k). Using the size in the binary image header.[0m
+[0;32mI (355) sleep: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (361) sleep: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (368) main_task: Started on CPU0[0m
+[0;32mI (378) main_task: Calling app_main()[0m
+[0;32mI (378) sensor_manager: Initializing sensor manager[0m
+[0;32mI (378) sensor_manager: Initializing I2C with frequency 10000 Hz[0m
+[0;32mI (388) gpio: GPIO[9]| InputEn: 1| OutputEn: 1| OpenDrain: 1| Pullup: 1| Pulldown: 0| Intr:0 [0m
+[0;32mI (388) gpio: GPIO[8]| InputEn: 1| OutputEn: 1| OpenDrain: 1| Pullup: 1| Pulldown: 0| Intr:0 [0m
+[0;33mW (398) i2c.master: Please note i2c asynchronous is only used for specific scenario currently. It's experimental for other users because user cannot get bus error from API. And It's not compatible with ``i2c_master_probe``. If user makes sure there won't be any error on bus and tested with no problem, this message can be ignored.[0m
+[0;32mI (628) sensor_manager: Checking for SEN5x sensor presence...[0m
+[0;32mI (628) sensor_manager: SEN5x sensor detected![0m
+[0;32mI (628) sensor_manager: Attempting to initialize SEN5x sensor (attempt 1/3)[0m
+[0;32mI (628) sensor_manager: Resetting SEN5x sensor[0m
+[0;32mI (3728) sensor_manager: SEN5x sensor initialized successfully[0m
+[0;32mI (3748) pp: pp rom version: e7ae62f[0m
+[0;32mI (3748) net80211: net80211 rom version: e7ae62f[0m
+[0;32mI (3758) wifi:wifi driver task: 3fcad384, prio:23, stack:6656, core=0[0m
+[0;32mI (3768) wifi:wifi firmware version: 01d22db[0m
+[0;32mI (3768) wifi:wifi certification version: v7.0[0m
+[0;32mI (3768) wifi:config NVS flash: enabled[0m
+[0;32mI (3768) wifi:config nano formating: disabled[0m
+[0;32mI (3768) wifi:Init data frame dynamic rx buffer num: 32[0m
+[0;32mI (3778) wifi:Init static rx mgmt buffer num: 5[0m
+[0;32mI (3778) wifi:Init management short buffer num: 32[0m
+[0;32mI (3788) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (3788) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (3798) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (3798) wifi:Init static rx buffer num: 10[0m
+[0;32mI (3798) wifi:Init dynamic rx buffer num: 32[0m
+[0;32mI (3808) wifi_init: rx ba win: 6[0m
+[0;32mI (3808) wifi_init: tcpip mbox: 32[0m
+[0;32mI (3808) wifi_init: udp mbox: 6[0m
+[0;32mI (3818) wifi_init: tcp mbox: 6[0m
+[0;32mI (3818) wifi_init: tcp tx win: 5760[0m
+[0;32mI (3818) wifi_init: tcp rx win: 5760[0m
+[0;32mI (3828) wifi_init: tcp mss: 1440[0m
+[0;32mI (3828) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (3828) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (3838) phy_init: phy_version 680,a6008b2,Jun  4 2024,16:41:10[0m
+[0;32mI (3878) wifi:mode : softAP (30:30:f9:00:9d:1d)[0m
+[0;32mI (3888) wifi:Total power save buffer number: 16[0m
+[0;32mI (3888) wifi:Init max length of beacon: 752/752[0m
+[0;32mI (3888) wifi:Init max length of beacon: 752/752[0m
+[0;32mI (3888) network_manager: Network manager initialized[0m
+[0;32mI (3888) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+[0;32mI (3898) network_manager: AP started[0m
+[0;32mI (3898) wifi:mode : sta (30:30:f9:00:9d:1c) + softAP (30:30:f9:00:9d:1d)[0m
+[0;32mI (3908) wifi:enable tsf[0m
+[0;32mI (3918) wifi:Total power save buffer number: 16[0m
+[0;32mI (3918) network_manager: AP stopped[0m
+[0;32mI (3918) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+[0;32mI (3928) network_manager: AP started[0m
+[0;32mI (3928) web_server: Web server started[0m
+[0;32mI (3938) main: Web configuration portal started at http://192.168.4.1[0m
+[0;32mI (3938) main: System running - Current AQI: 0, Temperature: 0.0°C, Humidity: 0.0%[0m
+[1;31mE (4038) sensor_manager: CRC check failed at index 0: calculated 0x81, received 0x00[0m
+[0;33mW (4038) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4138) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4138) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4238) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4238) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4338) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4338) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4438) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4438) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4538) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4538) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4638) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4638) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4738) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4738) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4838) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4838) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (4938) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (4938) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5038) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5038) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5138) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5138) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5238) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5238) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5338) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5338) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5438) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5438) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5538) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5538) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5638) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5638) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5738) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5738) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5838) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5838) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (5938) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (5938) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6038) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6038) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6138) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6138) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6238) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6238) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6338) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6338) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6438) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6438) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6538) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6538) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6638) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6638) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6738) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6738) sensor_manager: CRC validation failed, retrying...[0m
+[0;32mI (6748) network_manager: Retrying connection to AP...[0m
+[1;31mE (6838) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6838) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (6938) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (6938) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7038) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7038) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7138) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7138) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7238) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7238) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7338) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7338) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7438) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7438) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7538) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7538) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7638) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7638) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7738) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7738) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7838) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7838) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (7938) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (7938) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (8038) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (8038) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (8138) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (8138) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (8238) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (8238) sensor_manager: CRC validation failed, retrying...[0m
+[1;31mE (8338) sensor_manager: CRC check failed at index 0: calculated 0x4A, received 0x00[0m
+[0;33mW (8338) sensor_manager: CRC validation failed, retrying...[0m

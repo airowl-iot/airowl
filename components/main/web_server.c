@@ -1,0 +1,627 @@
+#include <esp_http_server.h>
+#include <esp_log.h>
+#include <esp_wifi.h>
+#include <cJSON.h>
+#include "web_server.h"
+#include "network_manager.h"
+#include "sensor_manager.h"
+
+static const char *TAG = "web_server";
+static httpd_handle_t server = NULL;
+
+// HTML for the configuration page
+static const char *config_html = "<!DOCTYPE html>"
+    "<html>"
+    "<head>"
+        "<title>AirOwl Configuration</title>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+        "<style>"
+            "@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');"
+            "* { box-sizing: border-box; transition: all 0.3s; }"
+            "body {"
+                "font-family: 'Roboto', sans-serif;"
+                "margin: 0;"
+                "padding: 0;"
+                "background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);"
+                "min-height: 100vh;"
+                "display: flex;"
+                "align-items: center;"
+                "justify-content: center;"
+            "}"
+            ".container {"
+                "max-width: 450px;"
+                "margin: 20px;"
+                "width: 100%;"
+                "background-color: white;"
+                "border-radius: 12px;"
+                "box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);"
+                "overflow: hidden;"
+                "animation: slideIn 0.5s ease-out forwards;"
+            "}"
+            "@keyframes slideIn {"
+                "0% { transform: translateY(30px); opacity: 0; }"
+                "100% { transform: translateY(0); opacity: 1; }"
+            "}"
+            "@keyframes fadeIn {"
+                "0% { opacity: 0; }"
+                "100% { opacity: 1; }"
+            "}"
+            "@keyframes pulse {"
+                "0% { transform: scale(1); }"
+                "50% { transform: scale(1.05); }"
+                "100% { transform: scale(1); }"
+            "}"
+            "@keyframes spin {"
+                "0% { transform: rotate(0deg); }"
+                "100% { transform: rotate(360deg); }"
+            "}"
+            ".header {"
+                "background-color: #4a90e2;"
+                "color: white;"
+                "padding: 20px;"
+                "text-align: center;"
+                "border-bottom: 1px solid rgba(0, 0, 0, 0.1);"
+            "}"
+            ".header h2 {"
+                "margin: 0;"
+                "font-weight: 500;"
+            "}"
+            ".content {"
+                "padding: 20px;"
+            "}"
+            ".form-group {"
+                "margin-bottom: 15px;"
+            "}"
+            "label {"
+                "display: block;"
+                "margin-bottom: 8px;"
+                "font-weight: 500;"
+                "color: #212529;"
+            "}"
+            "input[type='text'], input[type='password'] {"
+                "width: 100%;"
+                "padding: 12px 15px;"
+                "border: 1px solid #ddd;"
+                "border-radius: 6px;"
+                "font-size: 16px;"
+                "transition: border-color 0.3s, box-shadow 0.3s;"
+            "}"
+            "input[type='text']:focus, input[type='password']:focus {"
+                "border-color: #4a90e2;"
+                "box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.25);"
+                "outline: none;"
+            "}"
+            ".btn {"
+                "background-color: #4a90e2;"
+                "color: white;"
+                "border: none;"
+                "padding: 14px 20px;"
+                "width: 100%;"
+                "border-radius: 6px;"
+                "font-size: 16px;"
+                "font-weight: 500;"
+                "cursor: pointer;"
+                "transition: background-color 0.3s, transform 0.2s;"
+            "}"
+            ".btn:hover {"
+                "background-color: #3a7bc8;"
+                "transform: translateY(-2px);"
+            "}"
+            ".btn:active {"
+                "transform: translateY(0);"
+            "}"
+            ".status {"
+                "margin-top: 20px;"
+                "padding: 15px;"
+                "border-radius: 6px;"
+                "background-color: #f8f9fa;"
+                "border-left: 4px solid #dee2e6;"
+                "animation: fadeIn 0.5s ease-out forwards;"
+                "display: none;"
+            "}"
+            ".status.success {"
+                "background-color: rgba(76, 175, 80, 0.1);"
+                "border-left-color: #63c765;"
+                "color: #2e7d32;"
+                "display: block;"
+            "}"
+            ".status.error {"
+                "background-color: rgba(255, 107, 107, 0.1);"
+                "border-left-color: #ff6b6b;"
+                "color: #d32f2f;"
+                "display: block;"
+            "}"
+            ".status.info {"
+                "background-color: rgba(74, 144, 226, 0.1);"
+                "border-left-color: #4a90e2;"
+                "color: #1976d2;"
+                "display: block;"
+            "}"
+            ".sensor-card {"
+                "margin-top: 30px;"
+                "border-radius: 8px;"
+                "overflow: hidden;"
+                "box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);"
+                "animation: fadeIn 0.8s ease-out forwards;"
+            "}"
+            ".sensor-header {"
+                "background-color: #e0f7fa;"
+                "color: #212529;"
+                "padding: 15px;"
+                "border-bottom: 1px solid rgba(0, 0, 0, 0.1);"
+                "display: flex;"
+                "justify-content: space-between;"
+                "align-items: center;"
+            "}"
+            ".sensor-header h3 {"
+                "margin: 0;"
+                "font-weight: 500;"
+            "}"
+            ".refresh-icon {"
+                "cursor: pointer;"
+                "display: inline-block;"
+                "transition: transform 0.3s ease;"
+            "}"
+            ".refresh-icon:hover {"
+                "transform: rotate(180deg);"
+            "}"
+            ".sensor-body {"
+                "padding: 15px;"
+                "background-color: white;"
+            "}"
+            ".metric {"
+                "margin-bottom: 15px;"
+                "padding-bottom: 10px;"
+                "border-bottom: 1px solid #f1f1f1;"
+                "animation: fadeIn 0.5s ease-out forwards;"
+                "opacity: 0;"
+            "}"
+            ".metric:nth-child(1) { animation-delay: 0.1s; }"
+            ".metric:nth-child(2) { animation-delay: 0.2s; }"
+            ".metric:nth-child(3) { animation-delay: 0.3s; }"
+            ".metric:nth-child(4) { animation-delay: 0.4s; }"
+            ".metric:nth-child(5) { animation-delay: 0.5s; }"
+            ".metric:nth-child(6) { animation-delay: 0.6s; }"
+            ".metric:nth-child(7) { animation-delay: 0.7s; }"
+            ".metric:last-child {"
+                "border-bottom: none;"
+                "margin-bottom: 0;"
+                "padding-bottom: 0;"
+            "}"
+            ".metric-header {"
+                "display: flex;"
+                "justify-content: space-between;"
+                "align-items: center;"
+                "margin-bottom: 5px;"
+            "}"
+            ".metric-name {"
+                "font-weight: 500;"
+                "color: #212529;"
+            "}"
+            ".metric-value {"
+                "font-weight: 700;"
+                "color: #4a90e2;"
+            "}"
+            ".aqi-value {"
+                "font-size: 28px;"
+                "font-weight: 700;"
+                "text-align: center;"
+                "margin: 15px 0;"
+                "animation: pulse 2s infinite ease-in-out;"
+            "}"
+            ".aqi-good { color: #4CAF50; }"
+            ".aqi-moderate { color: #F4D35E; }"
+            ".aqi-unhealthy { color: #F95738; }"
+            ".aqi-very-unhealthy { color: #843B62; }"
+            ".aqi-hazardous { color: #621B18; }"
+            ".aqi-category {"
+                "text-align: center;"
+                "font-weight: 500;"
+                "padding: 5px 15px;"
+                "border-radius: 50px;"
+                "background-color: #f8f9fa;"
+                "display: inline-block;"
+                "margin: 0 auto 15px auto;"
+            "}"
+            ".category-good {"
+                "background-color: rgba(76, 175, 80, 0.2);"
+                "color: #4CAF50;"
+            "}"
+            ".category-moderate {"
+                "background-color: rgba(248, 180, 0, 0.2);"
+                "color: #9c6b00;"
+            "}"
+            ".category-unhealthy {"
+                "background-color: rgba(249, 87, 56, 0.2);"
+                "color: #F95738;"
+            "}"
+            ".category-very-unhealthy {"
+                "background-color: rgba(132, 59, 98, 0.2);"
+                "color: #843B62;"
+            "}"
+            ".category-hazardous {"
+                "background-color: rgba(98, 27, 24, 0.2);"
+                "color: #621B18;"
+            "}"
+            ".loading {"
+                "display: flex;"
+                "justify-content: center;"
+                "align-items: center;"
+                "padding: 20px;"
+            "}"
+            ".loading-spinner {"
+                "width: 40px;"
+                "height: 40px;"
+                "border: 3px solid rgba(74, 144, 226, 0.3);"
+                "border-radius: 50%;"
+                "border-top-color: #4a90e2;"
+                "animation: spin 1s linear infinite;"
+            "}"
+            ".aqi-gauge-container {"
+                "position: relative;"
+                "width: 150px;"
+                "height: 150px;"
+                "margin: 0 auto 20px auto;"
+            "}"
+            ".aqi-gauge {"
+                "width: 100%;"
+                "height: 100%;"
+                "background: conic-gradient("
+                    "#4CAF50 0% 20%, "
+                    "#F4D35E 20% 40%, "
+                    "#F95738 40% 60%, "
+                    "#843B62 60% 80%, "
+                    "#621B18 80% 100%"
+                ");"
+                "border-radius: 50%;"
+                "position: relative;"
+                "overflow: hidden;"
+            "}"
+            ".aqi-gauge-inner {"
+                "position: absolute;"
+                "width: 70%;"
+                "height: 70%;"
+                "background-color: white;"
+                "border-radius: 50%;"
+                "top: 15%;"
+                "left: 15%;"
+                "display: flex;"
+                "align-items: center;"
+                "justify-content: center;"
+                "font-size: 28px;"
+                "font-weight: 700;"
+            "}"
+            ".gauge-needle {"
+                "position: absolute;"
+                "width: 2px;"
+                "height: 40%;"
+                "background-color: #212529;"
+                "bottom: 50%;"
+                "left: calc(50% - 1px);"
+                "transform-origin: bottom center;"
+                "transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);"
+                "z-index: 10;"
+            "}"
+        "</style>"
+    "</head>"
+    "<body>"
+        "<div class='container'>"
+            "<div class='header'>"
+                "<h2>AirOwl Configuration</h2>"
+            "</div>"
+            "<div class='content'>"
+                "<form id='wifiForm'>"
+                    "<div class='form-group'>"
+                        "<label for='ssid'>WiFi SSID:</label>"
+                        "<input type='text' id='ssid' name='ssid' placeholder='Enter network name' required>"
+                    "</div>"
+                    "<div class='form-group'>"
+                        "<label for='password'>Password:</label>"
+                        "<input type='password' id='password' name='password' placeholder='Enter network password'>"
+                    "</div>"
+                    "<button type='submit' class='btn'>Connect</button>"
+                "</form>"
+                "<div id='status' class='status'></div>"
+                
+                "<div class='sensor-card'>"
+                    "<div class='sensor-header'>"
+                        "<h3>Air Quality Data</h3>"
+                        "<span class='refresh-icon' onclick='fetchSensorData()'>⟳</span>"
+                    "</div>"
+                    "<div class='sensor-body'>"
+                        "<div id='sensorData'>"
+                            "<div class='loading'>"
+                                "<div class='loading-spinner'></div>"
+                            "</div>"
+                        "</div>"
+                    "</div>"
+                "</div>"
+            "</div>"
+        "</div>"
+        
+        "<script>"
+            "document.getElementById('wifiForm').onsubmit = function(e) {"
+                "e.preventDefault();"
+                "var data = {"
+                    "ssid: document.getElementById('ssid').value,"
+                    "password: document.getElementById('password').value"
+                "};"
+                
+                "let statusEl = document.getElementById('status');"
+                "statusEl.className = 'status info';"
+                "statusEl.innerHTML = 'Connecting to WiFi...';"
+                
+                "fetch('/connect', {"
+                    "method: 'POST',"
+                    "headers: {'Content-Type': 'application/json'},"
+                    "body: JSON.stringify(data)"
+                "})"
+                ".then(response => response.json())"
+                ".then(data => {"
+                    "if(data.success) {"
+                        "statusEl.className = 'status success';"
+                        "statusEl.innerHTML = data.message;"
+                        "setTimeout(() => {"
+                            "statusEl.innerHTML += '<br>Device will restart in 5 seconds...';"
+                        "}, 2000);"
+                    "} else {"
+                        "statusEl.className = 'status error';"
+                        "statusEl.innerHTML = data.message;"
+                    "}"
+                "})"
+                ".catch(error => {"
+                    "statusEl.className = 'status error';"
+                    "statusEl.innerHTML = 'Error: ' + error;"
+                "});"
+                "return false;"
+            "};"
+            
+            "function getAQIClass(aqi) {"
+                "if (aqi <= 50) return { color: 'aqi-good', category: 'category-good', text: 'Good' };"
+                "else if (aqi <= 100) return { color: 'aqi-moderate', category: 'category-moderate', text: 'Moderate' };"
+                "else if (aqi <= 150) return { color: 'aqi-unhealthy', category: 'category-unhealthy', text: 'Unhealthy for Sensitive Groups' };"
+                "else if (aqi <= 200) return { color: 'aqi-unhealthy', category: 'category-unhealthy', text: 'Unhealthy' };"
+                "else if (aqi <= 300) return { color: 'aqi-very-unhealthy', category: 'category-very-unhealthy', text: 'Very Unhealthy' };"
+                "else return { color: 'aqi-hazardous', category: 'category-hazardous', text: 'Hazardous' };"
+            "}"
+            
+            "function setGaugeNeedle(aqi) {"
+                "const maxAQI = 500;"
+                "const rotation = Math.min(180, (aqi / maxAQI) * 180);"
+                "const needle = document.querySelector('.gauge-needle');"
+                "if (needle) {"
+                    "needle.style.transform = 'rotate(' + rotation + 'deg)';"
+                "}"
+            "}"
+            
+            "function fetchSensorData() {"
+                "fetch('/api/sensor-data')"
+                ".then(response => response.json())"
+                ".then(data => {"
+                    "const aqiClass = getAQIClass(data.aqi);"
+                    
+                    "let html = '';"
+                    "html += '<div class=\"aqi-gauge-container\">';"
+                    "html += '<div class=\"aqi-gauge\"></div>';"
+                    "html += '<div class=\"aqi-gauge-inner\">' + data.aqi + '</div>';"
+                    "html += '<div class=\"gauge-needle\"></div>';"
+                    "html += '</div>';"
+                    "html += '<div class=\"aqi-category ' + aqiClass.category + '\">' + aqiClass.text + '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">PM1.0</span>';"
+                    "html += '<span class=\"metric-value\">' + data.pm1.toFixed(1) + ' ug/m3</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">PM2.5</span>';"
+                    "html += '<span class=\"metric-value\">' + data.pm25.toFixed(1) + ' ug/m3</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">PM4.0</span>';"
+                    "html += '<span class=\"metric-value\">' + data.pm4.toFixed(1) + ' ug/m3</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">PM10</span>';"
+                    "html += '<span class=\"metric-value\">' + data.pm10.toFixed(1) + ' ug/m3</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">Temperature</span>';"
+                    "html += '<span class=\"metric-value\">' + data.temperature.toFixed(1) + ' C</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">Humidity</span>';"
+                    "html += '<span class=\"metric-value\">' + data.humidity.toFixed(1) + ' %</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "html += '<div class=\"metric\">';"
+                    "html += '<div class=\"metric-header\">';"
+                    "html += '<span class=\"metric-name\">VOC Index</span>';"
+                    "html += '<span class=\"metric-value\">' + data.voc_index.toFixed(1) + '</span>';"
+                    "html += '</div>';"
+                    "html += '</div>';"
+                    
+                    "document.getElementById('sensorData').innerHTML = html;"
+                    "setGaugeNeedle(data.aqi);"
+                "})"
+                ".catch(error => {"
+                    "document.getElementById('sensorData').innerHTML = "
+                        "'<div class=\"metric\">' +"
+                        "'<div class=\"metric-header\">' +"
+                        "'<span class=\"metric-name\">Error loading data</span>' +"
+                        "'</div>' +"
+                        "'</div>';"
+                "});"
+            "}"
+            
+            "fetchSensorData();"
+            "setInterval(fetchSensorData, 5000);"
+        "</script>"
+    "</body>"
+    "</html>";
+
+// Handler for root path
+static esp_err_t root_handler(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, config_html, strlen(config_html));
+    return ESP_OK;
+}
+
+// Handler for sensor data API endpoint
+static esp_err_t sensor_data_handler(httpd_req_t *req)
+{
+    sensor_data_t sensor_data;
+    esp_err_t ret = sensor_manager_read_data(&sensor_data);
+    
+    if (ret != ESP_OK) {
+        const char *error_response = "{\"error\":\"Failed to read sensor data\"}";
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, error_response, strlen(error_response));
+        return ESP_OK;
+    }
+    
+    // Create JSON response with sensor data
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "aqi", sensor_data.aqi);
+    cJSON_AddStringToObject(root, "aqi_category", sensor_manager_get_aqi_category(sensor_data.aqi));
+    cJSON_AddNumberToObject(root, "pm1", sensor_data.pm1);
+    cJSON_AddNumberToObject(root, "pm25", sensor_data.pm25);
+    cJSON_AddNumberToObject(root, "pm4", sensor_data.pm4);
+    cJSON_AddNumberToObject(root, "pm10", sensor_data.pm10);
+    cJSON_AddNumberToObject(root, "temperature", sensor_data.temperature);
+    cJSON_AddNumberToObject(root, "humidity", sensor_data.humidity);
+    cJSON_AddNumberToObject(root, "voc_index", sensor_data.voc_index);
+    
+    char *json_str = cJSON_Print(root);
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, json_str, strlen(json_str));
+    
+    free(json_str);
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+
+// Handler for WiFi connection request
+static esp_err_t connect_handler(httpd_req_t *req)
+{
+    char buf[1024];
+    int ret, remaining = req->content_len;
+    
+    if (remaining >= sizeof(buf)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Content too long");
+        return ESP_FAIL;
+    }
+    
+    ret = httpd_req_recv(req, buf, remaining);
+    if (ret <= 0) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive content");
+        return ESP_FAIL;
+    }
+    buf[ret] = '\0';
+
+    cJSON *root = cJSON_Parse(buf);
+    if (!root) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
+
+    cJSON *ssid = cJSON_GetObjectItem(root, "ssid");
+    cJSON *password = cJSON_GetObjectItem(root, "password");
+
+    if (!ssid || !cJSON_IsString(ssid)) {
+        cJSON_Delete(root);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "SSID is required");
+        return ESP_FAIL;
+    }
+
+    esp_err_t err = network_manager_connect_sta(ssid->valuestring, 
+                                              password ? password->valuestring : NULL);
+
+    char *response;
+    if (err == ESP_OK) {
+        response = "{\"success\":true,\"message\":\"Successfully connected to WiFi\"}";
+    } else {
+        response = "{\"success\":false,\"message\":\"Failed to connect to WiFi\"}";
+    }
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, response, strlen(response));
+
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+
+esp_err_t web_server_init(void)
+{
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.stack_size = 8192;
+
+    if (httpd_start(&server, &config) == ESP_OK) {
+        // URI handler for root path
+        httpd_uri_t root_uri = {
+            .uri = "/",
+            .method = HTTP_GET,
+            .handler = root_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &root_uri);
+
+        // URI handler for sensor data API
+        httpd_uri_t sensor_data_uri = {
+            .uri = "/api/sensor-data",
+            .method = HTTP_GET,
+            .handler = sensor_data_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &sensor_data_uri);
+
+        // URI handler for connect endpoint
+        httpd_uri_t connect_uri = {
+            .uri = "/connect",
+            .method = HTTP_POST,
+            .handler = connect_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &connect_uri);
+
+        ESP_LOGI(TAG, "Web server started");
+        return ESP_OK;
+    }
+
+    ESP_LOGE(TAG, "Failed to start web server");
+    return ESP_FAIL;
+}
+
+esp_err_t web_server_start(void)
+{
+    if (server == NULL) {
+        return web_server_init();
+    }
+    return ESP_OK;
+}
+
+esp_err_t web_server_stop(void)
+{
+    if (server) {
+        httpd_stop(server);
+        server = NULL;
+    }
+    return ESP_OK; 
+} 

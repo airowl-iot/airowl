@@ -1,2 +1,2 @@
-source /home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader/gdbinit/symbols
-source /home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader/gdbinit/connect
+source /home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader/gdbinit/symbols
+source /home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader/gdbinit/connect

@@ -4,19 +4,19 @@
 cmake_minimum_required(VERSION 3.5)
 
 file(MAKE_DIRECTORY
-  "/home/upeya/esp-idf/components/bootloader/subproject"
-  "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader"
-  "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix"
-  "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/tmp"
-  "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp"
-  "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src"
-  "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp"
+  "/home/upeya/esp/esp-idf/components/bootloader/subproject"
+  "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader"
+  "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix"
+  "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix/tmp"
+  "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp"
+  "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix/src"
+  "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "/home/upeya/esp-idf/examples/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "/home/upeya/esp/esp-idf/examples/Main Air_Owl/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()
