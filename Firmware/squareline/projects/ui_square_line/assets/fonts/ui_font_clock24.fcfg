@@ -1,0 +1,16 @@
+{
+  "codename": "clock24",
+  "ttf_path": "/assets/fonts/FuturaStdCondensedLightObl.otf",
+  "bin_path": "/assets/fonts\\ui_font_clock24.bin",
+  "c_path": "/assets/fonts\\ui_font_clock24.c",
+  "cfg_path": "/assets/fonts\\ui_font_clock24.fcfg",
+  "size": 24,
+  "bpp": 8,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7f"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}
