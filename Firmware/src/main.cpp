@@ -54,7 +54,8 @@ void setup() {
   };
   esp_task_wdt_init(&wdt_config);
   esp_task_wdt_add(NULL);
-
+  WiFi.begin();
+  delay(1000);
   String mac = WiFi.macAddress();
   mac.replace(":", "");
   String apName = "AIROWL_" + mac.substring(6);
@@ -124,9 +125,9 @@ void loop() {
   static bool was_commissioned = false;
   if (matter_initialized) {
     if (!ArduinoMatter::isDeviceCommissioned()) {
-      Serial.println("Matter Node not commissioned");
-      Serial.println("Manual pairing code: " + ArduinoMatter::getManualPairingCode());
-      Serial.println("QR code URL: " + ArduinoMatter::getOnboardingQRCodeUrl());
+      // Serial.println("Matter Node not commissioned");
+      // Serial.println("Manual pairing code: " + ArduinoMatter::getManualPairingCode());
+      // Serial.println("QR code URL: " + ArduinoMatter::getOnboardingQRCodeUrl());
     } else if (!was_commissioned) {
       Serial.println("Matter Node commissioned");
       was_commissioned = true;
