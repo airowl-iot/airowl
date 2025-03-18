@@ -1,4 +1,9 @@
-#include "MatterAirQualitySensor.h"
+#include <sdkconfig.h>
+#ifdef CONFIG_ESP_MATTER_ENABLE_DATA_MODEL
+
+#include <Matter.h>
+#include <MatterEndpoints/MatterAirQualitySensor.h>
+
 using namespace esp_matter;
 using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
@@ -104,3 +109,5 @@ bool MatterAirQualitySensor::attributeChangeCB(uint16_t endpoint_id, uint32_t cl
 void MatterAirQualitySensor::end() {
     started = false;
 }
+
+#endif /* CONFIG_ESP_MATTER_ENABLE_DATA_MODEL */
