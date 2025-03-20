@@ -1,3 +1,5 @@
-idf_component_register(SRCS "main.c" "network_manager.c" "sensor_manager.c" "web_server.c"
-                    INCLUDE_DIRS "include"
-                    REQUIRES esp_http_server json nvs_flash esp_wifi esp_timer driver esp_system freertos) 
+idf_component_register(
+    SRCS "sensor_manager.c"
+    INCLUDE_DIRS "include"
+    REQUIRES driver esp_wifi mqtt lvgl SensirionI2CSen5x
+) 

@@ -1,7 +1,25 @@
-#ifndef SENSOR_MANAGER_H
-#define SENSOR_MANAGER_H
+#pragma once
 
+#include <stdint.h>
 #include "esp_err.h"
+#include "driver/i2c.h"
+#include "driver/gpio.h"
+#include "esp_wifi.h"
+#include "mqtt_client.h"
+#include "lvgl.h"
+
+// Constants
+#define MAXBUF_REQUIREMENT 48
+#define CHART_DATA_LENGTH 15
+#define DATA_FREQ 5
+#define I2C_MASTER_SCL_IO 2
+#define I2C_MASTER_SDA_IO 1
+#define I2C_MASTER_FREQ_HZ 100000
+
+// Global variables
+extern volatile int AQI;
+extern volatile float temperature;
+extern volatile float humidity;
 
 // AQI breakpoint structure matching the Arduino code
 typedef struct {
@@ -39,8 +57,9 @@ typedef struct {
     int count;
 } sensor_avg_data_t;
 
-// Initialize sensor hardware and driver
+// Function declarations
 esp_err_t sensor_manager_init(void);
+void sensor_manager_task(void *pvParameters);
 
 // Read current sensor data
 esp_err_t sensor_manager_read_data(sensor_data_t* data);
@@ -58,6 +77,4 @@ uint32_t sensor_manager_get_aqi_color(int aqi);
 esp_err_t sensor_manager_deinit(void);
 
 esp_err_t i2c_master_init(void);
-void i2c_master_deinit(void);
-
-#endif // SENSOR_MANAGER_H 
+void i2c_master_deinit(void); 
