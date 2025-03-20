@@ -37,27 +37,6 @@ Click on Open Project button as highlighted in the above picture and locate the 
 
 ![alt text](md_images/opening_firmware_repo.png)
 
-
-## ⚙️ Enabling Matter Support on Airowl
-
-
-### 📂 Step A: Add the Matter Library
-1. Go to the following directory:
-
-- **For Ubuntu :** /home/.platformio/packages/framework-arduinoespressif32/libraries
-- **For Mac :** /User/"YOUR-USER"/.platformio/packages/framework-arduinoespressif32/libraries
-- **For Windows :** C:\Users\\"YOUR-USER"\\.platformio\packages\framework-arduinoespressif32\libraries
-
-2. Inside the `libraries` folder, locate or create a folder named **Matter**.
-3. Copy the **Matter** folder from the source code (`/Firmware/Matter`) and paste it inside `libraries/Matter`.
-
-### 🔄 Step B: Build the Firmware
-1. After adding the Matter library, **build** the firmware in PlatformIO.
-
-🚀 **Your Airowl device now supports Matter and is ready for smart home integration!**
-
----
-
 ### Step 3  Uploading to the device using PlatformIO
 
 
