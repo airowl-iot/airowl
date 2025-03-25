@@ -11,45 +11,6 @@
 
 static const char *TAG = "main";
 
-// Global variables to track sensor data
-static int current_aqi = 0;
-static float current_temperature = 0.0f;
-static float current_humidity = 0.0f;
-
-// Task for reading sensor data
-static void sensor_task(void *pvParameters) {
-    while (1) {
-        sensor_data_t sensor_data;
-        esp_err_t ret = sensor_manager_read_data(&sensor_data);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to read sensor data");
-        } else {
-            // Update global variables
-            current_aqi = sensor_data.aqi;
-            current_temperature = sensor_data.temperature;
-            current_humidity = sensor_data.humidity;
-            
-            // Log sensor data
-            ESP_LOGI(TAG, "AQI: %d (%s)", 
-                current_aqi, 
-                sensor_manager_get_aqi_category(current_aqi));
-                
-            ESP_LOGI(TAG, "PM1: %.2f, PM2.5: %.2f, PM4: %.2f, PM10: %.2f μg/m³", 
-                sensor_data.pm1, 
-                sensor_data.pm25,
-                sensor_data.pm4,
-                sensor_data.pm10);
-                
-            ESP_LOGI(TAG, "Temperature: %.2f°C, Humidity: %.2f%%", 
-                current_temperature, 
-                current_humidity);
-        }
-        
-        // Wait 2 seconds before next reading
-        vTaskDelay(pdMS_TO_TICKS(2000));
-    }
-}
-
 void app_main(void)
 {
     // Initialize sensor manager
@@ -87,17 +48,20 @@ void app_main(void)
     }
     ESP_LOGI(TAG, "Web configuration portal started at http://192.168.4.1");
 
-    // Create a dedicated task for sensor readings
-    xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 5, NULL);
-
-    // Main loop - for monitoring the system and future UI integration
+    // Main loop
     while (1) {
-        // In the future, this can be used for the display/UI update
-        // For now, just monitor system status
-        ESP_LOGI(TAG, "System running - Current AQI: %d, Temperature: %.1f°C, Humidity: %.1f%%", 
-                current_aqi, current_temperature, current_humidity);
-        
-        // Sleep for 10 seconds
-        vTaskDelay(pdMS_TO_TICKS(10000));
+        sensor_data_t sensor_data;
+        ret = sensor_manager_read_data(&sensor_data);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to read sensor data");
+        } else {
+            ESP_LOGI(TAG, "Temperature: %.2f°C, Humidity: %.2f%%, Pressure: %.2f hPa, Gas: %.2f kΩ, IAQ: %.2f",
+                    sensor_data.temperature,
+                    sensor_data.humidity,
+                    sensor_data.pressure,
+                    sensor_data.gas_resistance,
+                    sensor_data.iaq);
+        }
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 } 
