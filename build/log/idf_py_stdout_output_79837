@@ -1,0 +1,273 @@
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x2b (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40048de8
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3820,len:0x19fc
+load:0x403c9700,len:0x4
+load:0x403c9704,len:0xe8c
+load:0x403cc700,len:0x3150
+entry 0x403c9940
+[0;32mI (26) boot: ESP-IDF v5.2.5 2nd stage bootloader[0m
+[0;32mI (27) boot: compile time Mar 26 2025 12:07:11[0m
+[0;32mI (27) boot: Multicore bootloader[0m
+[0;32mI (30) boot: chip revision: v0.2[0m
+[0;32mI (34) boot: efuse block revision: v1.3[0m
+[0;32mI (38) qio_mode: Enabling default flash chip QIO[0m
+[0;32mI (43) boot.esp32s3: Boot SPI Speed : 80MHz[0m
+[0;32mI (48) boot.esp32s3: SPI Mode       : QIO[0m
+[0;32mI (53) boot.esp32s3: SPI Flash Size : 16MB[0m
+[0;32mI (58) boot: Enabling RNG early entropy source...[0m
+[0;32mI (63) boot: Partition Table:[0m
+[0;32mI (67) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (74) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (81) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (89) boot:  2 factory          factory app      00 00 00010000 00400000[0m
+[0;32mI (96) boot:  3 storage          Unknown data     01 82 00410000 00100000[0m
+[0;32mI (104) boot: End of partition table[0m
+[0;32mI (108) esp_image: segment 0: paddr=00010020 vaddr=3c0d0020 size=2a658h (173656) map[0m
+[0;32mI (142) esp_image: segment 1: paddr=0003a680 vaddr=3fcab700 size=049ach ( 18860) load[0m
+[0;32mI (146) esp_image: segment 2: paddr=0003f034 vaddr=40374000 size=00fe4h (  4068) load[0m
+[0;32mI (149) esp_image: segment 3: paddr=00040020 vaddr=42000020 size=c0140h (786752) map[0m
+[0;32mI (273) esp_image: segment 4: paddr=00100168 vaddr=40374fe4 size=2661ch (157212) load[0m
+[0;32mI (319) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (319) boot: Disabling RNG early entropy source...[0m
+[0;32mI (330) cpu_start: Multicore app[0m
+[0;32mI (331) esp_psram: Found 8MB PSRAM device[0m
+[0;32mI (331) esp_psram: Speed: 80MHz[0m
+[0;32mI (429) mmu_psram: Instructions copied and mapped to SPIRAM[0m
+[0;32mI (452) mmu_psram: Read only data copied and mapped to SPIRAM[0m
+[0;32mI (1255) esp_psram: SPI SRAM memory test OK[0m
+[0;32mI (1264) cpu_start: Pro cpu start user code[0m
+[0;32mI (1264) cpu_start: cpu freq: 240000000 Hz[0m
+[0;32mI (1264) cpu_start: Application information:[0m
+[0;32mI (1267) cpu_start: Project name:     air_owl_firmware[0m
+[0;32mI (1273) cpu_start: App version:      v5.2.5[0m
+[0;32mI (1278) cpu_start: Compile time:     Mar 26 2025 12:06:49[0m
+[0;32mI (1284) cpu_start: ELF file SHA256:  032cde0e4...[0m
+[0;32mI (1290) cpu_start: ESP-IDF:          v5.2.5[0m
+[0;32mI (1295) cpu_start: Min chip rev:     v0.0[0m
+[0;32mI (1299) cpu_start: Max chip rev:     v0.99 [0m
+[0;32mI (1304) cpu_start: Chip rev:         v0.2[0m
+[0;32mI (1309) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (1316) heap_init: At 3FCB4350 len 000353C0 (212 KiB): RAM[0m
+[0;32mI (1323) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (1329) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (1335) heap_init: At 600FE010 len 00001FD8 (7 KiB): RTCRAM[0m
+[0;32mI (1342) esp_psram: Adding pool of 7168K of PSRAM memory to heap allocator[0m
+[0;32mI (1349) spi_flash: detected chip: generic[0m
+[0;32mI (1354) spi_flash: flash io: qio[0m
+[0;33mW (1358) i2c: This driver is an old driver, please migrate your application code to adapt `driver/i2c_master.h`[0m
+[0;32mI (1369) sleep: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (1375) sleep: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (1383) main_task: Started on CPU0[0m
+[0;32mI (1387) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations[0m
+[0;32mI (1396) main_task: Calling app_main()[0m
+[0;32mI (1400) sensor_manager: Initializing sensor manager[0m
+[0;32mI (1406) display_manager: Initializing display manager[0m
+[0;32mI (1412) LVGL: Starting LVGL task[0m
+[0;32mI (1414) gpio: GPIO[35]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0 [0m
+[0;32mI (1425) ili9341: LCD panel create success, version: 1.2.0[0m
+[0;32mI (1583) M5Stack: Setting LCD backlight: 100%[0m
+[0;32mI (1605) pp: pp rom version: e7ae62f[0m
+[0;32mI (1606) net80211: net80211 rom version: e7ae62f[0m
+[0;32mI (1607) wifi:wifi driver task: 3fcdb294, prio:23, stack:6656, core=0[0m
+[0;32mI (1617) wifi:wifi firmware version: 01d22db[0m
+[0;32mI (1617) wifi:wifi certification version: v7.0[0m
+[0;32mI (1618) wifi:config NVS flash: enabled[0m
+[0;32mI (1622) wifi:config nano formating: disabled[0m
+[0;32mI (1626) wifi:Init data frame dynamic rx buffer num: 32[0m
+[0;32mI (1631) wifi:Init static rx mgmt buffer num: 5[0m
+[0;32mI (1635) wifi:Init management short buffer num: 32[0m
+[0;32mI (1640) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (1644) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (1648) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (1652) wifi:Init static rx buffer num: 10[0m
+[0;32mI (1656) wifi:Init dynamic rx buffer num: 32[0m
+[0;32mI (1660) wifi_init: rx ba win: 6[0m
+[0;32mI (1664) wifi_init: tcpip mbox: 32[0m
+[0;32mI (1668) wifi_init: udp mbox: 6[0m
+[0;32mI (1672) wifi_init: tcp mbox: 6[0m
+[0;32mI (1675) wifi_init: tcp tx win: 5760[0m
+[0;32mI (1680) wifi_init: tcp rx win: 5760[0m
+[0;32mI (1684) wifi_init: tcp mss: 1440[0m
+[0;32mI (1688) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (1693) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (1698) phy_init: phy_version 680,a6008b2,Jun  4 2024,16:41:10[0m
+[0;32mI (1742) wifi:mode : softAP (30:30:f9:00:9d:1d)[0m
+[0;32mI (1745) wifi:Total power save buffer number: 16[0m
+[0;32mI (1745) wifi:Init max length of beacon: 752/752[0m
+[0;32mI (1745) wifi:Init max length of beacon: 752/752[0m
+[0;32mI (1749) network_manager: Network manager initialized[0m
+[0;32mI (1750) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+[0;32mI (1763) network_manager: AP started[0m
+[0;32mI (1768) wifi:mode : sta (30:30:f9:00:9d:1c) + softAP (30:30:f9:00:9d:1d)[0m
+[0;32mI (1774) wifi:enable tsf[0m
+[0;32mI (2125) wifi:Total power save buffer number: 16[0m
+[0;32mI (2127) network_manager: AP stopped[0m
+[0;32mI (2128) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+[0;32mI (2132) network_manager: AP started[0m
+[0;32mI (2137) web_server: Web server started[0m
+[0;32mI (2140) main: Web configuration portal started at http://192.168.4.1[0m
+[0;32mI (2148) sensor_manager: Temperature: 15.80°C, Humidity: 66.83%, Pressure: 1025.30hPa, Gas: 5063.01Ω, IAQ: 149.29[0m
+[0;32mI (2159) main: Temperature: 15.80°C, Humidity: 66.83%, Pressure: 1025.30 hPa, Gas: 5063.01 kΩ, IAQ: 149.29[0m
+[0;32mI (4171) sensor_manager: Temperature: 23.95°C, Humidity: 52.61%, Pressure: 1026.38hPa, Gas: 5721.56Ω, IAQ: 85.95[0m
+[0;32mI (4171) main: Temperature: 23.95°C, Humidity: 52.61%, Pressure: 1026.38 hPa, Gas: 5721.56 kΩ, IAQ: 85.95[0m
+[0;32mI (4957) network_manager: Retrying connection to AP...[0m
+[0;32mI (6183) sensor_manager: Temperature: 23.85°C, Humidity: 56.34%, Pressure: 1027.25hPa, Gas: 18676.61Ω, IAQ: 180.41[0m
+[0;32mI (6183) main: Temperature: 23.85°C, Humidity: 56.34%, Pressure: 1027.25 hPa, Gas: 18676.61 kΩ, IAQ: 180.41[0m
+[0;32mI (7788) network_manager: Retrying connection to AP...[0m
+[0;32mI (8195) sensor_manager: Temperature: 28.03°C, Humidity: 42.35%, Pressure: 991.03hPa, Gas: 8210.04Ω, IAQ: 65.32[0m
+[0;32mI (8195) main: Temperature: 28.03°C, Humidity: 42.35%, Pressure: 991.03 hPa, Gas: 8210.04 kΩ, IAQ: 65.32[0m
+[0;32mI (10206) sensor_manager: Temperature: 21.87°C, Humidity: 42.39%, Pressure: 993.19hPa, Gas: 12874.96Ω, IAQ: 92.93[0m
+[0;32mI (10206) main: Temperature: 21.87°C, Humidity: 42.39%, Pressure: 993.19 hPa, Gas: 12874.96 kΩ, IAQ: 92.93[0m
+[0;32mI (10620) network_manager: Retrying connection to AP...[0m
+[0;32mI (12217) sensor_manager: Temperature: 16.66°C, Humidity: 42.81%, Pressure: 1018.24hPa, Gas: 13224.69Ω, IAQ: 16.10[0m
+[0;32mI (12217) main: Temperature: 16.66°C, Humidity: 42.81%, Pressure: 1018.24 hPa, Gas: 13224.69 kΩ, IAQ: 16.10[0m
+[0;32mI (13451) network_manager: Retrying connection to AP...[0m
+[0;32mI (14228) sensor_manager: Temperature: 18.52°C, Humidity: 40.87%, Pressure: 1020.06hPa, Gas: 15665.09Ω, IAQ: 78.70[0m
+[0;32mI (14228) main: Temperature: 18.52°C, Humidity: 40.87%, Pressure: 1020.06 hPa, Gas: 15665.09 kΩ, IAQ: 78.70[0m
+[0;32mI (16239) sensor_manager: Temperature: 16.70°C, Humidity: 72.85%, Pressure: 993.20hPa, Gas: 8800.11Ω, IAQ: 139.24[0m
+[0;32mI (16239) main: Temperature: 16.70°C, Humidity: 72.85%, Pressure: 993.20 hPa, Gas: 8800.11 kΩ, IAQ: 139.24[0m
+[0;32mI (16282) network_manager: Retrying connection to AP...[0m
+[0;32mI (18250) sensor_manager: Temperature: 33.67°C, Humidity: 59.10%, Pressure: 1016.49hPa, Gas: 17203.84Ω, IAQ: 199.31[0m
+[0;32mI (18250) main: Temperature: 33.67°C, Humidity: 59.10%, Pressure: 1016.49 hPa, Gas: 17203.84 kΩ, IAQ: 199.31[0m
+[0;32mI (19112) network_manager: Retrying connection to AP...[0m
+[0;32mI (20261) sensor_manager: Temperature: 33.61°C, Humidity: 65.81%, Pressure: 1021.17hPa, Gas: 13640.96Ω, IAQ: 82.15[0m
+[0;32mI (20261) main: Temperature: 33.61°C, Humidity: 65.81%, Pressure: 1021.17 hPa, Gas: 13640.96 kΩ, IAQ: 82.15[0m
+[0;32mI (21943) network_manager: Retrying connection to AP...[0m
+[0;32mI (22272) sensor_manager: Temperature: 28.02°C, Humidity: 47.94%, Pressure: 1027.48hPa, Gas: 19639.97Ω, IAQ: 18.27[0m
+[0;32mI (22272) main: Temperature: 28.02°C, Humidity: 47.94%, Pressure: 1027.48 hPa, Gas: 19639.97 kΩ, IAQ: 18.27[0m
+[0;32mI (24283) sensor_manager: Temperature: 27.89°C, Humidity: 59.72%, Pressure: 1026.66hPa, Gas: 7533.66Ω, IAQ: 180.26[0m
+[0;32mI (24283) main: Temperature: 27.89°C, Humidity: 59.72%, Pressure: 1026.66 hPa, Gas: 7533.66 kΩ, IAQ: 180.26[0m
+[0;32mI (24774) network_manager: Retrying connection to AP...[0m
+[0;32mI (26294) sensor_manager: Temperature: 18.56°C, Humidity: 32.44%, Pressure: 998.59hPa, Gas: 19096.51Ω, IAQ: 20.84[0m
+[0;32mI (26294) main: Temperature: 18.56°C, Humidity: 32.44%, Pressure: 998.59 hPa, Gas: 19096.51 kΩ, IAQ: 20.84[0m
+[0;32mI (27604) network_manager: Retrying connection to AP...[0m
+[0;32mI (28305) sensor_manager: Temperature: 22.60°C, Humidity: 60.94%, Pressure: 1021.77hPa, Gas: 11680.38Ω, IAQ: 123.45[0m
+[0;32mI (28305) main: Temperature: 22.60°C, Humidity: 60.94%, Pressure: 1021.77 hPa, Gas: 11680.38 kΩ, IAQ: 123.45[0m
+[0;32mI (30316) sensor_manager: Temperature: 34.32°C, Humidity: 70.08%, Pressure: 1011.21hPa, Gas: 6155.27Ω, IAQ: 166.65[0m
+[0;32mI (30316) main: Temperature: 34.32°C, Humidity: 70.08%, Pressure: 1011.21 hPa, Gas: 6155.27 kΩ, IAQ: 166.65[0m
+[0;32mI (30435) network_manager: Retrying connection to AP...[0m
+[0;32mI (32327) sensor_manager: Temperature: 16.14°C, Humidity: 42.35%, Pressure: 1014.03hPa, Gas: 17799.38Ω, IAQ: 145.45[0m
+[0;32mI (32327) main: Temperature: 16.14°C, Humidity: 42.35%, Pressure: 1014.03 hPa, Gas: 17799.38 kΩ, IAQ: 145.45[0m
+[0;32mI (33265) network_manager: Retrying connection to AP...[0m
+[0;32mI (34338) sensor_manager: Temperature: 20.23°C, Humidity: 65.91%, Pressure: 1005.63hPa, Gas: 7666.78Ω, IAQ: 172.48[0m
+[0;32mI (34338) main: Temperature: 20.23°C, Humidity: 65.91%, Pressure: 1005.63 hPa, Gas: 7666.78 kΩ, IAQ: 172.48[0m
+[0;32mI (36096) network_manager: Retrying connection to AP...[0m
+[0;32mI (36349) sensor_manager: Temperature: 15.45°C, Humidity: 55.14%, Pressure: 997.04hPa, Gas: 14120.28Ω, IAQ: 54.01[0m
+[0;32mI (36349) main: Temperature: 15.45°C, Humidity: 55.14%, Pressure: 997.04 hPa, Gas: 14120.28 kΩ, IAQ: 54.01[0m
+[0;32mI (38360) sensor_manager: Temperature: 34.85°C, Humidity: 69.89%, Pressure: 1024.82hPa, Gas: 9447.26Ω, IAQ: 111.78[0m
+[0;32mI (38360) main: Temperature: 34.85°C, Humidity: 69.89%, Pressure: 1024.82 hPa, Gas: 9447.26 kΩ, IAQ: 111.78[0m
+[0;32mI (38926) network_manager: Retrying connection to AP...[0m
+[0;32mI (40371) sensor_manager: Temperature: 19.15°C, Humidity: 74.28%, Pressure: 1015.05hPa, Gas: 18317.45Ω, IAQ: 155.62[0m
+[0;32mI (40371) main: Temperature: 19.15°C, Humidity: 74.28%, Pressure: 1015.05 hPa, Gas: 18317.45 kΩ, IAQ: 155.62[0m
+[0;32mI (41757) network_manager: Retrying connection to AP...[0m
+[0;32mI (42382) sensor_manager: Temperature: 17.52°C, Humidity: 60.95%, Pressure: 991.16hPa, Gas: 11422.82Ω, IAQ: 73.24[0m
+[0;32mI (42382) main: Temperature: 17.52°C, Humidity: 60.95%, Pressure: 991.16 hPa, Gas: 11422.82 kΩ, IAQ: 73.24[0m
+[0;32mI (44393) sensor_manager: Temperature: 29.19°C, Humidity: 45.86%, Pressure: 1011.04hPa, Gas: 10251.50Ω, IAQ: 68.70[0m
+[0;32mI (44393) main: Temperature: 29.19°C, Humidity: 45.86%, Pressure: 1011.04 hPa, Gas: 10251.50 kΩ, IAQ: 68.70[0m
+[0;32mI (44587) network_manager: Retrying connection to AP...[0m
+[0;32mI (46404) sensor_manager: Temperature: 18.34°C, Humidity: 52.62%, Pressure: 1013.02hPa, Gas: 7388.08Ω, IAQ: 133.75[0m
+[0;32mI (46404) main: Temperature: 18.34°C, Humidity: 52.62%, Pressure: 1013.02 hPa, Gas: 7388.08 kΩ, IAQ: 133.75[0m
+[0;32mI (47418) network_manager: Retrying connection to AP...[0m
+[0;32mI (48415) sensor_manager: Temperature: 31.89°C, Humidity: 77.16%, Pressure: 1018.22hPa, Gas: 11538.04Ω, IAQ: 150.50[0m
+[0;32mI (48415) main: Temperature: 31.89°C, Humidity: 77.16%, Pressure: 1018.22 hPa, Gas: 11538.04 kΩ, IAQ: 150.50[0m
+[0;32mI (50249) network_manager: Retrying connection to AP...[0m
+[0;32mI (50426) sensor_manager: Temperature: 15.74°C, Humidity: 67.73%, Pressure: 1014.30hPa, Gas: 16782.05Ω, IAQ: 118.02[0m
+[0;32mI (50426) main: Temperature: 15.74°C, Humidity: 67.73%, Pressure: 1014.30 hPa, Gas: 16782.05 kΩ, IAQ: 118.02[0m
+[0;32mI (52437) sensor_manager: Temperature: 20.41°C, Humidity: 50.04%, Pressure: 994.66hPa, Gas: 7548.59Ω, IAQ: 173.20[0m
+[0;32mI (52437) main: Temperature: 20.41°C, Humidity: 50.04%, Pressure: 994.66 hPa, Gas: 7548.59 kΩ, IAQ: 173.20[0m
+[0;32mI (53079) network_manager: Retrying connection to AP...[0m
+[0;32mI (54448) sensor_manager: Temperature: 34.53°C, Humidity: 50.85%, Pressure: 1020.01hPa, Gas: 12859.07Ω, IAQ: 21.63[0m
+[0;32mI (54448) main: Temperature: 34.53°C, Humidity: 50.85%, Pressure: 1020.01 hPa, Gas: 12859.07 kΩ, IAQ: 21.63[0m
+[0;32mI (55909) network_manager: Retrying connection to AP...[0m
+[0;32mI (56459) sensor_manager: Temperature: 31.91°C, Humidity: 47.10%, Pressure: 996.29hPa, Gas: 13584.69Ω, IAQ: 136.94[0m
+[0;32mI (56459) main: Temperature: 31.91°C, Humidity: 47.10%, Pressure: 996.29 hPa, Gas: 13584.69 kΩ, IAQ: 136.94[0m
+[0;32mI (58470) sensor_manager: Temperature: 23.23°C, Humidity: 55.21%, Pressure: 1024.43hPa, Gas: 10000.26Ω, IAQ: 42.89[0m
+[0;32mI (58470) main: Temperature: 23.23°C, Humidity: 55.21%, Pressure: 1024.43 hPa, Gas: 10000.26 kΩ, IAQ: 42.89[0m
+[0;32mI (58740) network_manager: Retrying connection to AP...[0m
+[0;32mI (60481) sensor_manager: Temperature: 27.78°C, Humidity: 76.47%, Pressure: 1013.07hPa, Gas: 11469.01Ω, IAQ: 17.38[0m
+[0;32mI (60481) main: Temperature: 27.78°C, Humidity: 76.47%, Pressure: 1013.07 hPa, Gas: 11469.01 kΩ, IAQ: 17.38[0m
+[0;32mI (61571) network_manager: Retrying connection to AP...[0m
+[0;32mI (62492) sensor_manager: Temperature: 27.33°C, Humidity: 51.44%, Pressure: 993.32hPa, Gas: 9358.08Ω, IAQ: 12.29[0m
+[0;32mI (62492) main: Temperature: 27.33°C, Humidity: 51.44%, Pressure: 993.32 hPa, Gas: 9358.08 kΩ, IAQ: 12.29[0m
+[0;32mI (64401) network_manager: Retrying connection to AP...[0m
+[0;32mI (64503) sensor_manager: Temperature: 23.53°C, Humidity: 68.94%, Pressure: 1028.79hPa, Gas: 11545.66Ω, IAQ: 181.91[0m
+[0;32mI (64503) main: Temperature: 23.53°C, Humidity: 68.94%, Pressure: 1028.79 hPa, Gas: 11545.66 kΩ, IAQ: 181.91[0m
+[0;32mI (66514) sensor_manager: Temperature: 26.79°C, Humidity: 74.33%, Pressure: 995.68hPa, Gas: 14806.07Ω, IAQ: 14.80[0m
+[0;32mI (66514) main: Temperature: 26.79°C, Humidity: 74.33%, Pressure: 995.68 hPa, Gas: 14806.07 kΩ, IAQ: 14.80[0m
+[0;32mI (67232) network_manager: Retrying connection to AP...[0m
+[0;32mI (68525) sensor_manager: Temperature: 16.69°C, Humidity: 61.81%, Pressure: 1017.58hPa, Gas: 8284.11Ω, IAQ: 48.93[0m
+[0;32mI (68525) main: Temperature: 16.69°C, Humidity: 61.81%, Pressure: 1017.58 hPa, Gas: 8284.11 kΩ, IAQ: 48.93[0m
+[0;32mI (70062) network_manager: Retrying connection to AP...[0m
+[0;32mI (70536) sensor_manager: Temperature: 28.17°C, Humidity: 62.27%, Pressure: 1018.46hPa, Gas: 10615.69Ω, IAQ: 164.37[0m
+[0;32mI (70536) main: Temperature: 28.17°C, Humidity: 62.27%, Pressure: 1018.46 hPa, Gas: 10615.69 kΩ, IAQ: 164.37[0m
+[0;32mI (72547) sensor_manager: Temperature: 24.52°C, Humidity: 68.23%, Pressure: 1019.06hPa, Gas: 12594.72Ω, IAQ: 175.32[0m
+[0;32mI (72547) main: Temperature: 24.52°C, Humidity: 68.23%, Pressure: 1019.06 hPa, Gas: 12594.72 kΩ, IAQ: 175.32[0m
+[0;32mI (72893) network_manager: Retrying connection to AP...[0m
+[0;32mI (74558) sensor_manager: Temperature: 29.47°C, Humidity: 43.83%, Pressure: 1010.85hPa, Gas: 17046.97Ω, IAQ: 84.62[0m
+[0;32mI (74558) main: Temperature: 29.47°C, Humidity: 43.83%, Pressure: 1010.85 hPa, Gas: 17046.97 kΩ, IAQ: 84.62[0m
+[0;32mI (75723) network_manager: Retrying connection to AP...[0m
+[0;32mI (76569) sensor_manager: Temperature: 25.82°C, Humidity: 72.28%, Pressure: 1010.52hPa, Gas: 16446.46Ω, IAQ: 87.36[0m
+[0;32mI (76569) main: Temperature: 25.82°C, Humidity: 72.28%, Pressure: 1010.52 hPa, Gas: 16446.46 kΩ, IAQ: 87.36[0m
+[0;32mI (78554) network_manager: Retrying connection to AP...[0m
+[0;32mI (78580) sensor_manager: Temperature: 33.29°C, Humidity: 48.94%, Pressure: 1023.62hPa, Gas: 16841.29Ω, IAQ: 106.08[0m
+[0;32mI (78580) main: Temperature: 33.29°C, Humidity: 48.94%, Pressure: 1023.62 hPa, Gas: 16841.29 kΩ, IAQ: 106.08[0m
+[0;32mI (80591) sensor_manager: Temperature: 15.05°C, Humidity: 69.89%, Pressure: 1017.97hPa, Gas: 12140.40Ω, IAQ: 147.28[0m
+[0;32mI (80591) main: Temperature: 15.05°C, Humidity: 69.89%, Pressure: 1017.97 hPa, Gas: 12140.40 kΩ, IAQ: 147.28[0m
+[0;32mI (81385) network_manager: Retrying connection to AP...[0m
+[0;32mI (82603) sensor_manager: Temperature: 24.94°C, Humidity: 55.91%, Pressure: 991.50hPa, Gas: 18099.48Ω, IAQ: 155.39[0m
+[0;32mI (82603) main: Temperature: 24.94°C, Humidity: 55.91%, Pressure: 991.50 hPa, Gas: 18099.48 kΩ, IAQ: 155.39[0m
+[0;32mI (84215) network_manager: Retrying connection to AP...[0m
+[0;32mI (84614) sensor_manager: Temperature: 34.06°C, Humidity: 49.33%, Pressure: 1005.44hPa, Gas: 12767.23Ω, IAQ: 196.37[0m
+[0;32mI (84614) main: Temperature: 34.06°C, Humidity: 49.33%, Pressure: 1005.44 hPa, Gas: 12767.23 kΩ, IAQ: 196.37[0m
+[0;32mI (86625) sensor_manager: Temperature: 22.39°C, Humidity: 59.03%, Pressure: 1001.32hPa, Gas: 12884.11Ω, IAQ: 110.08[0m
+[0;32mI (86625) main: Temperature: 22.39°C, Humidity: 59.03%, Pressure: 1001.32 hPa, Gas: 12884.11 kΩ, IAQ: 110.08[0m
+[0;32mI (87046) network_manager: Retrying connection to AP...[0m
+[0;32mI (88636) sensor_manager: Temperature: 34.95°C, Humidity: 57.02%, Pressure: 1007.61hPa, Gas: 11424.66Ω, IAQ: 185.58[0m
+[0;32mI (88636) main: Temperature: 34.95°C, Humidity: 57.02%, Pressure: 1007.61 hPa, Gas: 11424.66 kΩ, IAQ: 185.58[0m
+[0;32mI (89877) network_manager: Retrying connection to AP...[0m
+[0;32mI (90647) sensor_manager: Temperature: 30.20°C, Humidity: 43.17%, Pressure: 1011.62hPa, Gas: 7114.06Ω, IAQ: 161.96[0m
+[0;32mI (90647) main: Temperature: 30.20°C, Humidity: 43.17%, Pressure: 1011.62 hPa, Gas: 7114.06 kΩ, IAQ: 161.96[0m
+[0;32mI (92658) sensor_manager: Temperature: 16.09°C, Humidity: 30.66%, Pressure: 1010.58hPa, Gas: 10902.12Ω, IAQ: 65.94[0m
+[0;32mI (92658) main: Temperature: 16.09°C, Humidity: 30.66%, Pressure: 1010.58 hPa, Gas: 10902.12 kΩ, IAQ: 65.94[0m
+[0;32mI (92708) network_manager: Retrying connection to AP...[0m
+[0;32mI (94669) sensor_manager: Temperature: 21.00°C, Humidity: 56.94%, Pressure: 991.34hPa, Gas: 10992.41Ω, IAQ: 161.59[0m
+[0;32mI (94669) main: Temperature: 21.00°C, Humidity: 56.94%, Pressure: 991.34 hPa, Gas: 10992.41 kΩ, IAQ: 161.59[0m
+[0;32mI (95538) network_manager: Retrying connection to AP...[0m
+[0;32mI (96680) sensor_manager: Temperature: 29.90°C, Humidity: 48.09%, Pressure: 1000.27hPa, Gas: 10740.53Ω, IAQ: 43.86[0m
+[0;32mI (96680) main: Temperature: 29.90°C, Humidity: 48.09%, Pressure: 1000.27 hPa, Gas: 10740.53 kΩ, IAQ: 43.86[0m
+[0;32mI (98368) network_manager: Retrying connection to AP...[0m
+[0;32mI (98691) sensor_manager: Temperature: 33.70°C, Humidity: 57.88%, Pressure: 1001.28hPa, Gas: 17590.98Ω, IAQ: 11.22[0m
+[0;32mI (98691) main: Temperature: 33.70°C, Humidity: 57.88%, Pressure: 1001.28 hPa, Gas: 17590.98 kΩ, IAQ: 11.22[0m
+[0;32mI (100702) sensor_manager: Temperature: 22.04°C, Humidity: 47.19%, Pressure: 996.87hPa, Gas: 15829.43Ω, IAQ: 103.50[0m
+[0;32mI (100702) main: Temperature: 22.04°C, Humidity: 47.19%, Pressure: 996.87 hPa, Gas: 15829.43 kΩ, IAQ: 103.50[0m
+[0;32mI (101199) network_manager: Retrying connection to AP...[0m
+[0;32mI (102713) sensor_manager: Temperature: 16.38°C, Humidity: 49.75%, Pressure: 1003.91hPa, Gas: 8469.13Ω, IAQ: 74.18[0m
+[0;32mI (102713) main: Temperature: 16.38°C, Humidity: 49.75%, Pressure: 1003.91 hPa, Gas: 8469.13 kΩ, IAQ: 74.18[0m
+[0;32mI (104029) network_manager: Retrying connection to AP...[0m
+[0;32mI (104724) sensor_manager: Temperature: 30.38°C, Humidity: 61.80%, Pressure: 1001.64hPa, Gas: 17413.32Ω, IAQ: 125.15[0m
+[0;32mI (104724) main: Temperature: 30.38°C, Humidity: 61.80%, Pressure: 1001.64 hPa, Gas: 17413.32 kΩ, IAQ: 125.15[0m
+[0;32mI (106736) sensor_manager: Temperature: 21.56°C, Humidity: 73.02%, Pressure: 1006.67hPa, Gas: 19416.91Ω, IAQ: 110.12[0m
+[0;32mI (106736) main: Temperature: 21.56°C, Humidity: 73.02%, Pressure: 1006.67 hPa, Gas: 19416.91 kΩ, IAQ: 110.12[0m
+[0;32mI (106860) network_manager: Retrying connection to AP...[0m
+[0;32mI (108748) sensor_manager: Temperature: 19.40°C, Humidity: 79.62%, Pressure: 997.78hPa, Gas: 6391.43Ω, IAQ: 36.78[0m
+[0;32mI (108748) main: Temperature: 19.40°C, Humidity: 79.62%, Pressure: 997.78 hPa, Gas: 6391.43 kΩ, IAQ: 36.78[0m
+[0;32mI (109691) network_manager: Retrying connection to AP...[0m
+[0;32mI (110759) sensor_manager: Temperature: 16.40°C, Humidity: 77.25%, Pressure: 1011.01hPa, Gas: 7626.53Ω, IAQ: 99.96[0m
+[0;32mI (110759) main: Temperature: 16.40°C, Humidity: 77.25%, Pressure: 1011.01 hPa, Gas: 7626.53 kΩ, IAQ: 99.96[0m
+[0;32mI (112521) network_manager: Retrying connection to AP...[0m
+[0;32mI (112770) sensor_manager: Temperature: 32.67°C, Humidity: 43.71%, Pressure: 1013.22hPa, Gas: 10193.67Ω, IAQ: 63.54[0m
+[0;32mI (112770) main: Temperature: 32.67°C, Humidity: 43.71%, Pressure: 1013.22 hPa, Gas: 10193.67 kΩ, IAQ: 63.54[0m
+[0;32mI (114781) sensor_manager: Temperature: 29.25°C, Humidity: 40.32%, Pressure: 1013.06hPa, Gas: 6676.51Ω, IAQ: 161.64[0m
+[0;32mI (114781) main: Temperature: 29.25°C, Humidity: 40.32%, Pressure: 1013.06 hPa, Gas: 6676.51 kΩ, IAQ: 161.64[0m
+[0;32mI (115352) network_manager: Retrying connection to AP...[0m
+[0;32mI (116792) sensor_manager: Temperature: 16.23°C, Humidity: 47.98%, Pressure: 1011.92hPa, Gas: 10882.82Ω, IAQ: 131.62[0m
+[0;32mI (116792) main: Temperature: 16.23°C, Humidity: 47.98%, Pressure: 1011.92 hPa, Gas: 10882.82 kΩ, IAQ: 131.62[0m
+[0;32mI (118183) network_manager: Retrying connection to AP...[0m
+[0;32mI (118804) sensor_manager: Temperature: 28.19°C, Humidity: 56.10%, Pressure: 1005.26hPa, Gas: 8622.60Ω, IAQ: 149.57[0m
+[0;32mI (118804) main: Temperature: 28.19°C, Humidity: 56.10%, Pressure: 1005.26 hPa, Gas: 8622.60 kΩ, IAQ: 149.57[0m
+[0;32mI (120815) sensor_manager: Temperature: 15.22°C, Humidity: 45.41%, Pressure: 998.53hPa, Gas: 16445.56Ω, IAQ: 195.21[0m
+[0;32

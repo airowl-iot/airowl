@@ -1,0 +1,2 @@
+source /home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/gdbinit/symbols
+source /home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/gdbinit/connect

@@ -1,0 +1,24 @@
+dependencies:
+  esp32-camera:
+    public: true
+    version: ^2.0.2
+  esp_codec_dev:
+    public: true
+    version: ~1.1
+  esp_lcd_ili9341: ^1
+  esp_lcd_touch_ft5x06: ^1
+  espressif/esp_lvgl_port:
+    public: true
+    version: ^2
+  idf: '>=5.0'
+description: Board Support Package (BSP) for M5Stack CoreS3
+repository: git://github.com/espressif/esp-bsp.git
+repository_info:
+  commit_sha: 17beb6e4b5882318737357b6bd567b099c37e6a3
+  path: bsp/m5stack_core_s3
+tags:
+- bsp
+targets:
+- esp32s3
+url: https://github.com/espressif/esp-bsp/tree/master/bsp/m5stack_core_s3
+version: 1.1.1~1

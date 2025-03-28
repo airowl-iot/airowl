@@ -7,6 +7,7 @@
 #include "sensor_manager.h"
 #include "network_manager.h"
 #include "web_server.h"
+#include "display_manager.h"
 #include "esp_log.h"
 
 static const char *TAG = "main";
@@ -20,6 +21,13 @@ void app_main(void)
         return;
     }
 
+    // Initialize display manager
+    ret = display_manager_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize display manager");
+        return;
+    }
+    
     // Initialize network manager
     network_manager_config_t wifi_config;
     ret = network_manager_load_wifi_config(&wifi_config);
@@ -61,6 +69,9 @@ void app_main(void)
                     sensor_data.pressure,
                     sensor_data.gas_resistance,
                     sensor_data.iaq);
+            
+            // Update display with the latest sensor data
+            display_manager_update(&sensor_data);
         }
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
