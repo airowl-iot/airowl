@@ -1,4 +1,4 @@
-# Install script for directory: /home/upeya/esp/esp-idf
+# Install script for directory: /home/rishi/esp/esp-idf
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,441 +34,401 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/home/upeya/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20230928/xtensa-esp-elf/bin/xtensa-esp32s3-elf-objdump")
+  set(CMAKE_OBJDUMP "/home/rishi/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20230928/xtensa-esp-elf/bin/xtensa-esp32s3-elf-objdump")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/xtensa/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/xtensa/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_ringbuf/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_ringbuf/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/efuse/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/efuse/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_mm/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_mm/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/driver/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/driver/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_pm/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_pm/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/mbedtls/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/mbedtls/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_bootloader_format/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_bootloader_format/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_app_format/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_app_format/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/bootloader_support/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/bootloader_support/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/bootloader/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/bootloader/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esptool_py/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esptool_py/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/partition_table/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/partition_table/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_partition/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_partition/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/app_update/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/app_update/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/spi_flash/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/spi_flash/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/pthread/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/pthread/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_system/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_system/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_rom/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_rom/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/hal/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/hal/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/log/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/log/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/heap/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/heap/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/soc/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/soc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_hw_support/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_hw_support/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/freertos/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/freertos/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/newlib/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/newlib/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/cxx/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/cxx/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_common/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_common/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_timer/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_timer/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/app_trace/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/app_trace/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_event/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_event/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/nvs_flash/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/nvs_flash/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_phy/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_phy/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/vfs/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/vfs/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/lwip/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/lwip/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_netif_stack/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_netif_stack/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_netif/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_netif/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/wpa_supplicant/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/wpa_supplicant/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_coex/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_coex/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_wifi/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_wifi/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/bt/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/bt/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/unity/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/unity/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/cmock/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/cmock/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/console/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/console/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/http_parser/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/http_parser/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp-tls/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp-tls/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_adc/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_adc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_eth/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_eth/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_gdbstub/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_gdbstub/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_hid/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_hid/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/tcp_transport/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/tcp_transport/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_http_client/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_http_client/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_http_server/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_http_server/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_https_ota/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_https_ota/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_https_server/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_https_server/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_psram/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_psram/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_lcd/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_lcd/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/protobuf-c/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/protobuf-c/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/protocomm/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/protocomm/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/esp_local_ctrl/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_local_ctrl/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espcoredump/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/espcoredump/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/wear_levelling/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/wear_levelling/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/sdmmc/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/sdmmc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/fatfs/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/fatfs/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/idf_test/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/idf_test/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/ieee802154/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/ieee802154/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/json/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/json/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/lvgl/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/mqtt/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/mqtt/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/nvs_sec_provider/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/nvs_sec_provider/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/openthread/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/openthread/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/perfmon/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/perfmon/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/spiffs/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/spiffs/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/touch_element/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/touch_element/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/ulp/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/ulp/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/usb/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/usb/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/wifi_provisioning/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/wifi_provisioning/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/main/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__esp32-camera/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/M5GFX/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__esp_codec_dev/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__esp_lvgl_port/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__cmake_utilities/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__esp_lcd_ili9341/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__esp_lcd_touch/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__esp_lcd_touch_ft5x06/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/espressif__m5stack_core_s3/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/main/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
-  include("/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/display_manager/cmake_install.cmake")
+  include("/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/M5Unified/cmake_install.cmake")
 endif()
 

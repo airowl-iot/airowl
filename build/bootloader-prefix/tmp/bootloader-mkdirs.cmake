@@ -4,19 +4,19 @@
 cmake_minimum_required(VERSION 3.5)
 
 file(MAKE_DIRECTORY
-  "/home/upeya/esp/esp-idf/components/bootloader/subproject"
-  "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader"
-  "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix"
-  "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix/tmp"
-  "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp"
-  "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix/src"
-  "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp"
+  "/home/rishi/esp/esp-idf/components/bootloader/subproject"
+  "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader"
+  "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix"
+  "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix/tmp"
+  "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix/src/bootloader-stamp"
+  "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix/src"
+  "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "/home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()

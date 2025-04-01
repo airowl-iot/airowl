@@ -1,6 +1,0 @@
-description: Display manager for AirOwl sensors
-dependencies:
-  m5stack_core_s3:
-    version: "*"
-  lvgl/lvgl:
-    version: "^8.3.0" 

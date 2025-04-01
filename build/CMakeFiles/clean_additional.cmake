@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.16)
 
 if("${CONFIG}" STREQUAL "" OR "${CONFIG}" STREQUAL "")
   file(REMOVE_RECURSE
-  "air_owl_firmware.bin"
-  "air_owl_firmware.map"
   "bootloader/bootloader.bin"
   "bootloader/bootloader.elf"
   "bootloader/bootloader.map"
@@ -18,6 +16,8 @@ if("${CONFIG}" STREQUAL "" OR "${CONFIG}" STREQUAL "")
   "flasher_args.json"
   "ldgen_libraries"
   "ldgen_libraries.in"
+  "m5core-s3-hello-world.bin"
+  "m5core-s3-hello-world.map"
   "project_elf_src_esp32s3.c"
   "x509_crt_bundle.S"
   )

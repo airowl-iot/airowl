@@ -1,4 +1,4 @@
-/* * Data converted from /home/upeya/esp/esp-idf/examples/AirOwl_Code_Conversion/air_owl_firmware/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 .section .rodata.embedded

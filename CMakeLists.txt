@@ -1,19 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
-
-# Set partition table file
-set(PARTITION_TABLE_CSV "partitions.csv")
-set(PARTITION_TABLE "${CMAKE_CURRENT_LIST_DIR}/partitions.csv")
-
-# Include necessary build scripts for ESP-IDF
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(m5core-s3-hello-world)
 
-# Add custom component directories
-set(EXTRA_COMPONENT_DIRS 
-    ${CMAKE_CURRENT_LIST_DIR}/components
+# Keep either LovyanGFX or M5GFX, not both
+set(EXTRA_COMPONENT_DIRS
+    components/M5Unified
+    components/M5GFX    # Keep this OR LovyanGFX
+    # components/LovyanGFX  # Remove/comment this line
+    driver
+    esp_log
+    freertos
+    # SensirionI2CSen5x
+    # Wire
 )
-
-# Set compile options for LVGL
-add_compile_options("-Wno-attributes")
-
-# Define the project
-project(air_owl_firmware) 

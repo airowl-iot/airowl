@@ -1,0 +1,50 @@
+[0/1] Re-running CMake...
+-- Building ESP-IDF components for target esp32s3
+NOTICE: Processing 1 dependencies:
+NOTICE: [1/1] idf (5.2.0)
+-- M5GFX use components = nvs_flash;efuse;driver;esp_timer
+-- M5Unified use component = M5GFX;esp_adc;driver
+-- Project sdkconfig file /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/sdkconfig
+-- Compiler supported targets: xtensa-esp-elf
+-- App "m5core-s3-hello-world" version: 265b238-dirty
+-- Adding linker script /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /home/rishi/esp/esp-idf/components/esp_system/ld/esp32s3/sections.ld.in
+-- Adding linker script /home/rishi/esp/esp-idf/components/esp_rom/esp32s3/ld/esp32s3.rom.ld
+-- Adding linker script /home/rishi/esp/esp-idf/components/esp_rom/esp32s3/ld/esp32s3.rom.api.ld
+-- Adding linker script /home/rishi/esp/esp-idf/components/esp_rom/esp32s3/ld/esp32s3.rom.libgcc.ld
+-- Adding linker script /home/rishi/esp/esp-idf/components/esp_rom/esp32s3/ld/esp32s3.rom.newlib.ld
+-- Adding linker script /home/rishi/esp/esp-idf/components/esp_rom/esp32s3/ld/esp32s3.rom.version.ld
+-- Adding linker script /home/rishi/esp/esp-idf/components/soc/esp32s3/ld/esp32s3.peripherals.ld
+-- M5GFX use components = nvs_flash;efuse;driver;esp_timer
+-- M5Unified use component = M5GFX;esp_adc;driver
+-- Components: M5GFX M5Unified app_trace app_update bootloader bootloader_support bt cmock console cxx driver efuse esp-tls esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_hid esp_http_client esp_http_server esp_https_ota esp_https_server esp_hw_support esp_lcd esp_local_ctrl esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_psram esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump esptool_py fatfs freertos hal heap http_parser idf_test ieee802154 json log lwip main mbedtls mqtt newlib nvs_flash nvs_sec_provider openthread partition_table perfmon protobuf-c protocomm pthread sdmmc soc spi_flash spiffs tcp_transport touch_element ulp unity usb vfs wear_levelling wifi_provisioning wpa_supplicant xtensa
+-- Component paths: /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/components/M5GFX /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/components/M5Unified /home/rishi/esp/esp-idf/components/app_trace /home/rishi/esp/esp-idf/components/app_update /home/rishi/esp/esp-idf/components/bootloader /home/rishi/esp/esp-idf/components/bootloader_support /home/rishi/esp/esp-idf/components/bt /home/rishi/esp/esp-idf/components/cmock /home/rishi/esp/esp-idf/components/console /home/rishi/esp/esp-idf/components/cxx /home/rishi/esp/esp-idf/components/driver /home/rishi/esp/esp-idf/components/efuse /home/rishi/esp/esp-idf/components/esp-tls /home/rishi/esp/esp-idf/components/esp_adc /home/rishi/esp/esp-idf/components/esp_app_format /home/rishi/esp/esp-idf/components/esp_bootloader_format /home/rishi/esp/esp-idf/components/esp_coex /home/rishi/esp/esp-idf/components/esp_common /home/rishi/esp/esp-idf/components/esp_eth /home/rishi/esp/esp-idf/components/esp_event /home/rishi/esp/esp-idf/components/esp_gdbstub /home/rishi/esp/esp-idf/components/esp_hid /home/rishi/esp/esp-idf/components/esp_http_client /home/rishi/esp/esp-idf/components/esp_http_server /home/rishi/esp/esp-idf/components/esp_https_ota /home/rishi/esp/esp-idf/components/esp_https_server /home/rishi/esp/esp-idf/components/esp_hw_support /home/rishi/esp/esp-idf/components/esp_lcd /home/rishi/esp/esp-idf/components/esp_local_ctrl /home/rishi/esp/esp-idf/components/esp_mm /home/rishi/esp/esp-idf/components/esp_netif /home/rishi/esp/esp-idf/components/esp_netif_stack /home/rishi/esp/esp-idf/components/esp_partition /home/rishi/esp/esp-idf/components/esp_phy /home/rishi/esp/esp-idf/components/esp_pm /home/rishi/esp/esp-idf/components/esp_psram /home/rishi/esp/esp-idf/components/esp_ringbuf /home/rishi/esp/esp-idf/components/esp_rom /home/rishi/esp/esp-idf/components/esp_system /home/rishi/esp/esp-idf/components/esp_timer /home/rishi/esp/esp-idf/components/esp_wifi /home/rishi/esp/esp-idf/components/espcoredump /home/rishi/esp/esp-idf/components/esptool_py /home/rishi/esp/esp-idf/components/fatfs /home/rishi/esp/esp-idf/components/freertos /home/rishi/esp/esp-idf/components/hal /home/rishi/esp/esp-idf/components/heap /home/rishi/esp/esp-idf/components/http_parser /home/rishi/esp/esp-idf/components/idf_test /home/rishi/esp/esp-idf/components/ieee802154 /home/rishi/esp/esp-idf/components/json /home/rishi/esp/esp-idf/components/log /home/rishi/esp/esp-idf/components/lwip /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main /home/rishi/esp/esp-idf/components/mbedtls /home/rishi/esp/esp-idf/components/mqtt /home/rishi/esp/esp-idf/components/newlib /home/rishi/esp/esp-idf/components/nvs_flash /home/rishi/esp/esp-idf/components/nvs_sec_provider /home/rishi/esp/esp-idf/components/openthread /home/rishi/esp/esp-idf/components/partition_table /home/rishi/esp/esp-idf/components/perfmon /home/rishi/esp/esp-idf/components/protobuf-c /home/rishi/esp/esp-idf/components/protocomm /home/rishi/esp/esp-idf/components/pthread /home/rishi/esp/esp-idf/components/sdmmc /home/rishi/esp/esp-idf/components/soc /home/rishi/esp/esp-idf/components/spi_flash /home/rishi/esp/esp-idf/components/spiffs /home/rishi/esp/esp-idf/components/tcp_transport /home/rishi/esp/esp-idf/components/touch_element /home/rishi/esp/esp-idf/components/ulp /home/rishi/esp/esp-idf/components/unity /home/rishi/esp/esp-idf/components/usb /home/rishi/esp/esp-idf/components/vfs /home/rishi/esp/esp-idf/components/wear_levelling /home/rishi/esp/esp-idf/components/wifi_provisioning /home/rishi/esp/esp-idf/components/wpa_supplicant /home/rishi/esp/esp-idf/components/xtensa
+-- Configuring done (11.5s)
+-- Generating done (1.2s)
+-- Build files have been written to: /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build
+[1/9] Performing build step for 'bootloader'
+[1/1] cd /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader/esp-idf/esptool_py && /home/rishi/.espressif/python_env/idf5.2_py3.12_env/bin/python /home/rishi/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader/bootloader.bin
+Bootloader binary size 0x5240 bytes. 0x2dc0 bytes (36%) free.
+[2/9] No install step for 'bootloader'
+[3/9] Completed 'bootloader'
+[4/9] Building CXX object esp-idf/main/CMakeFiles/__idf_main.dir/hello_world_main.cpp.obj
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp: In function 'void app_main()':
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp:276:33: warning: missing initializer for member 'SensorReadings::pm25' [-Wmissing-field-initializers]
+  276 |     SensorReadings readings = {0};
+      |                                 ^
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp:276:33: warning: missing initializer for member 'SensorReadings::pm4' [-Wmissing-field-initializers]
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp:276:33: warning: missing initializer for member 'SensorReadings::pm10' [-Wmissing-field-initializers]
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp:276:33: warning: missing initializer for member 'SensorReadings::tvoc' [-Wmissing-field-initializers]
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp:276:33: warning: missing initializer for member 'SensorReadings::temperature' [-Wmissing-field-initializers]
+/home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/main/hello_world_main.cpp:276:33: warning: missing initializer for member 'SensorReadings::humidity' [-Wmissing-field-initializers]
+[5/9] Linking C static library esp-idf/main/libmain.a
+[6/9] Generating ld/sections.ld
+[7/9] Linking CXX executable m5core-s3-hello-world.elf
+[8/9] Generating binary image from built executable
+esptool.py v4.8.1
+Creating esp32s3 image...
+Merged 2 ELF sections
+Successfully created esp32s3 image.
+Generated /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/m5core-s3-hello-world.bin
+[9/9] cd /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esptool_py && /home/rishi/.espressif/python_env/idf5.2_py3.12_env/bin/python /home/rishi/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/partition_table/partition-table.bin /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/m5core-s3-hello-world.bin
+m5core-s3-hello-world.bin binary size 0x65540 bytes. Smallest app partition is 0x100000 bytes. 0x9aac0 bytes (60%) free.
