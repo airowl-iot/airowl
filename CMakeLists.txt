@@ -1,15 +1,14 @@
-cmake_minimum_required(VERSION 3.16)
-include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(m5core-s3-hello-world)
+# For more information about build system see
+# https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html
+# The following five lines of boilerplate have to be in your project's
+# CMakeLists in this exact order for cmake to work correctly
+cmake_minimum_required(VERSION 3.5)
 
-# Keep either LovyanGFX or M5GFX, not both
-set(EXTRA_COMPONENT_DIRS
-    components/M5Unified
-    components/M5GFX    # Keep this OR LovyanGFX
-    # components/LovyanGFX  # Remove/comment this line
-    driver
-    esp_log
-    freertos
-    # SensirionI2CSen5x
-    # Wire
-)
+set(COMPONENTS main) # "Trim" the build. Include the minimal set of components; main and anything it depends on.
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+add_compile_options("-Wno-attributes") # For LVGL code
+project(display_lvgl_demos)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)

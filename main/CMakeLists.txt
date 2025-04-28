@@ -1,5 +1,5 @@
-# main/CMakeLists.txt
 idf_component_register(
-    SRCS "hello_world_main.cpp"
+    SRCS "display_lvgl_demos_main.c" "sensor_ui.c"
     INCLUDE_DIRS "."
+    REQUIRES ui
 )

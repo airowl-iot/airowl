@@ -1,0 +1,6 @@
+description: BSP Display rotation example
+dependencies:
+  m5stack_core_s3:
+    version: '*'
+  lvgl/lvgl: '8.3.11'
+  espressif/arduino-esp32: '*'

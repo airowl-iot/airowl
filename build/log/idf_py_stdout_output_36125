@@ -1,7 +1,0 @@
-[1/4] cd /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/esp-idf/esptool_py && /home/rishi/.espressif/python_env/idf5.2_py3.12_env/bin/python /home/rishi/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/partition_table/partition-table.bin /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/m5core-s3-hello-world.bin
-m5core-s3-hello-world.bin binary size 0x65540 bytes. Smallest app partition is 0x100000 bytes. 0x9aac0 bytes (60%) free.
-[2/4] Performing build step for 'bootloader'
-[1/1] cd /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader/esp-idf/esptool_py && /home/rishi/.espressif/python_env/idf5.2_py3.12_env/bin/python /home/rishi/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/rishi/esp/esp-idf/examples/airowl/m5core-s3-aqi-sensor/build/bootloader/bootloader.bin
-Bootloader binary size 0x5240 bytes. 0x2dc0 bytes (36%) free.
-[3/4] No install step for 'bootloader'
-[4/4] Completed 'bootloader'

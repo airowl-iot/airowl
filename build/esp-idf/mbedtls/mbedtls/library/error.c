@@ -1,1 +1,0 @@
-/home/rishi/esp/esp-idf/components/mbedtls/mbedtls/library/error.c
