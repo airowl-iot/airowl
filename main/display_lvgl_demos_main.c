@@ -2,14 +2,14 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_err.h"
-#include "driver/i2c_master.h"
+#include "driver/i2c.h"
 #include "lvgl.h"
 #include "bsp/esp-bsp.h"
 #include "ui.h"
 #include "sensor_ui.h"
 #include <math.h>
 #include <time.h>
-#include <string.h> // Added for memset
+#include <string.h>
 #include "esp_task_wdt.h"
 
 static const char *TAG = "app_main";
@@ -17,14 +17,15 @@ static const char *TAG = "app_main";
 // I2C Configuration
 #define I2C_MASTER_SDA_IO 2
 #define I2C_MASTER_SCL_IO 1
-#define I2C_MASTER_FREQ_HZ 100000
+#define I2C_MASTER_FREQ_HZ 400000
 #define SEN54_ADDR 0x69
-#define DATA_FREQ 2
+#define DATA_FREQ 2 //Updated to match PlatformIO
 
 // SEN54 Commands
 #define START_MEASUREMENT 0x0021
 #define READ_MEASUREMENT 0x03C4
 #define DEVICE_RESET 0xD304
+#define START_FAN_CLEANING 0x5607
 
 // AQI Breakpoints
 typedef struct
@@ -47,69 +48,46 @@ typedef struct
     int count;
 } SensorAccumulator;
 
-// I2C Master Handle
-static i2c_master_bus_handle_t i2c_bus_handle = NULL;
+// Maximum average values
+static float pm1_max = 0.0f;
+static float pm25_max = 0.0f;
+static float pm4_max = 0.0f;
+static float pm10_max = 0.0f;
+static float tvoc_max = 0.0f;
 
 void i2c_master_init()
 {
-    i2c_master_bus_config_t i2c_bus_config = {
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .i2c_port = I2C_NUM_0,
-        .scl_io_num = I2C_MASTER_SCL_IO,
+    i2c_config_t conf = {
+        .mode = I2C_MODE_MASTER,
         .sda_io_num = I2C_MASTER_SDA_IO,
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true,
+        .scl_io_num = I2C_MASTER_SCL_IO,
+        .sda_pullup_en = GPIO_PULLUP_ENABLE,
+        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        .master.clk_speed = I2C_MASTER_FREQ_HZ,
+        .clk_flags = 0,
     };
-    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &i2c_bus_handle));
-    ESP_LOGI(TAG, "I2C master initialized on SDA=%d, SCL=%d", I2C_MASTER_SDA_IO, I2C_MASTER_SCL_IO);
+    ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf));
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, conf.mode, 0, 0, 0));
 }
+
 
 esp_err_t sen54_write_cmd(uint16_t command)
 {
-    i2c_master_dev_handle_t dev_handle;
-    i2c_device_config_t dev_config = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = SEN54_ADDR,
-        .scl_speed_hz = I2C_MASTER_FREQ_HZ,
-    };
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_bus_handle, &dev_config, &dev_handle));
-
     uint8_t cmd[2] = {(uint8_t)(command >> 8), (uint8_t)(command & 0xFF)};
-    esp_err_t ret = i2c_master_transmit(dev_handle, cmd, sizeof(cmd), pdMS_TO_TICKS(1000));
-    if (ret != ESP_OK)
-    {
-        ESP_LOGE(TAG, "I2C write failed: %s", esp_err_to_name(ret));
+    esp_err_t ret = i2c_master_write_to_device(I2C_NUM_0, SEN54_ADDR, cmd, sizeof(cmd), pdMS_TO_TICKS(1000));
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Write command 0x%04X failed: 0x%x", command, ret);
     }
-    else
-    {
-        ESP_LOGD(TAG, "I2C write command 0x%04x succeeded", command);
-    }
-
-    i2c_master_bus_rm_device(dev_handle);
     return ret;
 }
 
+
 esp_err_t sen54_read_data(uint8_t *data, size_t len)
 {
-    i2c_master_dev_handle_t dev_handle;
-    i2c_device_config_t dev_config = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = SEN54_ADDR,
-        .scl_speed_hz = I2C_MASTER_FREQ_HZ,
-    };
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_bus_handle, &dev_config, &dev_handle));
-
-    esp_err_t ret = i2c_master_receive(dev_handle, data, len, pdMS_TO_TICKS(1000));
-    if (ret != ESP_OK)
-    {
-        ESP_LOGE(TAG, "I2C read failed: %s", esp_err_to_name(ret));
+    esp_err_t ret = i2c_master_read_from_device(I2C_NUM_0, SEN54_ADDR, data, len, pdMS_TO_TICKS(1000));
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Read failed: 0x%x", ret);
     }
-    else
-    {
-        ESP_LOGD(TAG, "I2C read succeeded, %d bytes", len);
-    }
-
-    i2c_master_bus_rm_device(dev_handle);
     return ret;
 }
 
@@ -117,13 +95,10 @@ void initialize_sensor()
 {
     ESP_LOGI(TAG, "Starting measurements");
     ESP_ERROR_CHECK(sen54_write_cmd(START_MEASUREMENT));
-    for (int i = 0; i < 10; i++)
-    {
-        vTaskDelay(pdMS_TO_TICKS(500));
-        esp_task_wdt_reset();
-    }
+    vTaskDelay(pdMS_TO_TICKS(2000));
     ESP_LOGI(TAG, "Sensor initialization completed");
 }
+
 
 bool read_sensor_values(SensorReadings *readings)
 {
@@ -150,7 +125,7 @@ bool read_sensor_values(SensorReadings *readings)
     readings->tvoc = ((data[18] << 8) | data[19]) / 10.0f;
     ESP_LOGD(TAG, "Raw sensor data: PM1=%.1f, PM2.5=%.1f, PM4=%.1f, PM10=%.1f, Hum=%.1f, Temp=%.1f, TVOC=%.1f",
              readings->pm1, readings->pm25, readings->pm4, readings->pm10, readings->humidity, readings->temperature, readings->tvoc);
-    return (readings->pm1 <= 1000 && readings->pm25 <= 1000 && readings->temperature <= 100 &&
+    return (readings->pm1 <= 1500 && readings->pm25 <= 1500 && readings->temperature <= 100 &&
             readings->temperature >= -40 && readings->humidity <= 100 && readings->humidity >= 0);
 }
 
@@ -170,29 +145,48 @@ AQIBreakpoint getBreakpoint(float Cp, AQIBreakpoint bps[], int numBps)
     return bps[numBps - 1];
 }
 
+lv_color_t get_aqi_color(int aqi)
+{
+    if (aqi <= 50) return lv_color_hex(0x0000ff);
+    else if (aqi <= 100) return lv_color_hex(0x8080FF);
+    else if (aqi <= 150) return lv_color_hex(0x00FFFF);
+    else if (aqi <= 200) return lv_color_hex(0x1aff8c);
+    else if (aqi <= 300) return lv_color_hex(0x00ff00);
+    else return lv_color_hex(0x808000);
+}
+
+void check_i2c_bus()
+{
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (SEN54_ADDR << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_stop(cmd);
+
+    esp_err_t ret = i2c_master_cmd_begin(I2C_NUM_0, cmd, pdMS_TO_TICKS(1000));
+    i2c_cmd_link_delete(cmd);
+
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "Sensor found at address 0x%02X", SEN54_ADDR);
+    } else {
+        ESP_LOGE(TAG, "Sensor not found at address 0x%02X (error: 0x%x)", SEN54_ADDR, ret);
+    }
+}
+
 void app_main(void)
 {
     ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
-    // ── Initialize display & LVGL ──────────────────────────────
+    // Initialize display & LVGL
     lv_display_t *disp = bsp_display_start();
     bsp_display_backlight_on();
     bsp_display_rotate(disp, LV_DISPLAY_ROTATION_180);
 
-    // Initialize labels to zero
-    // bsp_display_lock(0);
-    // {
-    //     SensorReadings init = {0};
-    //     update_sensor_ui(&init, 0, 0, 0, 0, 0);
-    //     lv_obj_invalidate(lv_scr_act());
-    // }
-    // bsp_display_unlock();
-
-    // ── Initialize sensor ───────────────────────────────────────
+    // Initialize I2C and sensor
     i2c_master_init();
+    check_i2c_bus();
 
     bsp_display_lock(0);
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), LV_PART_MAIN); // Clear to black
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x000000), LV_PART_MAIN);
     lv_obj_invalidate(lv_scr_act());
     ui_init();
     _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_dashboard_screen_init);
@@ -205,12 +199,11 @@ void app_main(void)
     SensorReadings raw = {0};
     SensorReadings avg = {0};
     SensorAccumulator acc = {0};
-
     TickType_t last_read = xTaskGetTickCount();
 
     while (1)
     {
-        // 1) Let LVGL do its thing every 5 ticks (~50 ms × 5)
+        // Handle LVGL updates every 5 ticks (~50 ms × 5)
         static int tick_cnt = 0;
         if (++tick_cnt >= 5)
         {
@@ -220,8 +213,8 @@ void app_main(void)
             bsp_display_unlock();
         }
 
-        // 2) Once per second, sample & accumulate
-        if (xTaskGetTickCount() - last_read >= pdMS_TO_TICKS(1000))
+        // Sample sensor data every 2 seconds (matching PlatformIO delay)
+        if (xTaskGetTickCount() - last_read >= pdMS_TO_TICKS(2000))
         {
             last_read = xTaskGetTickCount();
             if (read_sensor_values(&raw))
@@ -237,7 +230,7 @@ void app_main(void)
 
                 if (acc.count >= DATA_FREQ)
                 {
-                    // compute averages
+                    // Compute averages
                     avg.pm1 = acc.pm1 / acc.count;
                     avg.pm25 = acc.pm25 / acc.count;
                     avg.pm4 = acc.pm4 / acc.count;
@@ -246,7 +239,7 @@ void app_main(void)
                     avg.temperature = acc.temperature / acc.count;
                     avg.humidity = acc.humidity / acc.count;
 
-                    // compute AQI sub-indices
+                    // Compute AQI sub-indices
                     AQIBreakpoint bp;
                     bp = getBreakpoint(avg.pm1, pm1Bps, sizeof(pm1Bps) / sizeof(pm1Bps[0]));
                     int i_pm1 = calculateSubIndex(avg.pm1, bp);
@@ -259,14 +252,80 @@ void app_main(void)
                     bp = getBreakpoint(avg.tvoc, tvocBps, sizeof(tvocBps) / sizeof(tvocBps[0]));
                     int i_tvoc = calculateSubIndex(avg.tvoc, bp);
 
-                    // 3) Batch all LVGL updates in one lock/unlock
+                    // Update maximum values and chart ranges
+                    if (avg.pm1 > pm1_max)
+                    {
+                        pm1_max = avg.pm1;
+                        if (pm1_max > 50)
+                            lv_chart_set_range(ui_PM1chart, LV_CHART_AXIS_PRIMARY_Y, 0, (int)(pm1_max + 20));
+                    }
+                    if (avg.pm25 > pm25_max)
+                    {
+                        pm25_max = avg.pm25;
+                        if (pm25_max > 50)
+                            lv_chart_set_range(ui_PM25chart, LV_CHART_AXIS_PRIMARY_Y, 0, (int)(pm25_max + 20));
+                    }
+                    if (avg.pm4 > pm4_max)
+                    {
+                        pm4_max = avg.pm4;
+                        if (pm4_max > 50)
+                            lv_chart_set_range(ui_PM4chart, LV_CHART_AXIS_PRIMARY_Y, 0, (int)(pm4_max + 20));
+                    }
+                    if (avg.pm10 > pm10_max)
+                    {
+                        pm10_max = avg.pm10;
+                        if (pm10_max > 50)
+                            lv_chart_set_range(ui_PM10chart, LV_CHART_AXIS_PRIMARY_Y, 0, (int)(pm10_max + 20));
+                    }
+                    if (avg.tvoc > tvoc_max)
+                    {
+                        tvoc_max = avg.tvoc;
+                        if (tvoc_max > 100)
+                            lv_chart_set_range(ui_TVOCchart, LV_CHART_AXIS_PRIMARY_Y, 0, (int)(tvoc_max + 20));
+                    }
+
+                    // Batch all LVGL updates
                     bsp_display_lock(0);
                     update_sensor_ui(&avg, i_pm1, i_pm25, i_pm4, i_pm10, i_tvoc);
                     update_all_charts(&avg);
+
+                    // Update average and max labels
+                    char buf[16];
+                    snprintf(buf, sizeof(buf), "%.1f", avg.pm1);
+                    lv_label_set_text(ui_pm1avg, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", pm1_max);
+                    lv_label_set_text(ui_pm1max, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", avg.pm25);
+                    lv_label_set_text(ui_pm25avg, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", pm25_max);
+                    lv_label_set_text(ui_pm25max, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", avg.pm4);
+                    lv_label_set_text(ui_pm4avg, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", pm4_max);
+                    lv_label_set_text(ui_pm4max, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", avg.pm10);
+                    lv_label_set_text(ui_pm10avg, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", pm10_max);
+                    lv_label_set_text(ui_pm10max, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", avg.tvoc);
+                    lv_label_set_text(ui_tvocavg, buf);
+                    snprintf(buf, sizeof(buf), "%.1f", tvoc_max);
+                    lv_label_set_text(ui_tvocmax, buf);
+
+                    // Set eye colors based on overall AQI
+                    int overall_aqi = i_pm1;
+                    if (i_pm25 > overall_aqi) overall_aqi = i_pm25;
+                    if (i_pm4 > overall_aqi) overall_aqi = i_pm4;
+                    if (i_pm10 > overall_aqi) overall_aqi = i_pm10;
+                    if (i_tvoc > overall_aqi) overall_aqi = i_tvoc;
+                    lv_color_t eye_color = get_aqi_color(overall_aqi);
+                    lv_obj_set_style_bg_color(ui_lefteye, eye_color, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(ui_righteye, eye_color, LV_PART_MAIN | LV_STATE_DEFAULT);
+
                     lv_obj_invalidate(lv_scr_act());
                     bsp_display_unlock();
 
-                    // reset accumulator
+                    // Reset accumulator
                     memset(&acc, 0, sizeof(acc));
                 }
             }
