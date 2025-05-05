@@ -1,6 +1,7 @@
-description: BSP Display rotation example
+description: Combined Matter + LVGL + Sensor Demo
 dependencies:
-  m5stack_core_s3:
-    version: '*'
+  espressif/cmake_utilities: '*'
+  espressif/button: '*'
   lvgl/lvgl: '8.3.11'
+  m5stack_core_s3: '*'
   espressif/arduino-esp32: '*'

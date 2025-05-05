@@ -1,5 +1,9 @@
 idf_component_register(
-    SRCS "display_lvgl_demos_main.c" "sensor_ui.c"
+    SRCS "app_main.cpp" "sensor_ui.c"
     INCLUDE_DIRS "."
-    REQUIRES ui
+    PRIV_INCLUDE_DIRS "." "${ESP_MATTER_PATH}/examples/common/utils"
+    PRIV_REQUIRES esp_matter ui espressif__cmake_utilities espressif__button app_reset
 )
+
+set_property(TARGET ${COMPONENT_LIB} PROPERTY CXX_STANDARD 17)
+target_compile_options(${COMPONENT_LIB} PRIVATE "-DCHIP_HAVE_CONFIG_H")

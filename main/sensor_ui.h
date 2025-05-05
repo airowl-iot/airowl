@@ -4,7 +4,11 @@
 #include "ui.h"
 #include "lvgl.h"
 
-#define CHART_DATA_LENGTH 15
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define CHART_DATA_LENGTH 5
 
 typedef struct
 {
@@ -18,7 +22,7 @@ typedef struct
 } SensorReadings;
 
 // Call this once after ui_init() to initialize charts
-void setup_charts();
+void setup_charts(void);
 
 // Call every time you get new sensor values
 void update_sensor_ui(const SensorReadings *readings,
@@ -28,5 +32,12 @@ void update_sensor_ui(const SensorReadings *readings,
 
 // Call after update_sensor_ui to feed data into graphs
 void update_all_charts(const SensorReadings *readings);
+
+// Get color based on AQI value
+lv_color_t get_aqi_color(int aqi);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -2,7 +2,7 @@
 #include "esp_log.h"
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h> // Added for PRIx32
+#include <inttypes.h>
 
 #define CHART_COLOR lv_color_hex(0x41b4d1)
 #define TAG "sensor_ui"
@@ -39,7 +39,7 @@ void setup_charts() {
     lv_chart_set_range(ui_TVOCchart, LV_CHART_AXIS_PRIMARY_Y, 0, 100);
 }
 
-static lv_color_t get_aqi_color(int aqi) {
+lv_color_t get_aqi_color(int aqi) {
     lv_color_t color;
     if (aqi <= 50) color = lv_color_hex(0x00E400);      // Good
     else if (aqi <= 100) color = lv_color_hex(0x9CFF9C); // Satisfactory
@@ -47,7 +47,7 @@ static lv_color_t get_aqi_color(int aqi) {
     else if (aqi <= 200) color = lv_color_hex(0xFF7E00); // Unhealthy
     else if (aqi <= 300) color = lv_color_hex(0xFF0000); // Very Unhealthy
     else color = lv_color_hex(0x8F3F97);                 // Hazardous
-    ESP_LOGD(TAG, "AQI=%d, Color=0x%" PRIx32, aqi, lv_color_to32(color)); // Fixed: Use PRIx32
+    ESP_LOGD(TAG, "AQI=%d, Color=0x%" PRIx32, aqi, lv_color_to32(color));
     return color;
 }
 
