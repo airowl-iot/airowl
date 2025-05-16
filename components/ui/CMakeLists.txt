@@ -2,6 +2,7 @@ idf_component_register(
     SRCS
         "ui.c"
         "ui_helpers.c"
+        "lv_setup.cpp"
         "components/ui_comp_hook.c"
         "screens/ui_Intro.c"
         "screens/ui_qrcode.c"
@@ -21,5 +22,5 @@ idf_component_register(
         "fonts/ui_font_clock48.c"
         "fonts/ui_font_clock_66.c"
     INCLUDE_DIRS "."
-    REQUIRES lvgl M5GFX M5Unified arduino-esp32
+    REQUIRES lvgl M5GFX M5Unified arduino-esp32 espressif__m5stack_core_s3
 )

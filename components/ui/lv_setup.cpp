@@ -1,12 +1,5 @@
-
 #include <Arduino.h>
-#if defined(ARDUINO_M5STACK_Core2)
-#include <M5Core2.h>
-#endif
-#if defined(ARDUINO_M5STACK_CORES3)
-// #include <M5CoreS3.h>
 #include <M5Unified.h>
-#endif
 #include <lvgl.h>
 
 /* Core2 screen size */
@@ -34,7 +27,6 @@ static void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t
 static void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
     uint16_t touchX = 0, touchY = 0;
-#ifdef M5UNIFIED
     M5.update();
     auto count = M5.Touch.getCount();
     if (!count) {
@@ -53,7 +45,6 @@ static void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     {
         data->state = LV_INDEV_STATE_REL;
     }
-#else
     bool touched = M5.Lcd.getTouch(&touchX, &touchY, 600);
     if (M5.Lcd.getTouch(&touchX, &touchY, 600))
     {
@@ -67,11 +58,10 @@ static void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     {
         data->state = LV_INDEV_STATE_REL;
     }
-#endif
 }
 
 /* Setup lvgl with display and touch pad */
-void lv_begin()
+extern "C" void lv_begin()
 {
     lv_init(); // call this before any other lvgl function
 
@@ -99,7 +89,7 @@ void lv_begin()
 }
 
 /* Handles updating the display and touch events */
-void lv_handler()
+extern "C" void lv_handler()
 {
     static uint32_t previousUpdate = 0;
     static uint32_t interval = 0;

@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "app_main.cpp" "sensor_ui.c"
+    SRCS "app_main.cpp"
     INCLUDE_DIRS "."
     PRIV_INCLUDE_DIRS "." "${ESP_MATTER_PATH}/examples/common/utils"
     PRIV_REQUIRES esp_matter ui espressif__cmake_utilities espressif__button app_reset

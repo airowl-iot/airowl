@@ -546,12 +546,12 @@ dependencies:
       type: service
     version: 1.19.2
   lvgl/lvgl:
-    component_hash: 948bff879a345149b83065535bbc4a026ce9f47498a22881e432a264b9098015
+    component_hash: 7b7ee85e48c2eb35bb242a8c7e0e4cd702e150541afb3f69089fb7ba81554d14
     dependencies: []
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 8.3.11
+    version: 8.3.0
 direct_dependencies:
 - espressif/arduino-esp32
 - espressif/button
@@ -566,6 +566,6 @@ direct_dependencies:
 - espressif/m5stack_core_s3
 - espressif/mdns
 - lvgl/lvgl
-manifest_hash: 528b91f7f52fa824099076748487836faa975c0ddf44e03401cc06add8aaf544
+manifest_hash: 9892d9bc23836e8f33f4c5557f110a852d9dac3b6f8c2c049f9cfcd14757b06e
 target: esp32s3
 version: 2.0.0

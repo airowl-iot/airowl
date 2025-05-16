@@ -2,6 +2,6 @@ description: Combined Matter + LVGL + Sensor Demo
 dependencies:
   espressif/cmake_utilities: '*'
   espressif/button: '*'
-  lvgl/lvgl: '8.3.11'
+  lvgl/lvgl: '8.3.0'
   m5stack_core_s3: '*'
   espressif/arduino-esp32: '*'
