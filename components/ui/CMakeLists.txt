@@ -17,6 +17,7 @@ SET(SOURCES screens/ui_Intro.c
     fonts/ui_font_clock48.c
     fonts/ui_font_clock_66.c)
 
+# Register the component with ESP-IDF
 idf_component_register(SRCS "${SOURCES}"
                        INCLUDE_DIRS "."
                        REQUIRES lvgl)

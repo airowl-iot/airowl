@@ -118,13 +118,11 @@ dependencies:
     component_hash: 096c69af22eaf8a2b721e3913da91918c5e6bf1a762a113ec01f401aa61337a0
     dependencies: []
     source:
-      registry_url: https://components.espressif.com/
+      registry_url: https://components.espressif.com
       type: service
     version: 9.2.2
 direct_dependencies:
 - espressif/m5stack_core_s3
-- idf
-- lvgl/lvgl
-manifest_hash: 57a4c3acb4ae07a3af4bcf409752f5a32f80c5d59db3b17328b15a9aeecb4a4e
+manifest_hash: 47d35e7dac85e7457669c2aad9ff76834deb36d21a810e4c03de7777db92a6ad
 target: esp32s3
 version: 2.0.0
