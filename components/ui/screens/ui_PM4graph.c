@@ -47,7 +47,7 @@ void ui_PM4graph_screen_init(void)
     lv_obj_set_y(ui_PM4chart, -9);
     lv_obj_set_align(ui_PM4chart, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_PM4chart, LV_OBJ_FLAG_OVERFLOW_VISIBLE);      //make scales visible - Should it be forced to True?
-    //lv_obj_remove_flag( ui_PM4chart, LV_OBJ_FLAG_SCROLLABLE );    //no chart-zoom in LVGL9 - Shouldn't it be forced to False?
+    lv_obj_remove_flag( ui_PM4chart, LV_OBJ_FLAG_SCROLLABLE );    //no chart-zoom in LVGL9 - Shouldn't it be forced to False?
     lv_chart_set_type(ui_PM4chart, LV_CHART_TYPE_BAR);
     lv_chart_set_point_count(ui_PM4chart, 15);
     lv_chart_set_range(ui_PM4chart, LV_CHART_AXIS_PRIMARY_Y, 500, 1800);
