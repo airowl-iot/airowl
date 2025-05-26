@@ -20,12 +20,17 @@ typedef struct {
     float tvoc;
     float temperature;
     float humidity;
-    int pm1_max;
-    int pm25_max;
-    int pm4_max;
-    int pm10_max;
-    int tvoc_max;
+    int pm1_max;   // Not used in this context, can be kept for other purposes
+    int pm25_max;  // Not used
+    int pm4_max;   // Not used
+    int pm10_max;  // Not used
+    int tvoc_max;  // Not used
     int count;
+    int pm1_aqi;   // New: AQI sub-index for PM1
+    int pm25_aqi;  // New: AQI sub-index for PM2.5
+    int pm4_aqi;   // New: AQI sub-index for PM4
+    int pm10_aqi;  // New: AQI sub-index for PM10
+    int tvoc_aqi;  // New: AQI sub-index for TVOC
 } SensorReadings;
 
 typedef struct {

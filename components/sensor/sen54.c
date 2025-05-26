@@ -184,18 +184,18 @@ int calculate_aqi(SensorReadings *readings) {
     AQIBreakpoint pm10Bp = get_breakpoint(avgPM10, pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
     AQIBreakpoint tvocBp = get_breakpoint(avgTVOC, tvocBps, sizeof(tvocBps) / sizeof(tvocBps[0]));
 
-    int pm1Index = calculate_sub_index(avgPM1, pm1Bp);
-    int pm25Index = calculate_sub_index(avgPM25, pm25Bp);
-    int pm4Index = calculate_sub_index(avgPM4, pm4Bp);
-    int pm10Index = calculate_sub_index(avgPM10, pm10Bp);
-    int tvocIndex = calculate_sub_index(avgTVOC, tvocBp);
+    readings->pm1_aqi = calculate_sub_index(avgPM1, pm1Bp);
+    readings->pm25_aqi = calculate_sub_index(avgPM25, pm25Bp);
+    readings->pm4_aqi = calculate_sub_index(avgPM4, pm4Bp);
+    readings->pm10_aqi = calculate_sub_index(avgPM10, pm10Bp);
+    readings->tvoc_aqi = calculate_sub_index(avgTVOC, tvocBp);
 
     // Return the maximum AQI sub-index
-    int aqi = pm1Index;
-    if (pm25Index > aqi) aqi = pm25Index;
-    if (pm4Index > aqi) aqi = pm4Index;
-    if (pm10Index > aqi) aqi = pm10Index;
-    if (tvocIndex > aqi) aqi = tvocIndex;
+    int aqi = readings->pm1_aqi;
+    if (readings->pm25_aqi > aqi) aqi = readings->pm25_aqi;
+    if (readings->pm4_aqi > aqi) aqi = readings->pm4_aqi;
+    if (readings->pm10_aqi > aqi) aqi = readings->pm10_aqi;
+    if (readings->tvoc_aqi > aqi) aqi = readings->tvoc_aqi;
 
     return aqi;
 }

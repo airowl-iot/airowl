@@ -1,4 +1,6 @@
 description: BSP Display rotation example
 dependencies:
-  m5stack_core_s3:
-    version: "*"
+  espressif/cmake_utilities:
+    version: ^1
+  espressif/button: '*'
+  espressif/m5stack_core_s3: ^3.0.0
