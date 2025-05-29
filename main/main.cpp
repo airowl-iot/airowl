@@ -22,6 +22,8 @@
 #include "freertos/task.h"
 #include "screens/ui_dashboard.h"
 #include <time.h>
+// NEW: Added MQTT include
+#include "mqtt.h"
 
 static const char *TAG = "app_main";
 
@@ -35,41 +37,24 @@ extern EventGroupHandle_t s_wifi_event_group;
 extern const int WIFI_CONNECTED_BIT_GLOBAL;
 extern const int WIFI_FAIL_BIT_GLOBAL;
 
-// External declaration from ui_dashboard.c
-extern lv_obj_t *ui_clock2;
-
 // Global variables for Matter status and endpoint IDs
 static bool matter_initialized = false;
 static uint16_t temp_endpoint_id = 0;
 static uint16_t humidity_endpoint_id = 0;
 static uint16_t air_quality_endpoint_id = 0;
 
+// NEW: Global variables for MQTT sensor data accumulation
+#define DATA_FREQ 5 // Accumulate 5 sensor readings (10 seconds)
+static int sensor_count = 0;
+static float pm1_sum = 0.0f;
+static float pm25_sum = 0.0f;
+static float pm4_sum = 0.0f;
+static float pm10_sum = 0.0f;
+static float tvoc_sum = 0.0f;
+
 // Function declarations
 void update_chart_data(lv_obj_t *chart, const float *data, lv_obj_t *y_axis, float min_range, float max_range);
 void update_avg_max_labels(lv_obj_t *avg_label, lv_obj_t *max_label, const float *data);
-
-// Task to update clock display
-static void clock_update_task(void *pvParameters)
-{
-    esp_task_wdt_add(NULL); // Subscribe to WDT
-    char time_str[16];
-    while (1) {
-        time_t now = time(NULL);
-        struct tm *timeinfo = localtime(&now);
-        strftime(time_str, sizeof(time_str), "%H:%M:%S", timeinfo);
-
-        bsp_display_lock(0);
-        if (ui_clock2) {
-            lv_label_set_text(ui_clock2, time_str);
-        } else {
-            ESP_LOGE(TAG, "ui_clock2 is NULL");
-        }
-        bsp_display_unlock();
-
-        esp_task_wdt_reset(); // Reset WDT
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Update every 1 seconds
-    }
-}
 
 // Dedicated LVGL task for rendering
 static void lvgl_task(void *pvParameters)
@@ -276,6 +261,44 @@ static void update_sensor_task(void *pvParameters)
                 humidity_sensor_notification(humidity_endpoint_id, readings.humidity);
                 air_quality_sensor_notification(air_quality_endpoint_id, overall_aqi);
             }
+            // NEW: Accumulate sensor data and publish to MQTT
+            pm1_sum += readings.pm1;
+            pm25_sum += readings.pm25;
+            pm4_sum += readings.pm4;
+            pm10_sum += readings.pm10;
+            tvoc_sum += readings.tvoc;
+            sensor_count++;
+
+            // Update UI nose based on Wi-Fi status
+            bsp_display_lock(0);
+            if (wifi_is_connected()) {
+                if (ui_nose) lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
+            } else {
+                if (ui_nose) lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
+            }
+            bsp_display_unlock();
+
+            if (sensor_count >= DATA_FREQ) {
+                // Calculate averages
+                float avg_pm1 = pm1_sum / DATA_FREQ;
+                float avg_pm25 = pm25_sum / DATA_FREQ;
+                float avg_pm4 = pm4_sum / DATA_FREQ;
+                float avg_pm10 = pm10_sum / DATA_FREQ;
+                float avg_tvoc = tvoc_sum / DATA_FREQ;
+
+                // Publish to MQTT if Wi-Fi connected
+                if (wifi_is_connected()) {
+                    mqtt_publish_sensor_data(avg_pm1, avg_pm25, avg_pm4, avg_pm10, avg_tvoc);
+                }
+
+                // Reset for next cycle
+                pm1_sum = 0.0f;
+                pm25_sum = 0.0f;
+                pm4_sum = 0.0f;
+                pm10_sum = 0.0f;
+                tvoc_sum = 0.0f;
+                sensor_count = 0;
+            }
         } else {
             bsp_display_lock(0);
             if (ui_pm1label) lv_label_set_text(ui_pm1label, "Err");
@@ -444,7 +467,6 @@ extern "C" void app_main(void)
 
     // Start tasks
     xTaskCreate(update_sensor_task, "sensor_task", 12123, NULL, 5, NULL);
-    xTaskCreatePinnedToCore(clock_update_task, "clock_task", 8192, NULL, 2, NULL, 0);
     xTaskCreatePinnedToCore(lvgl_task, "lvgl_task", 8192, NULL, 3, NULL, 0);
     xTaskCreate(wifi_init_task, "wifi_init_task", 4096, NULL, 5, NULL);
 
@@ -502,6 +524,11 @@ extern "C" void app_main(void)
         humidity_endpoint_id = endpoint::get_id(humidity_sensor_ep);
         air_quality_endpoint_id = endpoint::get_id(air_quality_ep);
 
+        // NEW: Initialize MQTT
+        const char* device_id = wifi_get_ap_ssid();
+        if (mqtt_init(device_id) != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to initialize MQTT");
+        }
     } else if (bits & WIFI_FAIL_BIT_GLOBAL) {
         ESP_LOGI(TAG, "Wi-Fi failed to connect, Matter will not start");
     } else {

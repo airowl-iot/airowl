@@ -42,6 +42,7 @@ extern lv_obj_t * ui____initial_actions0;
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_loho2_png);    // assets/loho2.png
 LV_IMG_DECLARE(ui_img_airowl_1_png);    // assets/airowl_1.png
+LV_IMG_DECLARE(ui_img_airowl_2_png);    // assets/airowl_2.png
 LV_IMG_DECLARE(ui_img_582762761);    // assets/celsius-degrees-symbol-of-temperature.png
 
 // FONTS

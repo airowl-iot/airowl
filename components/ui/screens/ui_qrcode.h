@@ -10,13 +10,16 @@
 extern "C" {
 #endif
 
+#include "lvgl.h"
+#include "../ui.h"
+
 // SCREEN: ui_qrcode
 extern void ui_qrcode_screen_init(void);
 extern void ui_qrcode_screen_destroy(void);
 extern void ui_event_qrcode(lv_event_t * e);
 extern lv_obj_t * ui_qrcode;
 extern lv_obj_t * ui_qrcodename;
-// CUSTOM VARIABLES
+extern lv_obj_t * ui_qrcode_widget; // Added for QR code widget
 
 #ifdef __cplusplus
 } /*extern "C"*/

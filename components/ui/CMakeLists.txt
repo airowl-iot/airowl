@@ -12,6 +12,7 @@ SET(SOURCES screens/ui_Intro.c
     ui_helpers.c
     images/ui_img_loho2_png.c
     images/ui_img_airowl_1_png.c
+    images/ui_img_airowl_2_png.c
     images/ui_img_582762761.c
     fonts/ui_font_clock24.c
     fonts/ui_font_clock48.c
