@@ -130,8 +130,8 @@ String deviceName = "";
 
 // MQTT Server Details
 const char *mqtt_server = "mqtt.oizom.com";
-const char *username = "xxxx";
-const char *password = "xxxx";
+const char *username = "oizom";
+const char *password = "12345678";
 
 lv_chart_series_t *ui_PM1chart_series_1 = {0};
 static lv_coord_t ui_PM1chart_series_1_array[CHART_DATA_LENGTH] = {0};
@@ -201,6 +201,8 @@ void setupCharts() {
 }
 
 void sensorData(void *params) {
+    unsigned long lastWdtReset = 0;
+    const unsigned long WDT_RESET_INTERVAL = 1000; //
     Wire.begin(2, 1, 100000L);
     sen5x.begin(Wire);
 
@@ -240,6 +242,18 @@ void sensorData(void *params) {
     deviceName = "AIROWL_" + mac.substring(6);
 
     while (1) {
+        extern bool otaInProgress;
+        if (otaInProgress) {
+            // Just reset watchdog and wait while OTA is in progress
+            esp_task_wdt_reset();
+            delay(1000);
+            continue;
+        }
+        
+        if (millis() - lastWdtReset >= WDT_RESET_INTERVAL) {
+            esp_task_wdt_reset();
+            lastWdtReset = millis();
+        }
         uint16_t error;
         char errorMessage[256];
 
@@ -495,7 +509,7 @@ void sensorData(void *params) {
                 lv_chart_set_ext_y_array(ui_TVOCchart, ui_TVOCchart_series_1,
                                          ui_TVOCchart_series_1_array);
 
-                if (WiFi.status() == WL_CONNECTED) {
+                                         if (WiFi.status() == WL_CONNECTED) {
                     lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
                     if (!mqttClient.connected()) {
                         reconnect();
@@ -533,7 +547,10 @@ void sensorData(void *params) {
                 sensor_data.count = 0;
             }
         }
-        esp_task_wdt_reset(); // Reset watchdog for this task
-        delay(2000);
+        if (millis() - lastWdtReset >= WDT_RESET_INTERVAL) {
+            esp_task_wdt_reset();
+            lastWdtReset = millis();
+        }
+        delay(200);
     }
 }
