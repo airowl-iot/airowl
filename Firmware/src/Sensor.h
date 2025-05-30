@@ -123,15 +123,15 @@ AQIBreakpoint tvocBps[] = {{0.0, 300, 0, 50},      {300, 500, 51, 100},
 SensirionI2CSen5x sen5x;
 Sensor_t sensor_data;
 
-WiFiClient espClient;
-PubSubClient mqttClient(espClient);
+// WiFiClient espClient;
+// PubSubClient mqttClient(espClient);
 
 String deviceName = "";
 
 // MQTT Server Details
-const char *mqtt_server = "mqtt.oizom.com";
-const char *username = "oizom";
-const char *password = "12345678";
+// const char *mqtt_server = "mqtt.oizom.com";
+// const char *username = "oizom";
+// const char *password = "12345678";
 
 lv_chart_series_t *ui_PM1chart_series_1 = {0};
 static lv_coord_t ui_PM1chart_series_1_array[CHART_DATA_LENGTH] = {0};
@@ -147,26 +147,6 @@ static lv_coord_t ui_PM10chart_series_1_array[CHART_DATA_LENGTH] = {0};
 
 lv_chart_series_t *ui_TVOCchart_series_1 = {0};
 static lv_coord_t ui_TVOCchart_series_1_array[CHART_DATA_LENGTH] = {0};
-
-void callback(char *topic, byte *payload, unsigned int length) {
-    // handle message arrived
-}
-
-boolean reconnect() {
-    if (!mqttClient.connected()) {
-        String clientId = "AIROWL";
-        clientId += String(random(0xffffff), HEX);
-        if (mqttClient.connect(clientId.c_str(), username, password)) {
-            // M5.Log.println("MQTT Connected");
-        }
-    }
-    return mqttClient.connected();
-}
-
-void setupMQTT() {
-    mqttClient.setServer(mqtt_server, 1883);
-    mqttClient.setCallback(callback);
-}
 
 void setupCharts() {
     ui_PM1chart_series_1 = lv_chart_add_series(
@@ -201,6 +181,7 @@ void setupCharts() {
 }
 
 void sensorData(void *params) {
+    PubSubClient *mqttClient = (PubSubClient *)params;
     unsigned long lastWdtReset = 0;
     const unsigned long WDT_RESET_INTERVAL = 1000; //
     Wire.begin(2, 1, 100000L);
@@ -236,7 +217,6 @@ void sensorData(void *params) {
     }
 
     setupCharts();
-    setupMQTT();
     String mac = WiFi.macAddress();
     mac.replace(":", "");
     deviceName = "AIROWL_" + mac.substring(6);
@@ -511,9 +491,6 @@ void sensorData(void *params) {
 
                                          if (WiFi.status() == WL_CONNECTED) {
                     lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
-                    if (!mqttClient.connected()) {
-                        reconnect();
-                    }
                     // Construct the JSON string
                     String jsonString = "{";
                     jsonString += "\"deviceId\":\"";
@@ -534,8 +511,10 @@ void sensorData(void *params) {
                     jsonString += "\"v2\":";
                     jsonString += String(avgTVOC, 2);
                     jsonString += "}";
-                    mqttClient.publish("airowl", jsonString.c_str());
-                    mqttClient.loop();
+                    if(mqttClient->connected()) {
+                        // Publish the JSON string to the MQTT topic
+                        mqttClient->publish("airowl", jsonString.c_str());
+                    }
                 } else {
                     lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
                 }

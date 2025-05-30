@@ -1,12 +1,3 @@
-//Airowl-OTA - raat vdu
-
-
-
-
-
-
-
-
 #include <Arduino.h>
 #if defined(ARDUINO_M5STACK_Core2)
 #include <M5Core2.h>
@@ -81,7 +72,7 @@ String errorTopic = "$anedya/device/" + String(PHYSICAL_DEVICE_ID) + "/errors"; 
 
 // ----------------------------- Helper Variable ----------------------------------------
 long last_check_for_ota_update = 0;
-long check_for_ota_update_interval= 1*60*1000;
+long check_for_ota_update_interval= 60*60*1000;
 String timeRes; // variable to handle response
 
 #define TIME_SYNC_BIT 1
@@ -103,7 +94,6 @@ PubSubClient mqtt_client(esp_client); // creat a PubSubClient object
 static HttpsOTAStatus_t otastatus;
 
 /*------------------------Function declarations--------------------------*/
-// void connectToWiFi();
 void connectToMQTT();
 void mqttCallback(char *topic, byte *payload, unsigned int length);
 void syncDeviceTime();       // Function to configure the device time with real-time from ATS (Anedya Time Services)
@@ -157,12 +147,6 @@ void handlesensordata() {
         lastAQI = AQI;
       }
       if (temperature != lastTemp || humidity != lastHum) {
-        Serial.print("Temperature from Sensor: ");
-        Serial.print(temperature);
-        Serial.println(" C");
-        Serial.print("Humidity from Sensor: ");
-        Serial.print(humidity);
-        Serial.println(" %");
         lastTemp = temperature;
         lastHum = humidity;
       }
@@ -189,9 +173,6 @@ void handlesensordata() {
     if (matter_initialized && !otaInProgress ) 
     {
       if (!ArduinoMatter::isDeviceCommissioned()) {
-       // Serial.println("Matter Node not commissioned");
-      // Serial.println("Manual pairing code: " + ArduinoMatter::getManualPairingCode());
-      // Serial.println("QR code URL: " + ArduinoMatter::getOnboardingQRCodeUrl());
       } else if (!was_commissioned) {
         Serial.println("Matter Node commissioned");
         was_commissioned = true;
@@ -260,7 +241,7 @@ void setup() {
   wm.setTitle("AIROWL Configuration");
   if (WiFi.status() != WL_CONNECTED) {
     wm.autoConnect(apName.c_str(), "12345678");
-}
+  }
 
   lv_begin();
   ui_init();
@@ -274,141 +255,114 @@ void setup() {
   lv_obj_center(ui_qrcode_obj);
 
   time_init();
-  xTaskCreatePinnedToCore(sensorData, "sensorData", 10000, NULL, 2, &myTaskHandle, 1);
+  xTaskCreatePinnedToCore(sensorData, "sensorData", 10000, (void *)&mqtt_client, 2, &myTaskHandle, 1);
   esp_task_wdt_add(myTaskHandle);
 
   preferences.begin("MatterPrefs", false);
 }
 
 void loop() {
-  if (millis() - last_check_for_ota_update >= check_for_ota_update_interval)
-  {
-      anedya_sendHeartbeat(); // sending heartbeat
-      bool success = anedya_check_ota_update();
-      if (success)
-      {
-          if (deploymentAvailable)
-          {
-            otaInProgress = true;
-            suppressSensorPrinting = true;
-            // Give the sensor task time to notice the flag
-           if (myTaskHandle != NULL) {
-                Serial.println("Stopping sensor task before OTA...");
-                vTaskDelete(myTaskHandle);
-                myTaskHandle = NULL;
-              }
-            
-              anedya_update_ota_status(deploymentID, "start");
-
-              Serial.println("Starting firmware update");
-              esp_client.setHandshakeTimeout(30000); // 30 seconds timeout
-          
-              esp_task_wdt_config_t ota_wdt_config = {
-                .timeout_ms = 300000,           // 5 minutes for OTA
-                .idle_core_mask = 0,
-                .trigger_panic = true
-            };
-            esp_task_wdt_reconfigure(&ota_wdt_config);
-            
-            HttpsOTA.onHttpEvent(HttpEvent);
-          
-            Serial.println("Free Internal Heap: " + String(esp_get_free_heap_size()));
-            Serial.println("Free PSRAM: " + String(ESP.getFreePsram()));
-            Serial.println("Total Heap Size: " + String(esp_get_free_heap_size()));
-          
-            if (esp_get_free_heap_size() < 80000) {
-                Serial.println("Not enough internal heap for OTA, aborting.");
-                anedya_update_ota_status(deploymentID, "failure");
-                return;
-              }
-
-              HttpsOTA.begin(assetURL.c_str(), ca_cert, false);
-              Serial.print(" OTA in progress ..");
-              const uint32_t ota_timeout = 300000; // 5 minutes timeout
-              uint32_t ota_start = millis();
-              
-              while ((millis() - ota_start) < ota_timeout)
-          {
-            esp_task_wdt_reset();
-                  Serial.print(".");
-                  otastatus = HttpsOTA.status();
-                  if (otastatus == HTTPS_OTA_SUCCESS)
-                  {
-                      Serial.println("Firmware written successfully");
-                      delay(500);
-                          // Properly close MQTT connection before sending status
-    mqtt_client.disconnect();
-    delay(1000);  // Give time for disconnect to complete
-    
-    // Reconnect to MQTT
-    connectToMQTT();
-                      anedya_update_ota_status(deploymentID, "success");
-                      statusPublished = false;
-                      while(!statusPublished){
-                          mqtt_client.loop();
-                          delay(500);
-                      }                  
-                      ESP.restart();
-                  }
-                  else if (otastatus == HTTPS_OTA_FAIL)
-                  {
-                      Serial.println("Firmware Upgrade Fail");
-                      anedya_update_ota_status(deploymentID, "failure");
-                      break;
-                  }
-                  delay(1000);
-              }
-              if ((millis() - ota_start) >= ota_timeout) {
-                Serial.println("OTA timeout");
-                anedya_update_ota_status(deploymentID, "failure");
-            }
-              deploymentAvailable = false;
-        }  
-          otaInProgress = false;
-          suppressSensorPrinting = false;
-    }
-      else
-      {
-          Serial.println("Failed to Publish!");
-      }
-      last_check_for_ota_update = millis();
-  }
-  mqtt_client.loop();
-  delay(3000);
   
   wm.process();
   lv_handler();
   update_time();
   esp_task_wdt_reset();
+  if (WiFi.status() == WL_CONNECTED) {
+    if (millis() - last_check_for_ota_update >= check_for_ota_update_interval)
+    {
+        anedya_sendHeartbeat(); // sending heartbeat
+        bool success = anedya_check_ota_update();
+        if (success)
+        {
+            if (deploymentAvailable)
+            {
+                otaInProgress = true;
+                suppressSensorPrinting = true;
+                // Give the sensor task time to notice the flag
+            if (myTaskHandle != NULL) {
+                    Serial.println("Stopping sensor task before OTA...");
+                    vTaskDelete(myTaskHandle);
+                    myTaskHandle = NULL;
+                }
+                
+                anedya_update_ota_status(deploymentID, "start");
 
-  if (!otaInProgress) {
- handlesensordata();
- handleMatter();
- handlesensorAndMatter();
+                Serial.println("Starting firmware update");
+                esp_client.setHandshakeTimeout(30000); // 30 seconds timeout
+            
+                esp_task_wdt_config_t ota_wdt_config = {
+                    .timeout_ms = 300000,           // 5 minutes for OTA
+                    .idle_core_mask = 0,
+                    .trigger_panic = true
+                };
+                esp_task_wdt_reconfigure(&ota_wdt_config);
+                
+                HttpsOTA.onHttpEvent(HttpEvent);
+            
+                Serial.println("Free Internal Heap: " + String(esp_get_free_heap_size()));
+                Serial.println("Free PSRAM: " + String(ESP.getFreePsram()));
+                Serial.println("Total Heap Size: " + String(esp_get_free_heap_size()));
+            
+                if (esp_get_free_heap_size() < 80000) {
+                    Serial.println("Not enough internal heap for OTA, aborting.");
+                    anedya_update_ota_status(deploymentID, "failure");
+                    return;
+                }
+
+                HttpsOTA.begin(assetURL.c_str(), ca_cert, false);
+                Serial.print(" OTA in progress ..");
+                const uint32_t ota_timeout = 300000; // 5 minutes timeout
+                uint32_t ota_start = millis();
+                
+                while ((millis() - ota_start) < ota_timeout)
+                {
+                    esp_task_wdt_reset();
+                    Serial.print(".");
+                    otastatus = HttpsOTA.status();
+                    if (otastatus == HTTPS_OTA_SUCCESS)
+                    {
+                        Serial.println("Firmware written successfully");
+                        // Reconnect to MQTT
+                        connectToMQTT();
+                        anedya_update_ota_status(deploymentID, "success");
+                        statusPublished = false;
+                        while(!statusPublished){
+                            mqtt_client.loop();
+                            delay(500);
+                        }                  
+                        ESP.restart();
+                    }
+                    else if (otastatus == HTTPS_OTA_FAIL)
+                    {
+                        Serial.println("Firmware Upgrade Fail");
+                        anedya_update_ota_status(deploymentID, "failure");
+                        break;
+                    }
+                    delay(1000);
+                }
+                if ((millis() - ota_start) >= ota_timeout) {
+                        Serial.println("OTA timeout");
+                        anedya_update_ota_status(deploymentID, "failure");
+                }
+                deploymentAvailable = false;
+            }  
+            otaInProgress = false;
+            suppressSensorPrinting = false;
+        }
+        else
+        {
+            Serial.println("Failed to Publish!");
+        }
+        last_check_for_ota_update = millis();
+    }
+    mqtt_client.loop();
+    if (!otaInProgress) {
+        handlesensordata();
+        handleMatter();
+        handlesensorAndMatter();
+    }
   }
 }
-
-// //<---------------------------------------------------------------------------------------------------------------------------->
-// void connectToWiFi()
-// {
-//     if (WiFi.status() == WL_CONNECTED) {
-//         Serial.println("WiFi already connected.");
-//         return;
-//     }
-    
-//     // Connect to WiFi network
-//     WiFi.begin(SSID, PASSWORD);
-//     Serial.println();
-//     Serial.print("Connecting to WiFi...");
-//     while (WiFi.status() != WL_CONNECTED)
-//     {
-//         delay(500);
-//         Serial.print(".");
-//     }
-//     Serial.println();
-//     Serial.print("Connected, IP address: ");
-//     Serial.println(WiFi.localIP());
-// }
 
 void connectToMQTT()
 {
@@ -421,7 +375,7 @@ void connectToMQTT()
     }
     if (mqtt_client.connected()) {
         mqtt_client.disconnect();
-        delay(1000);  // Give time for disconnect to complete
+        // delay(1000);  // Give time for disconnect to complete
     }
     
     while (!mqtt_client.connected())
@@ -439,7 +393,7 @@ void connectToMQTT()
             Serial.print("Failed to connect to Anedya broker, rc=");
             Serial.print(mqtt_client.state());
             Serial.println(" Retrying in 5 seconds.");
-            delay(5000);
+            // delay(5000);
         }
     }
 }
