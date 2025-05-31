@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include "esp_err.h"
+extern bool ntp_synced; // NTP sync status
 
 // Initialize Wi-Fi
 void wifi_init(void);

@@ -1,12 +1,12 @@
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_task_wdt.h"
 #include "esp_wifi.h"
 #include "lvgl.h"
 #include "nvs_flash.h"
 #include "sen54.h"
 #include "ui.h"
 #include "wifi.h"
-#include "esp_task_wdt.h"
 #include <algorithm>
 #include <app/server/CommissioningWindowManager.h>
 #include <app/server/Server.h>
@@ -17,11 +17,11 @@
 #include <esp_matter.h>
 #include <inttypes.h>
 #include <nvs_flash.h>
+#include <time.h>
 #include "bsp/esp-bsp.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "screens/ui_dashboard.h"
-#include <time.h>
 // NEW: Added MQTT include
 #include "mqtt.h"
 
@@ -31,6 +31,8 @@ using namespace esp_matter;
 using namespace esp_matter::attribute;
 using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
+
+static bool g_commissioning_window_open = false;
 
 // External declarations from wifi.c
 extern EventGroupHandle_t s_wifi_event_group;
@@ -117,8 +119,7 @@ static void air_quality_sensor_notification(uint16_t endpoint_id, int aqi)
 
         esp_matter_attr_val_t val = esp_matter_invalid(NULL);
         attribute::get_val(attribute, &val);
-        uint8_t aqi_mapped = static_cast<uint8_t>(
-            std::min(std::max(aqi / 50, 0), 6));
+        uint8_t aqi_mapped = static_cast<uint8_t>(std::min(std::max(aqi / 50, 0), 6));
         val.val.u8 = aqi_mapped;
 
         attribute::update(endpoint_id, AirQuality::Id, AirQuality::Attributes::AirQuality::Id, &val);
@@ -142,6 +143,14 @@ static void open_commissioning_window_if_necessary()
 static void app_event_cb(const ChipDeviceEvent *event, intptr_t arg)
 {
     switch (event->Type) {
+    case chip::DeviceLayer::DeviceEventType::kCommissioningWindowOpened:
+        ESP_LOGI(TAG, "Commissioning window opened");
+        g_commissioning_window_open = true;
+        break;
+    case chip::DeviceLayer::DeviceEventType::kCommissioningWindowClosed:
+        ESP_LOGI(TAG, "Commissioning window closed");
+        g_commissioning_window_open = false;
+        break;
     case chip::DeviceLayer::DeviceEventType::kCommissioningComplete:
         ESP_LOGI(TAG, "Commissioning complete");
         break;
@@ -221,40 +230,64 @@ static void update_sensor_task(void *pvParameters)
 
             bsp_display_lock(0);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.pm1);
-            if (ui_pm1label) lv_label_set_text(ui_pm1label, buffer);
+            if (ui_pm1label)
+                lv_label_set_text(ui_pm1label, buffer);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.pm25);
-            if (ui_pm25label) lv_label_set_text(ui_pm25label, buffer);
+            if (ui_pm25label)
+                lv_label_set_text(ui_pm25label, buffer);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.pm4);
-            if (ui_pm4label) lv_label_set_text(ui_pm4label, buffer);
+            if (ui_pm4label)
+                lv_label_set_text(ui_pm4label, buffer);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.pm10);
-            if (ui_pm10label) lv_label_set_text(ui_pm10label, buffer);
+            if (ui_pm10label)
+                lv_label_set_text(ui_pm10label, buffer);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.tvoc);
-            if (ui_tvoclabel) lv_label_set_text(ui_tvoclabel, buffer);
+            if (ui_tvoclabel)
+                lv_label_set_text(ui_tvoclabel, buffer);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.temperature);
-            if (ui_templabel) lv_label_set_text(ui_templabel, buffer);
+            if (ui_templabel)
+                lv_label_set_text(ui_templabel, buffer);
             snprintf(buffer, sizeof(buffer), "%.1f", readings.humidity);
-            if (ui_RHlabel) lv_label_set_text(ui_RHlabel, buffer);
+            if (ui_RHlabel)
+                lv_label_set_text(ui_RHlabel, buffer);
 
-            if (ui_pm1label) lv_obj_set_style_text_color(ui_pm1label, lv_color_hex(pm1_color), LV_STATE_DEFAULT);
-            if (ui_pm25label) lv_obj_set_style_text_color(ui_pm25label, lv_color_hex(pm25_color), LV_STATE_DEFAULT);
-            if (ui_pm4label) lv_obj_set_style_text_color(ui_pm4label, lv_color_hex(pm4_color), LV_STATE_DEFAULT);
-            if (ui_pm10label) lv_obj_set_style_text_color(ui_pm10label, lv_color_hex(pm10_color), LV_STATE_DEFAULT);
-            if (ui_tvoclabel) lv_obj_set_style_text_color(ui_tvoclabel, lv_color_hex(tvoc_color), LV_STATE_DEFAULT);
-            if (ui_lefteye) lv_obj_set_style_bg_color(ui_lefteye, lv_color_hex(overall_aqi_color), LV_STATE_DEFAULT);
-            if (ui_righteye) lv_obj_set_style_bg_color(ui_righteye, lv_color_hex(overall_aqi_color), LV_STATE_DEFAULT);
+            if (ui_pm1label)
+                lv_obj_set_style_text_color(ui_pm1label, lv_color_hex(pm1_color), LV_STATE_DEFAULT);
+            if (ui_pm25label)
+                lv_obj_set_style_text_color(ui_pm25label, lv_color_hex(pm25_color), LV_STATE_DEFAULT);
+            if (ui_pm4label)
+                lv_obj_set_style_text_color(ui_pm4label, lv_color_hex(pm4_color), LV_STATE_DEFAULT);
+            if (ui_pm10label)
+                lv_obj_set_style_text_color(ui_pm10label, lv_color_hex(pm10_color), LV_STATE_DEFAULT);
+            if (ui_tvoclabel)
+                lv_obj_set_style_text_color(ui_tvoclabel, lv_color_hex(tvoc_color), LV_STATE_DEFAULT);
+            if (ui_lefteye)
+                lv_obj_set_style_bg_color(ui_lefteye, lv_color_hex(overall_aqi_color), LV_STATE_DEFAULT);
+            if (ui_righteye)
+                lv_obj_set_style_bg_color(ui_righteye, lv_color_hex(overall_aqi_color), LV_STATE_DEFAULT);
             bsp_display_unlock();
 
-            if (ui_PM1chart && ui_PM1chart_Yaxis1) update_chart_data(ui_PM1chart, pm1_data.data(), ui_PM1chart_Yaxis1, 0, 100);
-            if (ui_PM25chart && ui_PM25chart_Yaxis1) update_chart_data(ui_PM25chart, pm25_data.data(), ui_PM25chart_Yaxis1, 0, 600);
-            if (ui_PM4chart && ui_PM4chart_Yaxis1) update_chart_data(ui_PM4chart, pm4_data.data(), ui_PM4chart_Yaxis1, 0, 600);
-            if (ui_PM10chart && ui_PM10chart_Yaxis1) update_chart_data(ui_PM10chart, pm10_data.data(), ui_PM10chart_Yaxis1, 0, 700);
-            if (ui_TVOCchart && ui_TVOCchart_Yaxis1) update_chart_data(ui_TVOCchart, tvoc_data.data(), ui_TVOCchart_Yaxis1, 0, 5000);
+            if (ui_PM1chart && ui_PM1chart_Yaxis1)
+                update_chart_data(ui_PM1chart, pm1_data.data(), ui_PM1chart_Yaxis1, 0, 100);
+            if (ui_PM25chart && ui_PM25chart_Yaxis1)
+                update_chart_data(ui_PM25chart, pm25_data.data(), ui_PM25chart_Yaxis1, 0, 600);
+            if (ui_PM4chart && ui_PM4chart_Yaxis1)
+                update_chart_data(ui_PM4chart, pm4_data.data(), ui_PM4chart_Yaxis1, 0, 600);
+            if (ui_PM10chart && ui_PM10chart_Yaxis1)
+                update_chart_data(ui_PM10chart, pm10_data.data(), ui_PM10chart_Yaxis1, 0, 700);
+            if (ui_TVOCchart && ui_TVOCchart_Yaxis1)
+                update_chart_data(ui_TVOCchart, tvoc_data.data(), ui_TVOCchart_Yaxis1, 0, 5000);
 
-            if (ui_pm1avg && ui_pm1max) update_avg_max_labels(ui_pm1avg, ui_pm1max, pm1_data.data());
-            if (ui_pm25avg && ui_pm25max) update_avg_max_labels(ui_pm25avg, ui_pm25max, pm25_data.data());
-            if (ui_pm4avg && ui_pm4max) update_avg_max_labels(ui_pm4avg, ui_pm4max, pm4_data.data());
-            if (ui_pm10avg && ui_pm10max) update_avg_max_labels(ui_pm10avg, ui_pm10max, pm10_data.data());
-            if (ui_tvocavg && ui_tvocmax) update_avg_max_labels(ui_tvocavg, ui_tvocmax, tvoc_data.data());
+            if (ui_pm1avg && ui_pm1max)
+                update_avg_max_labels(ui_pm1avg, ui_pm1max, pm1_data.data());
+            if (ui_pm25avg && ui_pm25max)
+                update_avg_max_labels(ui_pm25avg, ui_pm25max, pm25_data.data());
+            if (ui_pm4avg && ui_pm4max)
+                update_avg_max_labels(ui_pm4avg, ui_pm4max, pm4_data.data());
+            if (ui_pm10avg && ui_pm10max)
+                update_avg_max_labels(ui_pm10avg, ui_pm10max, pm10_data.data());
+            if (ui_tvocavg && ui_tvocmax)
+                update_avg_max_labels(ui_tvocavg, ui_tvocmax, tvoc_data.data());
 
             if (matter_initialized) {
                 temp_sensor_notification(temp_endpoint_id, readings.temperature);
@@ -272,9 +305,11 @@ static void update_sensor_task(void *pvParameters)
             // Update UI nose based on Wi-Fi status
             bsp_display_lock(0);
             if (wifi_is_connected()) {
-                if (ui_nose) lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
+                if (ui_nose)
+                    lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
             } else {
-                if (ui_nose) lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
+                if (ui_nose)
+                    lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
             }
             bsp_display_unlock();
 
@@ -301,20 +336,34 @@ static void update_sensor_task(void *pvParameters)
             }
         } else {
             bsp_display_lock(0);
-            if (ui_pm1label) lv_label_set_text(ui_pm1label, "Err");
-            if (ui_pm25label) lv_label_set_text(ui_pm25label, "Err");
-            if (ui_pm4label) lv_label_set_text(ui_pm4label, "Err");
-            if (ui_pm10label) lv_label_set_text(ui_pm10label, "Err");
-            if (ui_tvoclabel) lv_label_set_text(ui_tvoclabel, "Err");
-            if (ui_templabel) lv_label_set_text(ui_templabel, "Err");
-            if (ui_RHlabel) lv_label_set_text(ui_RHlabel, "Err");
-            if (ui_pm1label) lv_obj_set_style_text_color(ui_pm1label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
-            if (ui_pm25label) lv_obj_set_style_text_color(ui_pm25label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
-            if (ui_pm4label) lv_obj_set_style_text_color(ui_pm4label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
-            if (ui_pm10label) lv_obj_set_style_text_color(ui_pm10label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
-            if (ui_tvoclabel) lv_obj_set_style_text_color(ui_tvoclabel, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
-            if (ui_lefteye) lv_obj_set_style_bg_color(ui_lefteye, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
-            if (ui_righteye) lv_obj_set_style_bg_color(ui_righteye, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_pm1label)
+                lv_label_set_text(ui_pm1label, "Err");
+            if (ui_pm25label)
+                lv_label_set_text(ui_pm25label, "Err");
+            if (ui_pm4label)
+                lv_label_set_text(ui_pm4label, "Err");
+            if (ui_pm10label)
+                lv_label_set_text(ui_pm10label, "Err");
+            if (ui_tvoclabel)
+                lv_label_set_text(ui_tvoclabel, "Err");
+            if (ui_templabel)
+                lv_label_set_text(ui_templabel, "Err");
+            if (ui_RHlabel)
+                lv_label_set_text(ui_RHlabel, "Err");
+            if (ui_pm1label)
+                lv_obj_set_style_text_color(ui_pm1label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_pm25label)
+                lv_obj_set_style_text_color(ui_pm25label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_pm4label)
+                lv_obj_set_style_text_color(ui_pm4label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_pm10label)
+                lv_obj_set_style_text_color(ui_pm10label, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_tvoclabel)
+                lv_obj_set_style_text_color(ui_tvoclabel, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_lefteye)
+                lv_obj_set_style_bg_color(ui_lefteye, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
+            if (ui_righteye)
+                lv_obj_set_style_bg_color(ui_righteye, lv_color_hex(0xFFFFFF), LV_STATE_DEFAULT);
             bsp_display_unlock();
             sen54_init();
         }
@@ -415,11 +464,9 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     // Configure Task Watchdog Timer only if not already initialized
-    esp_task_wdt_config_t wdt_config = {
-        .timeout_ms = 10000, // 10 seconds
-        .idle_core_mask = (1 << 0), // Watchdog for CPU 0
-        .trigger_panic = true
-    };
+    esp_task_wdt_config_t wdt_config = {.timeout_ms = 10000, // 10 seconds
+                                        .idle_core_mask = (1 << 0), // Watchdog for CPU 0
+                                        .trigger_panic = true};
     esp_err_t wdt_ret = esp_task_wdt_init(&wdt_config);
     if (wdt_ret == ESP_ERR_INVALID_STATE) {
         ESP_LOGW(TAG, "Task WDT already initialized, skipping reinitialization");
@@ -478,6 +525,23 @@ extern "C" void app_main(void)
     if (bits & WIFI_CONNECTED_BIT_GLOBAL) {
         ESP_LOGI(TAG, "Wi-Fi connected successfully");
 
+        // Wait for NTP sync
+        int wait_count = 0;
+        const int max_wait = 30; // Wait up to 30 seconds
+        while (!ntp_synced && wait_count < max_wait) {
+            ESP_LOGI(TAG, "Waiting for NTP sync... (%d/%d)", wait_count + 1, max_wait);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            wait_count++;
+        }
+
+        // Save NTP-synced time
+        time_t ntp_time = time(NULL);
+        struct tm timeinfo;
+        localtime_r(&ntp_time, &timeinfo);
+        char strftime_buf[64];
+        strftime(strftime_buf, sizeof(strftime_buf), "%A, %B %d %Y %H:%M:%S %Z", &timeinfo);
+        ESP_LOGI(TAG, "System time before Matter init: %s (Unix: %ld)", strftime_buf, (long)ntp_time);
+
         // Create Matter node
         node::config_t node_config;
         node_t *node = node::create(&node_config, app_attribute_update_cb, app_identification_cb);
@@ -518,14 +582,27 @@ extern "C" void app_main(void)
             return;
         }
 
+        // Reapply NTP-synced time
+        if (ntp_synced) {
+            struct timeval tv = {.tv_sec = ntp_time, .tv_usec = 0};
+            if (settimeofday(&tv, NULL) == 0) {
+                localtime_r(&ntp_time, &timeinfo);
+                strftime(strftime_buf, sizeof(strftime_buf), "%A, %B %d %Y %H:%M:%S %Z", &timeinfo);
+                ESP_LOGI(TAG, "Reapplied NTP-synced time after Matter init: %s (Unix: %ld)", strftime_buf,
+                         (long)ntp_time);
+            } else {
+                ESP_LOGE(TAG, "Failed to reapply NTP-synced time");
+            }
+        }
+
         // Update global variables with Matter status and endpoint IDs
         matter_initialized = true;
         temp_endpoint_id = endpoint::get_id(temp_sensor_ep);
         humidity_endpoint_id = endpoint::get_id(humidity_sensor_ep);
         air_quality_endpoint_id = endpoint::get_id(air_quality_ep);
 
-        // NEW: Initialize MQTT
-        const char* device_id = wifi_get_ap_ssid();
+        // Initialize MQTT
+        const char *device_id = wifi_get_ap_ssid();
         if (mqtt_init(device_id) != ESP_OK) {
             ESP_LOGE(TAG, "Failed to initialize MQTT");
         }

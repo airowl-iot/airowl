@@ -1,10 +1,8 @@
-// wifi.c
 #include "esp_event.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
-#include "esp_ota_ops.h"
 #include "esp_sntp.h"
 #include "esp_system.h"
 #include "esp_task_wdt.h"
@@ -13,9 +11,6 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "ui.h"
-#include <string.h>
-#include <sys/time.h>
-#include <time.h>
 #include "bsp/esp-bsp.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -29,10 +24,102 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 // NTP server definitions
-#define NTP_SERVER1 "0.pool.ntp.org"
-#define NTP_SERVER2 "1.pool.ntp.org"
-#define NTP_SERVER3 "2.pool.ntp.org"
-char ntp_timezone[32] = "IST-5:30"; // Global variable for timezone
+#define NTP_SERVER_1 "pool.ntp.org"
+#define NTP_SERVER_2 "time.google.com"
+#define NTP_TIMEOUT_MS 20000
+#define NTP_RETRY_COUNT 3
+
+char ntp_timezone[32] = "UTC0"; // Global variable for timezone
+bool ntp_synced = false;
+
+// Timezone structure from wifi-manager.c
+typedef struct {
+    const char *region;
+    const char *posix_tz;
+} timezone_t;
+
+// Comprehensive list of timezones from wifi-manager.c
+static const timezone_t timezones[] = {
+    {"UTC", "UTC0"},
+    {"Africa/Abidjan", "GMT0"},
+    {"Africa/Algiers", "CET-1"},
+    {"Africa/Cairo", "EET-2"},
+    {"Africa/Johannesburg", "SAST-2"},
+    {"Africa/Lagos", "WAT-1"},
+    {"Africa/Nairobi", "EAT-3"},
+    {"America/Adak", "HST10HDT,M3.2.0,M11.1.0"},
+    {"America/Anchorage", "AKST9AKDT,M3.2.0,M11.1.0"},
+    {"America/Argentina/Buenos_Aires", "ART3"},
+    {"America/Bogota", "COT5"},
+    {"America/Chicago", "CST6CDT,M3.2.0,M11.1.0"},
+    {"America/Denver", "MST7MDT,M3.2.0,M11.1.0"},
+    {"America/Los_Angeles", "PST8PDT,M3.2.0,M11.1.0"},
+    {"America/New_York", "EST5EDT,M3.2.0,M11.1.0"},
+    {"America/Phoenix", "MST7"},
+    {"America/Sao_Paulo", "BRT3"},
+    {"America/St_Johns", "NST3:30NDT,M3.2.0,M11.1.0"},
+    {"Canada/Atlantic", "AST4ADT,M3.2.0,M11.1.0"}, // Added for Canada (Atlantic Time, e.g., Halifax)
+    {"America/Mexico_City", "CST6"},
+    {"America/Puerto_Rico", "AST4"},
+    {"Pacific/Guam", "ChST-10"},
+    {"Pacific/Pago_Pago", "SST11"},
+    {"Asia/Almaty", "ALMT-6"},
+    {"Asia/Baghdad", "AST-3"},
+    {"Asia/Baku", "AZT-4"},
+    {"Asia/Bangkok", "ICT-7"},
+    {"Asia/Colombo", "LKT-5:30"},
+    {"Asia/Dhaka", "BDT-6"},
+    {"Asia/Dubai", "GST-4"},
+    {"Asia/Hong_Kong", "HKT-8"},
+    {"Asia/Jakarta", "WIB-7"},
+    {"Asia/Jerusalem", "IST-2IDT,M3.4.4/26,M10.5.0"},
+    {"Asia/Kabul", "AFT-4:30"},
+    {"Asia/Karachi", "PKT-5"},
+    {"Asia/Kathmandu", "NPT-5:45"},
+    {"Asia/Kolkata", "IST-5:30"},
+    {"Asia/Manila", "PHT-8"},
+    {"Asia/Riyadh", "AST-3"},
+    {"Asia/Seoul", "KST-9"},
+    {"Asia/Singapore", "SGT-8"},
+    {"Asia/Tehran", "IRST-3:30"},
+    {"Asia/Tokyo", "JST-9"},
+    {"Asia/Ulaanbaatar", "ULAT-8"},
+    {"Asia/Yangon", "MMT-6:30"},
+    {"Asia/Yerevan", "AMT-4"},
+    {"Atlantic/Azores", "AZOT1AZOST,M3.5.0,M10.5.0"},
+    {"Atlantic/Cape_Verde", "CVT1"},
+    {"Australia/Adelaide", "ACST-9:30ACDT,M10.1.0,M4.1.0"},
+    {"Australia/Brisbane", "AEST-10"},
+    {"Australia/Canberra", "AEST-10AEDT,M10.1.0,M4.1.0"},
+    {"Australia/Darwin", "ACST-9:30"},
+    {"Australia/Eucla", "ACWST-8:45"},
+    {"Australia/Hobart", "AEST-10AEDT,M10.1.0,M4.1.0"},
+    {"Australia/Lord_Howe", "LHST-10:30LHDT,M10.1.0,M4.1.0"},
+    {"Australia/Perth", "AWST-8"},
+    {"Australia/Sydney", "AEST-10AEDT,M10.1.0,M4.1.0"},
+    {"Indian/Christmas", "CXT-7"},
+    {"Indian/Cocos", "CCT-6:30"},
+    {"Europe/Amsterdam", "CET-1CEST,M3.5.0,M10.5.0"},
+    {"Europe/Athens", "EET-2EEST,M3.5.0,M10.5.0"},
+    {"Europe/Berlin", "CET-1CEST,M3.5.0,M10.5.0"},
+    {"Europe/Helsinki", "EET-2EEST,M3.5.0,M10.5.0"},
+    {"Europe/Istanbul", "TRT-3"},
+    {"Europe/Lisbon", "WET0WEST,M3.5.0,M10.5.0"},
+    {"Europe/London", "GMT0BST,M3.5.0,M10.5.0"},
+    {"Europe/Moscow", "MSK-3"},
+    {"Europe/Paris", "CET-1CEST,M3.5.0,M10.5.0"},
+    {"Pacific/Apia", "WST-13"},
+    {"Pacific/Auckland", "NZST-12NZDT,M9.5.0,M4.1.0"},
+    {"Pacific/Chatham", "CHAST-12:45CHADT,M9.5.0,M4.1.0"},
+    {"Pacific/Fiji", "FJT-12"},
+    {"Pacific/Honolulu", "HST10"},
+    {"Pacific/Kiritimati", "LINT-14"},
+    {"Pacific/Majuro", "MHT-12"},
+    {"Pacific/Norfolk", "NFT-11"},
+    {"Pacific/Tahiti", "TAHT10"},
+    {"Pacific/Tongatapu", "TOT-13"}
+};
+#define NUM_TIMEZONES (sizeof(timezones) / sizeof(timezones[0]))
 
 EventGroupHandle_t s_wifi_event_group;
 const int WIFI_CONNECTED_BIT_GLOBAL = WIFI_CONNECTED_BIT;
@@ -48,212 +135,88 @@ static bool wifi_connected = false; // Track Wi-Fi connection status
 extern lv_obj_t *ui_clock2;
 static void stop_webserver(void);
 static esp_err_t setup_clock_post_handler(httpd_req_t *req); // Forward declaration
+static esp_err_t load_timezone(char *timezone, size_t *timezone_len); // Forward declaration
 
-// Updated main configuration page
-static const char *wifi_config_html = "<html>"
-                                      "<head>"
-                                      "<title>AIROWL Configuration</title>"
-                                      "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                                      "<style>"
-                                      "body {"
-                                      "    background-color: #1a1a1a;"
-                                      "    color: white;"
-                                      "    font-family: Arial, sans-serif;"
-                                      "    display: flex;"
-                                      "    flex-direction: column;"
-                                      "    align-items: center;"
-                                      "    justify-content: center;"
-                                      "    height: 100vh;"
-                                      "    margin: 0;"
-                                      "    text-align: center;"
-                                      "}"
-                                      "h1 {"
-                                      "    font-size: 2em;"
-                                      "    margin-bottom: 10px;"
-                                      "}"
-                                      "h2 {"
-                                      "    font-size: 1.2em;"
-                                      "    margin-bottom: 20px;"
-                                      "    color: #ccc;"
-                                      "}"
-                                      ".button {"
-                                      "    background-color: #007bff;"
-                                      "    color: white;"
-                                      "    padding: 15px;"
-                                      "    margin: 10px 0;"
-                                      "    border: none;"
-                                      "    border-radius: 5px;"
-                                      "    width: -webkit-fill-available;"
-                                      "    max-width: 300px;"
-                                      "    font-size: 1.2em;"
-                                      "    cursor: pointer;"
-                                      "    text-decoration: none;"
-                                      "    display: block;"
-                                      "    text-align: center;"
-                                      "}"
-                                      ".button:hover {"
-                                      "    background-color: #0056b3;"
-                                      "}"
-                                      ".divider {"
-                                      "    width: -webkit-fill-available;"
-                                      "    max-width: 300px;"
-                                      "    height: 1px;"
-                                      "    background-color: white;"
-                                      "    margin: 10px 0;"
-                                      "}"
-                                      "</style>"
-                                      "</head>"
-                                      "<body>"
-                                      "<h1>AIROWL Configuration</h1>"
-                                      "<h2>%s</h2>"
-                                      "<a href='/wifi_form' class='button'>Configure WiFi</a>"
-                                      "<a href='/ota' class='button'>OTA Update</a>"
-                                      "<a href='/setup_clock' class='button'>Setup Clock</a>"
-                                      "<div class='divider'></div>"
-                                      "<a href='/restart' class='button'>Restart</a>"
-                                      "<a href='/exit' class='button'>Exit</a>"
-                                      "</body>"
+// Main configuration page with OTA removed
+static const char *wifi_config_html = "<!DOCTYPE html>\n"
+                                      "<html lang=\"en\">\n"
+                                      "<head>\n"
+                                      "<meta charset=\"UTF-8\">\n"
+                                      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                                      "<title>AIROWL Configuration</title>\n"
+                                      "<style>\n"
+                                      "body { font-family: Arial, sans-serif; display: flex; justify-content: center; "
+                                      "align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }\n"
+                                      ".container { text-align: center; background-color: white; padding: 30px; "
+                                      "border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); min-width: 400px; max-width: 90%; box-sizing: border-box; }\n"
+                                      "h1 { color: #333; }\n"
+                                      "button { width: 200px; padding: 12px 0; margin: 10px; background-color: #007bff; color: "
+                                      "white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }\n"
+                                      "button:hover { background-color: #0056b3; }\n"
+                                      "</style>\n"
+                                      "</head>\n"
+                                      "<body>\n"
+                                      "<div class=\"container\">\n"
+                                      "<h1>AIROWL Configuration</h1>\n"
+                                      "<p>Connect to: %s</p>\n"
+                                      "<a href=\"/wifi_form\"><button>Configure WiFi</button></a><br>\n"
+                                      "<a href=\"/setup_clock\"><button>Setup Clock</button></a><br>\n"
+                                      "<a href=\"/restart\"><button>Restart</button></a><br>\n"
+                                      "<a href=\"/exit\"><button>Exit</button></a>\n"
+                                      "</div>\n"
+                                      "</body>\n"
                                       "</html>";
 
-// New HTML pages
-static const char *ota_get_html = "<html>"
-                                  "<head>"
-                                  "<title>OTA Update</title>"
-                                  "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                                  "<style>"
-                                  "body {"
-                                  "    background-color: #1a1a1a;"
-                                  "    color: white;"
-                                  "    font-family: Arial, sans-serif;"
-                                  "    display: flex;"
-                                  "    flex-direction: column;"
-                                  "    align-items: center;"
-                                  "    justify-content: center;"
-                                  "    height: 100vh;"
-                                  "    margin: 0;"
-                                  "}"
-                                  "h1 {"
-                                  "    font-size: 2em;"
-                                  "    margin-bottom: 20px;"
-                                  "}"
-                                  ".button {"
-                                  "    background-color: #007bff;"
-                                  "    color: white;"
-                                  "    padding: 15px;"
-                                  "    margin: 10px 0;"
-                                  "    border: none;"
-                                  "    border-radius: 5px;"
-                                  "    width: 80%;"
-                                  "    max-width: 300px;"
-                                  "    font-size: 1.2em;"
-                                  "    cursor: pointer;"
-                                  "    text-decoration: none;"
-                                  "    display: block;"
-                                  "    text-align: center;"
-                                  "}"
-                                  ".button:hover {"
-                                  "    background-color: #0056b3;"
-                                  "}"
-                                  "</style>"
-                                  "</head>"
-                                  "<body>"
-                                  "<h1>OTA Update</h1>"
-                                  "<p>Firmware update without Wi-Fi connection</p>"
-                                  "<a href='/do_ota' class='button'>Start OTA Update</a>"
-                                  "</body>"
+// Original HTML pages (excluding OTA)
+static const char *restart_html = "<!DOCTYPE html>\n"
+                                  "<html lang=\"en\">\n"
+                                  "<head>\n"
+                                  "<meta charset=\"UTF-8\">\n"
+                                  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                                  "<title>Restart Device</title>\n"
+                                  "<style>\n"
+                                  "body { font-family: Arial, sans-serif; display: flex; justify-content: center; "
+                                  "align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }\n"
+                                  ".container { text-align: center; background-color: white; padding: 20px; "
+                                  "border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }\n"
+                                  "h1 { color: #333; }\n"
+                                  "button { padding: 10px 20px; margin: 10px; background-color: #007bff; color: white; "
+                                  "border: none; border-radius: 5px; cursor: pointer; }\n"
+                                  "button:hover { background-color: #0056b3; }\n"
+                                  "</style>\n"
+                                  "</head>\n"
+                                  "<body>\n"
+                                  "<div class=\"container\">\n"
+                                  "<h1>Restart Device</h1>\n"
+                                  "<a href=\"/do_restart\"><button>Confirm Restart</button></a>\n"
+                                  "</div>\n"
+                                  "</body>\n"
                                   "</html>";
 
-static const char *restart_html = "<html>"
-                                  "<head>"
-                                  "<title>Restart Device</title>"
-                                  "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                                  "<style>"
-                                  "body {"
-                                  "    background-color: #1a1a1a;"
-                                  "    color: white;"
-                                  "    font-family: Arial, sans-serif;"
-                                  "    display: flex;"
-                                  "    flex-direction: column;"
-                                  "    align-items: center;"
-                                  "    justify-content: center;"
-                                  "    height: 100vh;"
-                                  "    margin: 0;"
-                                  "}"
-                                  "h1 {"
-                                  "    font-size: 2em;"
-                                  "    margin-bottom: 20px;"
-                                  "}"
-                                  ".button {"
-                                  "    background-color: #007bff;"
-                                  "    color: white;"
-                                  "    padding: 15px;"
-                                  "    margin: 10px 0;"
-                                  "    border: none;"
-                                  "    border-radius: 5px;"
-                                  "    width: 80%;"
-                                  "    max-width: 300px;"
-                                  "    font-size: 1.2em;"
-                                  "    cursor: pointer;"
-                                  "    text-decoration: none;"
-                                  "    display: block;"
-                                  "    text-align: center;"
-                                  "}"
-                                  ".button:hover {"
-                                  "    background-color: #0056b3;"
-                                  "}"
-                                  "</style>"
-                                  "</head>"
-                                  "<body>"
-                                  "<h1>Restart Device</h1>"
-                                  "<a href='/do_restart' class='button'>Confirm Restart</a>"
-                                  "</body>"
-                                  "</html>";
-
-static const char *exit_html = "<html>"
-                               "<head>"
-                               "<title>Exit Configuration</title>"
-                               "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                               "<style>"
-                               "body {"
-                               "    background-color: #1a1a1a;"
-                               "    color: white;"
-                               "    font-family: Arial, sans-serif;"
-                               "    display: flex;"
-                               "    flex-direction: column;"
-                               "    align-items: center;"
-                               "    justify-content: center;"
-                               "    height: 100vh;"
-                               "    margin: 0;"
-                               "}"
-                               "h1 {"
-                               "    font-size: 2em;"
-                               "    margin-bottom: 20px;"
-                               "}"
-                               ".button {"
-                               "    background-color: #007bff;"
-                               "    color: white;"
-                               "    padding: 15px;"
-                               "    margin: 10px 0;"
-                               "    border: none;"
-                               "    border-radius: 5px;"
-                               "    width: 80%;"
-                               "    max-width: 300px;"
-                               "    font-size: 1.2em;"
-                               "    cursor: pointer;"
-                               "    text-decoration: none;"
-                               "    display: block;"
-                               "    text-align: center;"
-                               "}"
-                               ".button:hover {"
-                               "    background-color: #0056b3;"
-                               "}"
-                               "</style>"
-                               "</head>"
-                               "<body>"
-                               "<h1>Exit Configuration</h1>"
-                               "<p>You will be disconnected from this network</p>"
-                               "<a href='/do_exit' class='button'>Confirm Exit</a>"
-                               "</body>"
+static const char *exit_html = "<!DOCTYPE html>\n"
+                               "<html lang=\"en\">\n"
+                               "<head>\n"
+                               "<meta charset=\"UTF-8\">\n"
+                               "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                               "<title>Exit Configuration</title>\n"
+                               "<style>\n"
+                               "body { font-family: Arial, sans-serif; display: flex; justify-content: center; "
+                               "align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }\n"
+                               ".container { text-align: center; background-color: white; padding: 20px; "
+                               "border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }\n"
+                               "h1 { color: #333; }\n"
+                               "button { padding: 10px 20px; margin: 10px; background-color: #007bff; color: white; "
+                               "border: none; border-radius: 5px; cursor: pointer; }\n"
+                               "button:hover { background-color: #0056b3; }\n"
+                               "</style>\n"
+                               "</head>\n"
+                               "<body>\n"
+                               "<div class=\"container\">\n"
+                               "<h1>Exit Configuration</h1>\n"
+                               "<p>You will be disconnected from this network</p>\n"
+                               "<a href=\"/do_exit\"><button>Confirm Exit</button></a>\n"
+                               "</div>\n"
+                               "</body>\n"
                                "</html>";
 
 // Function to generate AP SSID based on MAC address
@@ -277,11 +240,26 @@ static void generate_ap_ssid(void)
 static void time_sync_notification_cb(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Received time adjustment from NTP");
+    // Ensure timezone is applied correctly after NTP sync
+    char saved_timezone[32] = {0};
+    size_t timezone_len = sizeof(saved_timezone);
+    if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
+        strncpy(ntp_timezone, saved_timezone, sizeof(ntp_timezone));
+        ESP_LOGI(TAG, "Reapplied timezone from NVS after NTP sync: %s", ntp_timezone);
+        setenv("TZ", ntp_timezone, 1);
+        tzset();
+    } else {
+        ESP_LOGI(TAG, "Using default timezone after NTP sync: %s", ntp_timezone);
+        setenv("TZ", ntp_timezone, 1);
+        tzset();
+    }
     struct tm timeinfo;
     localtime_r(&tv->tv_sec, &timeinfo);
     char strftime_buf[64];
     strftime(strftime_buf, sizeof(strftime_buf), "%A, %B %d %Y %H:%M:%S %Z", &timeinfo);
     ESP_LOGI(TAG, "Current time: %s", strftime_buf);
+    ESP_LOGI(TAG, "System time set to: %ld", (long)tv->tv_sec);
+    ntp_synced = true;
 }
 
 // Task to update clock display
@@ -341,7 +319,7 @@ static esp_err_t save_timezone(const char *timezone)
         return err;
     }
 
-    err = nvs_set_str(nvs_handle, "timezone", timezone);
+    err = nvs_set_str(nvs_handle, "TZ", timezone);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error saving timezone: %s", esp_err_to_name(err));
         nvs_close(nvs_handle);
@@ -361,14 +339,14 @@ static esp_err_t load_timezone(char *timezone, size_t *timezone_len)
 
     err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs_handle);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-        ESP_LOGI(TAG, "NVS partition not found for timezone, using default");
+        ESP_LOGI(TAG, "NVS partition not found for timezone");
         return err;
     } else if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error opening NVS for timezone: %s", esp_err_to_name(err));
         return err;
     }
 
-    err = nvs_get_str(nvs_handle, "timezone", timezone, timezone_len);
+    err = nvs_get_str(nvs_handle, "TZ", timezone, timezone_len);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error reading timezone: %s", esp_err_to_name(err));
         nvs_close(nvs_handle);
@@ -380,27 +358,53 @@ static esp_err_t load_timezone(char *timezone, size_t *timezone_len)
 }
 
 // Initialize SNTP
-static void initialize_sntp(void)
+static esp_err_t initialize_sntp(void)
 {
     ESP_LOGI(TAG, "Initializing SNTP");
     esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
-    esp_sntp_setservername(0, NTP_SERVER1);
-    esp_sntp_setservername(1, NTP_SERVER2);
-    esp_sntp_setservername(2, NTP_SERVER3);
+    esp_sntp_setservername(0, NTP_SERVER_1);
+    esp_sntp_setservername(1, NTP_SERVER_2);
     esp_sntp_set_time_sync_notification_cb(time_sync_notification_cb);
     esp_sntp_init();
 
+    // Apply saved timezone before NTP sync
     char saved_timezone[32] = {0};
     size_t timezone_len = sizeof(saved_timezone);
     if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
         strncpy(ntp_timezone, saved_timezone, sizeof(ntp_timezone));
-        ESP_LOGI(TAG, "Loaded timezone from NVS: %s", ntp_timezone);
+        ESP_LOGI(TAG, "Loaded timezone from NVS before NTP sync: %s", ntp_timezone);
+        setenv("TZ", ntp_timezone, 1);
+        tzset();
     } else {
-        ESP_LOGI(TAG, "Using default timezone: %s", ntp_timezone);
+        ESP_LOGI(TAG, "Using default timezone before NTP: %s", ntp_timezone);
+        setenv("TZ", ntp_timezone, 1);
+        tzset();
     }
 
-    setenv("TZ", ntp_timezone, 1);
-    tzset();
+    for (int retry = 0; retry < NTP_RETRY_COUNT; retry++) {
+        ESP_LOGI(TAG, "NTP sync attempt %d/%d", retry + 1, NTP_RETRY_COUNT);
+        int retry_count = NTP_TIMEOUT_MS / 1000;
+        int i = 0;
+        while (i < retry_count) {
+            if (ntp_synced) {
+                ESP_LOGI(TAG, "NTP sync already completed, exiting early");
+                return ESP_OK;
+            }
+            ESP_LOGI(TAG, "Waiting for NTP time: attempt %d, retry %d/%d", retry + 1, i + 1, retry_count);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            i++;
+        }
+        ESP_LOGW(TAG, "NTP sync attempt %d failed", retry + 1);
+    }
+
+    ESP_LOGE(TAG, "All NTP sync attempts failed");
+    ntp_synced = false;
+    // Preserve existing time if previously synced
+    if (time(NULL) > 946684800) { // Check if time is beyond Jan 1, 2000
+        ESP_LOGI(TAG, "Preserving existing time due to NTP failure: %ld", (long)time(NULL));
+        return ESP_OK; // Avoid resetting time
+    }
+    return ESP_FAIL;
 }
 
 static esp_err_t save_wifi_credentials(const char *ssid, const char *pass)
@@ -441,7 +445,7 @@ static esp_err_t load_wifi_credentials(char *ssid, size_t *ssid_len, char *pass,
     err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs_handle);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
         ESP_LOGI(TAG, "NVS partition not found, initializing...");
-        nvs_flash_init_partition(NVS_DEFAULT_PART_NAME);
+        nvs_flash_init();
         err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs_handle);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Error opening NVS after init: %s", esp_err_to_name(err));
@@ -489,66 +493,36 @@ static esp_err_t favicon_get_handler(httpd_req_t *req)
 static esp_err_t wifi_form_get_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
-    const char *resp_str = "<html>"
-                           "<head>"
-                           "<title>WiFi Setup</title>"
-                           "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                           "<style>"
-                           "body {"
-                           "    background-color: #1a1a1a;"
-                           "    color: white;"
-                           "    font-family: Arial, sans-serif;"
-                           "    display: flex;"
-                           "    flex-direction: column;"
-                           "    align-items: center;"
-                           "    justify-content: center;"
-                           "    height: 100vh;"
-                           "    margin: 0;"
-                           "    text-align: center;"
-                           "}"
-                           "h1 {"
-                           "    font-size: 2em;"
-                           "    margin-bottom: 20px;"
-                           "}"
-                           "form {"
-                           "    display: flex;"
-                           "    flex-direction: column;"
-                           "    align-items: center;"
-                           "}"
-                           "input[type='text'], input[type='password'] {"
-                           "    padding: 10px;"
-                           "    margin: 10px 0;"
-                           "    width: 80%;"
-                           "    max-width: 300px;"
-                           "    border-radius: 5px;"
-                           "    border: none;"
-                           "    font-size: 1em;"
-                           "}"
-                           "input[type='submit'] {"
-                           "    background-color: #007bff;"
-                           "    color: white;"
-                           "    padding: 15px;"
-                           "    margin: 10px 0;"
-                           "    border: none;"
-                           "    border-radius: 5px;"
-                           "    width: 80%;"
-                           "    max-width: 300px;"
-                           "    font-size: 1.2em;"
-                           "    cursor: pointer;"
-                           "}"
-                           "input[type='submit']:hover {"
-                           "    background-color: #0056b3;"
-                           "}"
-                           "</style>"
-                           "</head>"
-                           "<body>"
-                           "<h1>WiFi Setup</h1>"
-                           "<form method='post' action='/set_wifi'>"
-                           "SSID: <input type='text' name='ssid'><br>"
-                           "Password: <input type='password' name='pass'><br>"
-                           "<input type='submit' value='Connect'>"
-                           "</form>"
-                           "</body>"
+    const char *resp_str = "<!DOCTYPE html>\n"
+                           "<html lang=\"en\">\n"
+                           "<head>\n"
+                           "<meta charset=\"UTF-8\">\n"
+                           "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                           "<title>WiFi Setup</title>\n"
+                           "<style>\n"
+                           "body { font-family: Arial, sans-serif; display: flex; justify-content: center; "
+                           "align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }\n"
+                           ".container { text-align: center; background-color: white; padding: 20px; border-radius: "
+                           "10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }\n"
+                           "h1 { color: #333; }\n"
+                           "input[type=text], input[type=password] { padding: 8px; margin: 10px; width: 200px; }\n"
+                           "button { padding: 10px 20px; background-color: #007bff; color: white; border: none; "
+                           "border-radius: 5px; cursor: pointer; }\n"
+                           "button:hover { background-color: #0056b3; }\n"
+                           "</style>\n"
+                           "</head>\n"
+                           "<body>\n"
+                           "<div class=\"container\">\n"
+                           "<h1>WiFi Setup</h1>\n"
+                           "<form action=\"/wifi_form\" method=\"post\">\n"
+                           "<label for=\"ssid\">SSID:</label><br>\n"
+                           "<input type=\"text\" id=\"ssid\" name=\"ssid\" required><br>\n"
+                           "<label for=\"pass\">Password:</label><br>\n"
+                           "<input type=\"password\" id=\"pass\" name=\"pass\" required minlength=\"8\"><br><br>\n"
+                           "<button type=\"submit\">Connect</button>\n"
+                           "</form>\n"
+                           "</div>\n"
+                           "</body>\n"
                            "</html>";
     httpd_resp_send(req, resp_str, strlen(resp_str));
     return ESP_OK;
@@ -558,155 +532,69 @@ static esp_err_t setup_clock_get_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
 
-    // Get current system time for display
+    // Get current time for display
     time_t now = time(NULL);
     struct tm *timeinfo = localtime(&now);
     char sys_time[32];
-    strftime(sys_time, sizeof(sys_time), "%m/%d/%Y, %I:%M:%S %p", timeinfo);
+    strftime(sys_time, sizeof(sys_time), "%Y-%m-%d, %H:%M:%S", timeinfo);
 
-    const char *resp_str = "<html>"
-                           "<head>"
-                           "<title>Time Settings</title>"
-                           "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                           "<style>"
-                           "body {"
-                           "    background-color: #1a1a1a;"
-                           "    color: white;"
-                           "    font-family: Arial, sans-serif;"
-                           "    display: flex;"
-                           "    flex-direction: column;"
-                           "    align-items: center;"
-                           "    justify-content: center;"
-                           "    min-height: 100vh;"
-                           "    margin: 0;"
-                           "    padding: 20px;"
-                           "    box-sizing: border-box;"
-                           "    overflow: hidden;"
-                           "}"
-                           "h1 {"
-                           "    font-size: 2em;"
-                           "    margin-bottom: 20px;"
-                           "    text-align: center;"
-                           "}"
-                           "form {"
-                           "    display: flex;"
-                           "    flex-direction: column;"
-                           "    align-items: center;"
-                           "    width: 100%;"
-                           "    max-width: 400px;"
-                           "}"
-                           ".form-group {"
-                           "    display: flex;"
-                           "    justify-content: space-between;"
-                           "    align-items: center;"
-                           "    width: 100%;"
-                           "    margin-bottom: 20px;"
-                           "    gap: 20px;"
-                           "}"
-                           "label {"
-                           "    font-size: 1em;"
-                           "    flex: 1;"
-                           "    text-align: left;"
-                           "    padding-left: 20px;"
-                           "}"
-                           ".time-display {"
-                           "    flex: 2;"
-                           "    text-align: right;"
-                           "    font-size: 1em;"
-                           "}"
-                           "select, input[type='number'] {"
-                           "    flex: 2;"
-                           "    padding: 10px;"
-                           "    border-radius: 5px;"
-                           "    border: none;"
-                           "    font-size: 1em;"
-                           "    background-color: #fff;"
-                           "    color: #000;"
-                           "    width: 100%;"
-                           "    box-sizing: border-box;"
-                           "}"
-                           ".time-inputs {"
-                           "    display: flex;"
-                           "    flex: 2;"
-                           "    gap: 10px;"
-                           "    align-items: center;"
-                           "}"
-                           ".time-inputs input {"
-                           "    width: 60px;" // Smaller width for hour/minute/second inputs
-                           "    text-align: center;"
-                           "}"
-                           "input[type='submit'] {"
-                           "    background-color: #007bff;"
-                           "    color: white;"
-                           "    padding: 15px;"
-                           "    margin-top: 20px;"
-                           "    border: none;"
-                           "    border-radius: 5px;"
-                           "    width: 100%;"
-                           "    max-width: 300px;"
-                           "    font-size: 1.2em;"
-                           "    cursor: pointer;"
-                           "}"
-                           "input[type='submit']:hover {"
-                           "    background-color: #0056b3;"
-                           "}"
-                           ".refresh-btn {"
-                           "    background-color: #007bff;"
-                           "    color: white;"
-                           "    padding: 5px 10px;"
-                           "    border: none;"
-                           "    border-radius: 5px;"
-                           "    cursor: pointer;"
-                           "    font-size: 0.9em;"
-                           "    margin-left: 10px;"
-                           "}"
-                           ".refresh-btn:hover {"
-                           "    background-color: #0056b3;"
-                           "}"
-                           "</style>"
-                           "</head>"
-                           "<body>"
-                           "<h1>Time Settings</h1>"
-                           "<form method='post' action='/set_clock'>"
-                           "<div class='form-group'>"
-                           "<label>System Time</label>"
-                           "<span class='time-display'>%s</span>"
-                           "<button type='button' class='refresh-btn' onclick='location.reload()'>Refresh</button>"
-                           "</div>"
-                           "<div class='form-group'>"
-                           "<label>Time Zone</label>"
-                           "<select name='timezone' required>"
-                           "<option value='%s' selected>%s</option>"
-                           "<option value='UTC0'>UTC</option>"
-                           "<option value='EST5EDT'>Eastern Time (US)</option>"
-                           "<option value='CST6CDT'>Central Time (US)</option>"
-                           "<option value='MST7MDT'>Mountain Time (US)</option>"
-                           "<option value='PST8PDT'>Pacific Time (US)</option>"
-                           "<option value='CET-1CEST'>Central European Time</option>"
-                           "<option value='IST-5:30'>India Standard Time</option>"
-                           "<option value='JST-9'>Japan Standard Time</option>"
-                           "</select>"
-                           "</div>"
-                           "<div class='form-group'>"
-                           "<label>Set Time</label>"
-                           "<div class='time-inputs'>"
-                           "<input type='number' name='hour' min='0' max='23' placeholder='HH' required>"
-                           "<input type='number' name='minute' min='0' max='59' placeholder='MM' required>"
-                           "<input type='number' name='second' min='0' max='59' placeholder='SS' required>"
-                           "</div>"
-                           "</div>"
-                           "<input type='submit' value='Submit'>"
-                           "</form>"
-                           "</body>"
-                           "</html>";
+    // Load saved timezone from NVS for display
+    char saved_timezone[32] = {0};
+    size_t timezone_len = sizeof(saved_timezone);
+    if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
+        strncpy(ntp_timezone, saved_timezone, sizeof(ntp_timezone));
+        ESP_LOGI(TAG, "Loaded timezone from NVS for display: %s", ntp_timezone);
+    } else {
+        ESP_LOGI(TAG, "Using default timezone for display: %s", ntp_timezone);
+    }
 
-    char resp_buf[4096];
-    snprintf(resp_buf, sizeof(resp_buf), resp_str, sys_time, ntp_timezone, ntp_timezone);
-    httpd_resp_send(req, resp_buf, strlen(resp_buf));
+    // Send HTML header
+    const char *header = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">"
+                         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+                         "<title>Time Settings</title>"
+                         "<style>"
+                         "body { font-family: Arial, sans-serif; display: flex; justify-content: center; "
+                         "align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }"
+                         ".container { text-align: center; background-color: white; padding: 20px; "
+                         "border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }"
+                         "h1 { color: #333; }"
+                         "select, input[type=text] { padding: 8px; margin: 10px; width: 200px; }"
+                         "button { padding: 10px 20px; background-color: #007bff; color: white; "
+                         "border: none; border-radius: 5px; cursor: pointer; }"
+                         "button:hover { background-color: #0056b3; }"
+                         "</style></head><body><div class=\"container\">"
+                         "<h1>Time Settings</h1><form action=\"/setup_clock\" method=\"post\">"
+                         "<h3>System Time</h3><p>%s</p>"
+                         "<a href=\"/setup_clock\"><button type=\"button\">Refresh</button></a><br><br>"
+                         "<h3>Time Zone</h3><select name=\"timezone\" id=\"timezone\">\n";
+    char header_buf[1024];
+    snprintf(header_buf, sizeof(header_buf), header, sys_time);
+    httpd_resp_send_chunk(req, header_buf, strlen(header_buf));
+
+    // Send timezone options in chunks
+    for (size_t i = 0; i < NUM_TIMEZONES; i++) {
+        char option[128];
+        snprintf(option, sizeof(option), "<option value=\"%s\" %s>%s</option>\n",
+                 timezones[i].posix_tz,
+                 strcmp(timezones[i].posix_tz, ntp_timezone) == 0 ? "selected" : "",
+                 timezones[i].region);
+        httpd_resp_send_chunk(req, option, strlen(option));
+    }
+
+    // Send form footer
+    const char *footer = "</select><br><br>"
+                         "<label for=\"hour\">Hour (0-23):</label><br>"
+                         "<input type=\"text\" id=\"hour\" name=\"hour\" required pattern=\"[0-9]{1,2}\"><br>"
+                         "<label for=\"minute\">Minute (0-59):</label><br>"
+                         "<input type=\"text\" id=\"minute\" name=\"minute\" required pattern=\"[0-9]{1,2}\"><br>"
+                         "<label for=\"second\">Second (0-59):</label><br>"
+                         "<input type=\"text\" id=\"second\" name=\"second\" required pattern=\"[0-9]{1,2}\"><br><br>"
+                         "<button type=\"submit\">Set Time</button></form></div></body></html>";
+    httpd_resp_send_chunk(req, footer, strlen(footer));
+    httpd_resp_send_chunk(req, NULL, 0); // End chunked response
     return ESP_OK;
 }
 
-// Clock setup POST handler
 static esp_err_t setup_clock_post_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling POST request for URI: %s, content length: %d", req->uri, req->content_len);
@@ -718,40 +606,61 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
 
     if (remaining > sizeof(buf) - 1) {
         ESP_LOGE(TAG, "POST data too large: %d bytes", remaining);
-        httpd_resp_send_err(req, HTTPD_413_CONTENT_TOO_LARGE, "Request entity too large");
+        httpd_resp_send_err(req, HTTPD_413_CONTENT_TOO_LARGE, "Content too large");
         return ESP_FAIL;
     }
 
     while (remaining > 0) {
-        ret = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf) - 1));
+        ret = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)));
         if (ret <= 0) {
             if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
                 httpd_resp_send_408(req);
+                return ESP_FAIL;
             }
-            ESP_LOGE(TAG, "Error receiving POST data: %d", ret);
             return ESP_FAIL;
         }
         buf[ret] = '\0';
         remaining -= ret;
-
-        ESP_LOGI(TAG, "Received POST data: %s", buf);
-
-        // Parse the expected fields: timezone, hour, minute, second
-        if (sscanf(buf, "timezone=%31[^&]&hour=%2[^&]&minute=%2[^&]&second=%2s", timezone, hour_str, minute_str,
-                   second_str) != 4) {
-            ESP_LOGW(TAG, "Failed to parse POST data");
-            valid_input = false;
-        }
     }
 
+    // Parse POST data
+    char *hour_start = strstr(buf, "hour=");
+    char *minute_start = strstr(buf, "minute=");
+    char *second_start = strstr(buf, "second=");
+    char *tz_start = strstr(buf, "timezone=");
+    if (hour_start && minute_start && second_start && tz_start) {
+        hour_start += strlen("hour=");
+        minute_start += strlen("minute=");
+        second_start += strlen("second=");
+        tz_start += strlen("timezone=");
+
+        char *hour_end = strchr(hour_start, '&');
+        char *minute_end = strchr(minute_start, '&');
+        char *second_end = strchr(second_start, '&');
+        char *tz_end = strchr(tz_start, '&');
+
+        if (!hour_end)
+            hour_end = hour_start + strlen(hour_start);
+        if (!minute_end)
+            minute_end = minute_start + strlen(minute_start);
+        if (!second_end)
+            second_end = second_start + strlen(second_start);
+        if (!tz_end)
+            tz_end = tz_start + strlen(tz_start);
+
+        strncpy(hour_str, hour_start, MIN(hour_end - hour_start, sizeof(hour_str) - 1));
+        strncpy(minute_str, minute_start, MIN(minute_end - minute_start, sizeof(minute_str) - 1));
+        strncpy(second_str, second_start, MIN(second_end - second_start, sizeof(second_str) - 1));
+        strncpy(timezone, tz_start, MIN(tz_end - tz_start, sizeof(timezone) - 1));
+    } else {
+        valid_input = false;
+        ESP_LOGW(TAG, "Missing required POST parameters");
+    }
+
+    // Validate time inputs
     int hour = atoi(hour_str);
     int minute = atoi(minute_str);
     int second = atoi(second_str);
-
-    ESP_LOGI(TAG, "Parsed values: hour=%s (%d), minute=%s (%d), second=%s (%d), timezone=%s", hour_str, hour,
-             minute_str, minute, second_str, second, timezone);
-
-    // Validate input
     if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
         valid_input = false;
         ESP_LOGW(TAG, "Validation failed: hour=%d, minute=%d, second=%d", hour, minute, second);
@@ -762,16 +671,30 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         url_decode(decoded_timezone, timezone, sizeof(decoded_timezone));
         ESP_LOGI(TAG, "Received timezone: %s, Decoded timezone: %s", timezone, decoded_timezone);
         if (strlen(decoded_timezone) > 0) {
-            esp_err_t err = save_timezone(decoded_timezone);
-            if (err == ESP_OK) {
-                strncpy(ntp_timezone, decoded_timezone, sizeof(ntp_timezone));
-                setenv("TZ", ntp_timezone, 1);
-                tzset();
-                ESP_LOGI(TAG, "Timezone set to: %s", ntp_timezone);
+            // Validate timezone against timezones array
+            bool valid_timezone = false;
+            for (size_t i = 0; i < NUM_TIMEZONES; i++) {
+                if (strcmp(decoded_timezone, timezones[i].posix_tz) == 0) {
+                    valid_timezone = true;
+                    break;
+                }
+            }
+
+            if (valid_timezone) {
+                esp_err_t err = save_timezone(decoded_timezone);
+                if (err == ESP_OK) {
+                    strncpy(ntp_timezone, decoded_timezone, sizeof(ntp_timezone));
+                    setenv("TZ", ntp_timezone, 1);
+                    tzset();
+                    ESP_LOGI(TAG, "Timezone set to: %s", ntp_timezone);
+                } else {
+                    ESP_LOGE(TAG, "Failed to save timezone");
+                    httpd_resp_send(req, "Failed to save timezone", HTTPD_RESP_USE_STRLEN);
+                    return ESP_OK;
+                }
             } else {
-                ESP_LOGE(TAG, "Failed to save timezone");
-                httpd_resp_send(req, "Failed to save timezone", HTTPD_RESP_USE_STRLEN);
-                return ESP_OK;
+                valid_input = false;
+                ESP_LOGW(TAG, "Invalid timezone: %s", decoded_timezone);
             }
         } else {
             valid_input = false;
@@ -779,7 +702,7 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         }
     } else {
         valid_input = false;
-        ESP_LOGW(TAG, "Invalid timezone received");
+        ESP_LOGW(TAG, "No valid timezone provided");
     }
 
     if (valid_input) {
@@ -797,7 +720,7 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
             return ESP_OK;
         }
 
-        struct timeval tv = {.tv_sec = rawtime, .tv_usec = 0};
+        struct timeval tv = { .tv_sec = rawtime, .tv_usec = 0 };
         if (settimeofday(&tv, NULL) != 0) {
             ESP_LOGE(TAG, "Failed to set system time");
             httpd_resp_send(req, "Failed to set system time", HTTPD_RESP_USE_STRLEN);
@@ -808,17 +731,17 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &timeinfo);
         ESP_LOGI(TAG, "System time set to: %s", time_str);
         httpd_resp_send(req, "Time and timezone set successfully. Redirecting...", HTTPD_RESP_USE_STRLEN);
+
+        httpd_resp_set_status(req, "302 Found");
+        httpd_resp_set_hdr(req, "Location", "/set_wifi");
+        httpd_resp_send(req, NULL, 0);
+        return ESP_OK;
     } else {
         ESP_LOGW(TAG, "Invalid input received");
         httpd_resp_send(req, "Invalid input. Check hour (0-23), minute (0-59), second (0-59), and timezone.",
                         HTTPD_RESP_USE_STRLEN);
         return ESP_OK;
     }
-
-    httpd_resp_set_status(req, "302 Found");
-    httpd_resp_set_hdr(req, "Location", "/set_wifi");
-    httpd_resp_send(req, NULL, 0);
-    return ESP_OK;
 }
 
 static esp_err_t wifi_config_post_handler(httpd_req_t *req)
@@ -830,40 +753,51 @@ static esp_err_t wifi_config_post_handler(httpd_req_t *req)
 
     if (remaining > sizeof(buf) - 1) {
         ESP_LOGE(TAG, "POST data too large: %d bytes", remaining);
-        httpd_resp_send_err(req, HTTPD_413_CONTENT_TOO_LARGE, "Request entity too large");
+        httpd_resp_send_err(req, HTTPD_413_CONTENT_TOO_LARGE, "Content too large");
         return ESP_FAIL;
     }
 
     while (remaining > 0) {
-        ret = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf) - 1));
+        ret = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)));
         if (ret <= 0) {
             if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
                 httpd_resp_send_408(req);
             }
-            ESP_LOGE(TAG, "Error receiving POST data: %d", ret);
             return ESP_FAIL;
         }
         buf[ret] = '\0';
         remaining -= ret;
-
-        char *ssid_start = strstr(buf, "ssid=");
-        char *pass_start = strstr(buf, "&pass=");
-        if (ssid_start && pass_start) {
-            sscanf(ssid_start, "ssid=%32[^&]", ssid);
-            sscanf(pass_start, "&pass=%64s", pass);
-        } else {
-            ESP_LOGW(TAG, "Invalid form data received");
-        }
     }
 
-    ESP_LOGI(TAG, "Received Wi-Fi credentials for SSID: %s", ssid);
+    char *ssid_start = strstr(buf, "ssid=");
+    char *pass_start = strstr(buf, "pass=");
+    if (ssid_start && pass_start) {
+        ssid_start += strlen("ssid=");
+        pass_start += strlen("pass=");
+        char *ssid_end = strchr(ssid_start, '&');
+        char *pass_end = strchr(pass_start, '&');
+        if (!ssid_end)
+            ssid_end = ssid_start + strlen(ssid_start);
+        if (!pass_end)
+            pass_end = pass_start + strlen(pass_start);
+
+        strncpy(ssid, ssid_start, MIN(ssid_end - ssid_start, sizeof(ssid) - 1));
+        strncpy(pass, pass_start, MIN(pass_end - pass_start, sizeof(pass) - 1));
+
+        char decoded_ssid[32];
+        char decoded_pass[64];
+        url_decode(decoded_ssid, ssid, sizeof(decoded_ssid));
+        url_decode(decoded_pass, pass, sizeof(decoded_pass));
+        strncpy(ssid, decoded_ssid, sizeof(ssid));
+        strncpy(pass, decoded_pass, sizeof(pass));
+    }
+
     if (strlen(ssid) > 0 && strlen(pass) >= 8) {
         ESP_LOGI(TAG, "Received SSID: %s, Password: %s", ssid, pass);
         save_wifi_credentials(ssid, pass);
         httpd_resp_send(req, "WiFi credentials saved. Rebooting...", HTTPD_RESP_USE_STRLEN);
-
         esp_wifi_stop();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
         esp_restart();
         return ESP_OK;
     } else {
@@ -875,18 +809,10 @@ static esp_err_t wifi_config_post_handler(httpd_req_t *req)
 
 static esp_err_t root_get_handler(httpd_req_t *req)
 {
-    ESP_LOGI(TAG, "Handling GET request for root URI: %s", req->uri);
+    ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
     httpd_resp_set_status(req, "302 Found");
     httpd_resp_set_hdr(req, "Location", "/set_wifi");
     httpd_resp_send(req, NULL, 0);
-    return ESP_OK;
-}
-
-// New handler implementations
-static esp_err_t ota_get_handler(httpd_req_t *req)
-{
-    ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
-    httpd_resp_send(req, ota_get_html, strlen(ota_get_html));
     return ESP_OK;
 }
 
@@ -897,7 +823,7 @@ static esp_err_t restart_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-static esp_err_t exit_get_handler(httpd_req_t *req)
+static esp_err_t exit_config_get_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
     httpd_resp_send(req, exit_html, strlen(exit_html));
@@ -908,7 +834,7 @@ static esp_err_t do_restart_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
     httpd_resp_send(req, "Restarting device...", HTTPD_RESP_USE_STRLEN);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     esp_restart();
     return ESP_OK;
 }
@@ -917,149 +843,116 @@ static esp_err_t do_exit_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
     httpd_resp_send(req, "Disconnecting...", HTTPD_RESP_USE_STRLEN);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 
-    // Stop services and disconnect clients
+    // Stop services
     stop_webserver();
     esp_wifi_stop();
-
-    // Restart to attempt STA connection
     esp_restart();
     return ESP_OK;
 }
 
-static esp_err_t do_ota_handler(httpd_req_t *req)
-{
-    ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
-    const esp_partition_t *update_partition = esp_ota_get_next_update_partition(NULL);
-    if (update_partition == NULL) {
-        ESP_LOGE(TAG, "Failed to find OTA update partition");
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "OTA partition not found");
-        return ESP_FAIL;
-    }
-
-    esp_ota_handle_t ota_handle;
-    esp_err_t err = esp_ota_begin(update_partition, OTA_SIZE_UNKNOWN, &ota_handle);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "OTA begin failed: %s", esp_err_to_name(err));
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "OTA begin failed");
-        return ESP_FAIL;
-    }
-
-    // Receive firmware data
-    char buf[1024];
-    int received;
-    int total_len = req->content_len;
-    int remaining = total_len;
-
-    while (remaining > 0) {
-        received = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)));
-        if (received <= 0) {
-            if (received == HTTPD_SOCK_ERR_TIMEOUT) {
-                continue; // Retry on timeout
-            }
-            esp_ota_end(ota_handle);
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive firmware");
-            return ESP_FAIL;
-        }
-
-        err = esp_ota_write(ota_handle, buf, received);
-        if (err != ESP_OK) {
-            esp_ota_end(ota_handle);
-            ESP_LOGE(TAG, "OTA write failed: %s", esp_err_to_name(err));
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "OTA write failed");
-            return ESP_FAIL;
-        }
-        remaining -= received;
-    }
-
-    err = esp_ota_end(ota_handle);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "OTA end failed: %s", esp_err_to_name(err));
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "OTA end failed");
-        return ESP_FAIL;
-    }
-
-    err = esp_ota_set_boot_partition(update_partition);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set boot partition: %s", esp_err_to_name(err));
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to set boot partition");
-        return ESP_FAIL;
-    }
-
-    httpd_resp_send(req, "OTA update successful. Rebooting...", HTTPD_RESP_USE_STRLEN);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    esp_restart();
-    return ESP_OK;
-}
-
-static void start_webserver(void)
-{
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 8192;
-    config.max_uri_handlers = 16; // Increase from default 8
-    config.uri_match_fn = httpd_uri_match_wildcard;
-
-    if (httpd_start(&server, &config) == ESP_OK) {
-        httpd_uri_t config_get = {
-            .uri = "/set_wifi", .method = HTTP_GET, .handler = wifi_config_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &config_get);
-
-        httpd_uri_t wifi_form = {
-            .uri = "/wifi_form", .method = HTTP_GET, .handler = wifi_form_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &wifi_form);
-
-        httpd_uri_t config_post = {
-            .uri = "/set_wifi", .method = HTTP_POST, .handler = wifi_config_post_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &config_post);
-
-        httpd_uri_t setup_clock_get = {
-            .uri = "/setup_clock", .method = HTTP_GET, .handler = setup_clock_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &setup_clock_get);
-
-        httpd_uri_t setup_clock_post = {
-            .uri = "/set_clock", .method = HTTP_POST, .handler = setup_clock_post_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &setup_clock_post);
-
-        httpd_uri_t root_get = {.uri = "/", .method = HTTP_GET, .handler = root_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &root_get);
-
-        httpd_uri_t favicon_get = {
-            .uri = "/favicon.ico", .method = HTTP_GET, .handler = favicon_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &favicon_get);
-
-        // Register new handlers
-        httpd_uri_t ota_get = {.uri = "/ota", .method = HTTP_GET, .handler = ota_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &ota_get);
-
-        httpd_uri_t restart_get = {
-            .uri = "/restart", .method = HTTP_GET, .handler = restart_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &restart_get);
-
-        httpd_uri_t exit_get = {.uri = "/exit", .method = HTTP_GET, .handler = exit_get_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &exit_get);
-
-        httpd_uri_t do_restart = {
-            .uri = "/do_restart", .method = HTTP_GET, .handler = do_restart_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &do_restart);
-
-        httpd_uri_t do_exit = {.uri = "/do_exit", .method = HTTP_GET, .handler = do_exit_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &do_exit);
-
-        httpd_uri_t do_ota = {.uri = "/do_ota", .method = HTTP_POST, .handler = do_ota_handler, .user_ctx = NULL};
-        httpd_register_uri_handler(server, &do_ota);
-    }
-    ESP_LOGI(TAG, "Webserver started with new features");
-}
 static void stop_webserver(void)
 {
     if (server) {
         httpd_stop(server);
         server = NULL;
+        ESP_LOGI(TAG, "Webserver stopped");
     }
 }
 
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+static httpd_handle_t start_webserver(void)
+{
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = 20; // Increase max URI handlers if needed
+    config.stack_size = 24576; // Increase stack size for larger requests
+
+    if (httpd_start(&server, &config) == ESP_OK) {
+        ESP_LOGI(TAG, "Starting webserver");
+        httpd_uri_t root = {
+            .uri       = "/",
+            .method    = HTTP_GET,
+            .handler   = root_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t wifi_config = {
+            .uri       = "/set_wifi",
+            .method    = HTTP_GET,
+            .handler   = wifi_config_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t favicon = {
+            .uri       = "/favicon.ico",
+            .method    = HTTP_GET,
+            .handler   = favicon_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t wifi_form = {
+            .uri       = "/wifi_form",
+            .method    = HTTP_GET,
+            .handler   = wifi_form_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t wifi_form_post = {
+            .uri       = "/wifi_form",
+            .method    = HTTP_POST,
+            .handler   = wifi_config_post_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t restart = {
+            .uri       = "/restart",
+            .method    = HTTP_GET,
+            .handler   = restart_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t do_restart = {
+            .uri       = "/do_restart",
+            .method    = HTTP_GET,
+            .handler   = do_restart_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t exit_config = {
+            .uri       = "/exit",
+            .method    = HTTP_GET,
+            .handler   = exit_config_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t do_exit = {
+            .uri       = "/do_exit",
+            .method    = HTTP_GET,
+            .handler   = do_exit_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t setup_clock = {
+            .uri       = "/setup_clock",
+            .method    = HTTP_GET,
+            .handler   = setup_clock_get_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t setup_clock_post = {
+            .uri       = "/setup_clock",
+            .method    = HTTP_POST,
+            .handler   = setup_clock_post_handler,
+            .user_ctx  = NULL
+        };
+
+        httpd_register_uri_handler(server, &root);
+        httpd_register_uri_handler(server, &wifi_config);
+        httpd_register_uri_handler(server, &favicon);
+        httpd_register_uri_handler(server, &wifi_form);
+        httpd_register_uri_handler(server, &wifi_form_post);
+        httpd_register_uri_handler(server, &restart);
+        httpd_register_uri_handler(server, &do_restart);
+        httpd_register_uri_handler(server, &exit_config);
+        httpd_register_uri_handler(server, &do_exit);
+        httpd_register_uri_handler(server, &setup_clock);
+        httpd_register_uri_handler(server, &setup_clock_post);
+    }
+    return server;
+}
+
+static void event_handler(void* arg, esp_event_base_t event_base,
+                            int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
@@ -1067,30 +960,18 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         if (s_retry_num < WIFI_MAX_RETRY) {
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGI(TAG, "Retry to connect to the AP");
+            ESP_LOGI(TAG, "Retry to connect to the AP, attempt %d", s_retry_num);
         } else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
             wifi_connected = false;
-            ESP_LOGI(TAG, "Failed to connect, starting AP mode");
-            esp_wifi_stop();
-            wifi_config_t wifi_config = {
-                .ap =
-                    {
-                        .password = AP_PASS,
-                        .max_connection = 4,
-                        .authmode = WIFI_AUTH_WPA2_PSK,
-                    },
-            };
-            strncpy((char *)wifi_config.ap.ssid, ap_ssid, sizeof(wifi_config.ap.ssid));
-            wifi_config.ap.ssid_len = strlen(ap_ssid);
-            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-            ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
-            ESP_ERROR_CHECK(esp_wifi_start());
-            start_webserver();
+            ESP_LOGI(TAG, "Failed to connect to AP after %d attempts", WIFI_MAX_RETRY);
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-        ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
+        char ip_str[16];
+        snprintf(ip_str, sizeof(ip_str), "%d.%d.%d.%d",
+                 IP2STR(&event->ip_info.ip));
+        ESP_LOGI(TAG, "Got IP: %s", ip_str);
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
         wifi_connected = true;
@@ -1102,16 +983,15 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 void wifi_init(void)
 {
     s_wifi_event_group = xEventGroupCreate();
+
     ESP_ERROR_CHECK(esp_netif_init());
 
     esp_err_t err = esp_event_loop_create_default();
     if (err == ESP_ERR_INVALID_STATE) {
-        ESP_LOGI(TAG, "Default event loop already exists, skipping creation");
+        ESP_LOGI(TAG, "Default event loop already created");
     } else if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create default event loop: %s", esp_err_to_name(err));
         ESP_ERROR_CHECK(err);
-    } else {
-        ESP_LOGI(TAG, "Created default event loop");
     }
 
     esp_netif_create_default_wifi_sta();
@@ -1124,12 +1004,32 @@ void wifi_init(void)
 
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(
-        esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
-    ESP_ERROR_CHECK(
-        esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
+                                                        ESP_EVENT_ANY_ID,
+                                                        &event_handler,
+                                                        NULL,
+                                                        &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
+                                                        IP_EVENT_STA_GOT_IP,
+                                                        &event_handler,
+                                                        NULL,
+                                                        &instance_got_ip));
 
-    xTaskCreatePinnedToCore(clock_update_task, "clock_task", 8192, NULL, 2, NULL, 0);
+    xTaskCreatePinnedToCore(clock_update_task, "clock_task", 12288, NULL, 2, NULL, 0);
+
+    // Load and apply saved timezone
+    char saved_timezone[32] = {0};
+    size_t timezone_len = sizeof(saved_timezone);
+    if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
+        strncpy(ntp_timezone, saved_timezone, sizeof(ntp_timezone));
+        ESP_LOGI(TAG, "Loaded timezone from NVS at init: %s", ntp_timezone);
+        setenv("TZ", ntp_timezone, 1);
+        tzset();
+    } else {
+        ESP_LOGI(TAG, "Using default timezone at init: %s", ntp_timezone);
+        setenv("TZ", ntp_timezone, 1);
+        tzset();
+    }
 
     char ssid[32] = {0};
     char pass[64] = {0};
@@ -1137,30 +1037,22 @@ void wifi_init(void)
     size_t pass_len = sizeof(pass);
 
     if (load_wifi_credentials(ssid, &ssid_len, pass, &pass_len) == ESP_OK) {
-        ESP_LOGI(TAG, "Loaded saved credentials, SSID: %s", ssid);
-        wifi_config_t wifi_config = {
-            .sta =
-                {
-                    .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-                },
-        };
+        ESP_LOGI(TAG, "Loaded saved credentials SSID: %s", ssid);
+        wifi_config_t wifi_config = {0};
         strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
         strncpy((char *)wifi_config.sta.password, pass, sizeof(wifi_config.sta.password));
+        wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
         ESP_ERROR_CHECK(esp_wifi_start());
     } else {
-        ESP_LOGI(TAG, "No saved credentials, starting AP mode");
-        wifi_config_t wifi_config = {
-            .ap =
-                {
-                    .password = AP_PASS,
-                    .max_connection = 4,
-                    .authmode = WIFI_AUTH_WPA2_PSK,
-                },
-        };
+        ESP_LOGI(TAG, "No saved credentials found, starting AP mode");
+        wifi_config_t wifi_config = {0};
         strncpy((char *)wifi_config.ap.ssid, ap_ssid, sizeof(wifi_config.ap.ssid));
         wifi_config.ap.ssid_len = strlen(ap_ssid);
+        strncpy((char *)wifi_config.ap.password, AP_PASS, sizeof(wifi_config.ap.password));
+        wifi_config.ap.max_connection = 4;
+        wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
         ESP_ERROR_CHECK(esp_wifi_start());
@@ -1168,7 +1060,7 @@ void wifi_init(void)
     }
 }
 
-const char *wifi_get_ap_ssid(void)
+const char* wifi_get_ap_ssid(void)
 {
     return ap_ssid;
 }
