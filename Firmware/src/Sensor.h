@@ -130,8 +130,8 @@ String deviceName = "";
 
 // MQTT Server Details
 const char *mqtt_server = "mqtt.oizom.com";
-const char *username = "xxxx";
-const char *password = "xxxx";
+const char *username = "OIZOM";
+const char *password = "12345678";
 
 lv_chart_series_t *ui_PM1chart_series_1 = {0};
 static lv_coord_t ui_PM1chart_series_1_array[CHART_DATA_LENGTH] = {0};
