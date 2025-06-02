@@ -31,8 +31,8 @@
 #define FIRMWARE_VERSION "version - 1.1"
 String REGION_CODE = "ap-in-1";                        // Anedya region code (e.g., "ap-in-1" for Asia-Pacific/India) | For other country code, visity [https://docs.anedya.io/device/#region]
 //AIROWL_E939F8
-const char *CONNECTION_KEY = "a0833765fa6b23753d7c3fb6ba78b970"; 
-const char *PHYSICAL_DEVICE_ID = "46ed7de4-e783-4ca7-8f7a-7def3ef51bb3"; 
+const char *CONNECTION_KEY = "b7a0cf40db3ad8a8cf2878634e07653f"; 
+const char *PHYSICAL_DEVICE_ID = "973e4f25-9e82-48d6-8f30-0fa21c1311bb";
 
 
 // Anedya Root CA 3 (ECC - 256)(Pem format)| [https://docs.anedya.io/device/mqtt-endpoints/#tls]
@@ -72,7 +72,7 @@ String errorTopic = "$anedya/device/" + String(PHYSICAL_DEVICE_ID) + "/errors"; 
 
 // ----------------------------- Helper Variable ----------------------------------------
 long last_check_for_ota_update = 0;
-long check_for_ota_update_interval= 60*60*1000;
+long check_for_ota_update_interval= 1*60*1000;
 String timeRes; // variable to handle response
 
 #define TIME_SYNC_BIT 1
@@ -100,8 +100,6 @@ void syncDeviceTime();       // Function to configure the device time with real-
 void anedya_sendHeartbeat(); // Function to send heartbeat to the Anedya
 bool anedya_check_ota_update();
 void anedya_update_ota_status(String deploymentID, String deploymentStatus);
-void handleMatter();
-void handlesensordata();
 void handlesensorAndMatter();
 
 // ---------------------------- OTA Event Handler ----------------------------
@@ -135,57 +133,53 @@ void HttpEvent(HttpEvent_t *event)
     }
 }
 
-void handlesensordata() {
+void handlesensorAndMatter() {
     if (otaInProgress || suppressSensorPrinting) return;
-    static int lastAQI = -1;
-    static float lastTemp = 0.0;
-    static float lastHum = 0.0;
-  
-    if (!suppressSensorPrinting) {
-      if (AQI != lastAQI) {
-        M5.Log.printf("AQI from Sensor: %d\n", AQI);
-        lastAQI = AQI;
-      }
-      if (temperature != lastTemp || humidity != lastHum) {
-        lastTemp = temperature;
-        lastHum = humidity;
-      }
-    }
-  }
+        static int lastAQI = -1;
+        static float lastTemp = 0.0;
+        static float lastHum = 0.0;
 
-  void handleMatter() {
+        if (!suppressSensorPrinting) {
+            if (AQI != lastAQI) {
+            M5.Log.printf("AQI from Sensor: %d\n", AQI);
+            lastAQI = AQI;
+            }
+            if (temperature != lastTemp || humidity != lastHum) {
+            lastTemp = temperature;
+            lastHum = humidity;
+            }
+        }
+
     static bool matter_initialized = false;
-    if (!matter_initialized && WiFi.status() == WL_CONNECTED && !otaInProgress) {
-      Serial.println("Starting Matter Setup...");
-      air_quality_sensor.begin(AQI);
-      temperature_sensor.begin(temperature);
-      humidity_sensor.begin(humidity);
-      ArduinoMatter::begin();
-      matter_initialized = true;
-      Serial.println("Matter initialized");
+    if (!matter_initialized && WiFi.status() == WL_CONNECTED && !otaInProgress)
+    {
+        Serial.println("Starting Matter Setup...");
+        air_quality_sensor.begin(AQI);
+        temperature_sensor.begin(temperature);
+        humidity_sensor.begin(humidity);
+        ArduinoMatter::begin();
+        matter_initialized = true;
+        Serial.println("Matter initialized");
     }
-  }
 
-  void handlesensorAndMatter() {
     static bool was_commissioned = false;
     static uint32_t last_read_time = 0;
-    static bool matter_initialized = true;
     if (matter_initialized && !otaInProgress ) 
     {
-      if (!ArduinoMatter::isDeviceCommissioned()) {
-      } else if (!was_commissioned) {
+        if (!ArduinoMatter::isDeviceCommissioned()) {
+        } else if (!was_commissioned) {
         Serial.println("Matter Node commissioned");
         was_commissioned = true;
-      }
-  
-      if (millis() - last_read_time > 5000) {
+        }
+
+        if (millis() - last_read_time > 5000) {
         last_read_time = millis();
         air_quality_sensor.setAQI(AQI);
         temperature_sensor.setTemperature(temperature);
         humidity_sensor.setHumidity(humidity);
-      }
+        }
     }
-  }
+}
 
 void on_time_available(struct timeval *t) {
   Serial.println("Received time adjustment from NTP");
@@ -279,14 +273,14 @@ void loop() {
                 otaInProgress = true;
                 suppressSensorPrinting = true;
                 // Give the sensor task time to notice the flag
-            if (myTaskHandle != NULL) {
+                if (myTaskHandle != NULL) 
+                {
                     Serial.println("Stopping sensor task before OTA...");
                     vTaskDelete(myTaskHandle);
                     myTaskHandle = NULL;
                 }
-                
+                    
                 anedya_update_ota_status(deploymentID, "start");
-
                 Serial.println("Starting firmware update");
                 esp_client.setHandshakeTimeout(30000); // 30 seconds timeout
             
@@ -296,14 +290,14 @@ void loop() {
                     .trigger_panic = true
                 };
                 esp_task_wdt_reconfigure(&ota_wdt_config);
-                
                 HttpsOTA.onHttpEvent(HttpEvent);
             
                 Serial.println("Free Internal Heap: " + String(esp_get_free_heap_size()));
                 Serial.println("Free PSRAM: " + String(ESP.getFreePsram()));
                 Serial.println("Total Heap Size: " + String(esp_get_free_heap_size()));
             
-                if (esp_get_free_heap_size() < 80000) {
+                if (esp_get_free_heap_size() < 80000) 
+                {
                     Serial.println("Not enough internal heap for OTA, aborting.");
                     anedya_update_ota_status(deploymentID, "failure");
                     return;
@@ -357,8 +351,7 @@ void loop() {
     }
     mqtt_client.loop();
     if (!otaInProgress) {
-        handlesensordata();
-        handleMatter();
+
         handlesensorAndMatter();
     }
   }
