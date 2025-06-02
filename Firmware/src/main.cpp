@@ -368,7 +368,6 @@ void connectToMQTT()
     }
     if (mqtt_client.connected()) {
         mqtt_client.disconnect();
-        // delay(1000);  // Give time for disconnect to complete
     }
     
     while (!mqtt_client.connected())
@@ -452,7 +451,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
     }
 }
 // Function to configure time synchronization with Anedya server
-// For more info, visit [https://docs.anedya.io/device/api/http-time-sync/]
+
 void syncDeviceTime()
 {
     if (WiFi.status() != WL_CONNECTED) {
@@ -464,14 +463,12 @@ void syncDeviceTime()
     }
     String timeTopic = "$anedya/device/" + String(PHYSICAL_DEVICE_ID) + "/time/json";
     const char *mqtt_topic = timeTopic.c_str();
-    // Attempt to synchronize time with Anedya server
 
     mqtt_client.connected() ? (void)0 : connectToMQTT(); // check mqtt connection
 
     Serial.print("Time synchronizing......");
 
     boolean syncTime = true; // iteration to re-sync to ATS (Anedya Time Services), in case of failed attempt
-    // Get the device send time
 
     long long deviceSendTime;
     long long timeTimer = millis();
@@ -528,7 +525,7 @@ bool anedya_check_ota_update()
     if (WiFi.status() != WL_CONNECTED) {
         wm.process();
         if (WiFi.status() != WL_CONNECTED) {
-            wm.process();  // or rely on WiFiManager logic
+            wm.process();  
             return false;
         }
     }
