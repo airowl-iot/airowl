@@ -24,6 +24,7 @@
 #include "screens/ui_dashboard.h"
 // NEW: Added MQTT include
 #include "mqtt.h"
+#include "main.h"
 
 static const char *TAG = "app_main";
 
@@ -32,7 +33,7 @@ using namespace esp_matter::attribute;
 using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
-static bool g_commissioning_window_open = false;
+bool g_commissioning_window_open = false;
 
 // External declarations from wifi.c
 extern EventGroupHandle_t s_wifi_event_group;

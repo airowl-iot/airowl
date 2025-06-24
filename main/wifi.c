@@ -7,6 +7,8 @@
 #include "esp_system.h"
 #include "esp_task_wdt.h"
 #include "esp_wifi.h"
+#include "lwip/sockets.h"
+#include "lwip/inet.h"
 #include "lvgl.h"
 #include "nvs.h"
 #include "nvs_flash.h"
@@ -22,6 +24,8 @@
 #define NVS_NAMESPACE "wifi_creds"
 #define AP_PASS "12345678"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define DNS_PORT 53
+#define AP_IP_ADDR "192.168.4.1"
 
 // NTP server definitions
 #define NTP_SERVER_1 "pool.ntp.org"
@@ -29,16 +33,17 @@
 #define NTP_TIMEOUT_MS 20000
 #define NTP_RETRY_COUNT 3
 
-char ntp_timezone[32] = "UTC0"; // Global variable for timezone
+char ntp_timezone[32] = "UTC0";
 bool ntp_synced = false;
+static bool dns_server_running = false;
 
-// Timezone structure from wifi-manager.c
+// Timezone structure
 typedef struct {
     const char *region;
     const char *posix_tz;
 } timezone_t;
 
-// Comprehensive list of timezones from wifi-manager.c
+// Comprehensive list of timezones
 static const timezone_t timezones[] = {
     {"UTC", "UTC0"},
     {"Africa/Abidjan", "GMT0"},
@@ -58,7 +63,7 @@ static const timezone_t timezones[] = {
     {"America/Phoenix", "MST7"},
     {"America/Sao_Paulo", "BRT3"},
     {"America/St_Johns", "NST3:30NDT,M3.2.0,M11.1.0"},
-    {"Canada/Atlantic", "AST4ADT,M3.2.0,M11.1.0"}, // Added for Canada (Atlantic Time, e.g., Halifax)
+    {"Canada/Atlantic", "AST4ADT,M3.2.0,M11.1.0"},
     {"America/Mexico_City", "CST6"},
     {"America/Puerto_Rico", "AST4"},
     {"Pacific/Guam", "ChST-10"},
@@ -128,16 +133,15 @@ const int WIFI_FAIL_BIT_GLOBAL = WIFI_FAIL_BIT;
 static const char *TAG = "wifi_manager";
 static int s_retry_num = 0;
 static httpd_handle_t server = NULL;
-static char ap_ssid[32] = "AIROWL_XXXXXX"; // Will be updated with MAC
-static bool wifi_connected = false; // Track Wi-Fi connection status
+static char ap_ssid[32] = "AIROWL_XXXXXX";
+static bool wifi_connected = false;
 
-// External declaration from ui_dashboard.c
 extern lv_obj_t *ui_clock2;
 static void stop_webserver(void);
-static esp_err_t setup_clock_post_handler(httpd_req_t *req); // Forward declaration
-static esp_err_t load_timezone(char *timezone, size_t *timezone_len); // Forward declaration
+static esp_err_t setup_clock_post_handler(httpd_req_t *req);
+static esp_err_t load_timezone(char *timezone, size_t *timezone_len);
 
-// Main configuration page with OTA removed
+// Main configuration page
 static const char *wifi_config_html = "<!DOCTYPE html>\n"
                                       "<html lang=\"en\">\n"
                                       "<head>\n"
@@ -167,7 +171,6 @@ static const char *wifi_config_html = "<!DOCTYPE html>\n"
                                       "</body>\n"
                                       "</html>";
 
-// Original HTML pages (excluding OTA)
 static const char *restart_html = "<!DOCTYPE html>\n"
                                   "<html lang=\"en\">\n"
                                   "<head>\n"
@@ -224,23 +227,97 @@ static void generate_ap_ssid(void)
 {
     uint8_t mac[6];
     char mac_str[13];
-    esp_err_t err = esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+    esp_err_t err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to read SoftAP MAC: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Failed to read Station MAC: %s", esp_err_to_name(err));
         snprintf(ap_ssid, sizeof(ap_ssid), "AIROWL_DEFAULT");
         return;
     }
-    ESP_LOGI(TAG, "SoftAP MAC: %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    ESP_LOGI(TAG, "Station MAC: %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     snprintf(mac_str, sizeof(mac_str), "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     snprintf(ap_ssid, sizeof(ap_ssid), "AIROWL_%s", &mac_str[6]);
     ESP_LOGI(TAG, "Generated AP SSID: %s", ap_ssid);
+}
+
+// DNS server task
+static void dns_server_task(void *pvParameters)
+{
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Failed to create DNS socket: %d", errno);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(DNS_PORT);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        ESP_LOGE(TAG, "Failed to bind DNS socket: %d", errno);
+        close(sock);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    dns_server_running = true;
+    ESP_LOGI(TAG, "DNS server started on port %d", DNS_PORT);
+
+    uint8_t buffer[512];
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+
+    while (dns_server_running) {
+        int len = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &client_len);
+        if (len < 0) {
+            ESP_LOGE(TAG, "DNS recvfrom error: %d", errno);
+            continue;
+        }
+
+        if (len >= 12) {
+            uint8_t response[512] = {0};
+            memcpy(response, buffer, 12);
+            response[2] |= 0x80;
+            response[3] = 0x80;
+            response[7] = 1;
+
+            int qname_len = 0;
+            while (buffer[12 + qname_len] != 0) qname_len++;
+            qname_len++;
+            memcpy(response + 12, buffer + 12, qname_len + 4);
+
+            int answer_offset = 12 + qname_len + 4;
+            response[answer_offset] = 0xc0;
+            response[answer_offset + 1] = 0x0c;
+            response[answer_offset + 2] = 0x00;
+            response[answer_offset + 3] = 0x01;
+            response[answer_offset + 4] = 0x00;
+            response[answer_offset + 5] = 0x01;
+            response[answer_offset + 6] = 0x00;
+            response[answer_offset + 7] = 0x00;
+            response[answer_offset + 8] = 0x00;
+            response[answer_offset + 9] = 0x60;
+            response[answer_offset + 10] = 0x00;
+            response[answer_offset + 11] = 0x04;
+            response[answer_offset + 12] = 192;
+            response[answer_offset + 13] = 168;
+            response[answer_offset + 14] = 4;
+            response[answer_offset + 15] = 1;
+
+            sendto(sock, response, answer_offset + 16, 0, (struct sockaddr *)&client_addr, client_len);
+        }
+    }
+
+    close(sock);
+    ESP_LOGI(TAG, "DNS server stopped");
+    vTaskDelete(NULL);
 }
 
 // SNTP callback for time synchronization
 static void time_sync_notification_cb(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Received time adjustment from NTP");
-    // Ensure timezone is applied correctly after NTP sync
     char saved_timezone[32] = {0};
     size_t timezone_len = sizeof(saved_timezone);
     if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
@@ -367,7 +444,6 @@ static esp_err_t initialize_sntp(void)
     esp_sntp_set_time_sync_notification_cb(time_sync_notification_cb);
     esp_sntp_init();
 
-    // Apply saved timezone before NTP sync
     char saved_timezone[32] = {0};
     size_t timezone_len = sizeof(saved_timezone);
     if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
@@ -399,10 +475,9 @@ static esp_err_t initialize_sntp(void)
 
     ESP_LOGE(TAG, "All NTP sync attempts failed");
     ntp_synced = false;
-    // Preserve existing time if previously synced
-    if (time(NULL) > 946684800) { // Check if time is beyond Jan 1, 2000
+    if (time(NULL) > 946684800) {
         ESP_LOGI(TAG, "Preserving existing time due to NTP failure: %ld", (long)time(NULL));
-        return ESP_OK; // Avoid resetting time
+        return ESP_OK;
     }
     return ESP_FAIL;
 }
@@ -474,6 +549,27 @@ static esp_err_t load_wifi_credentials(char *ssid, size_t *ssid_len, char *pass,
     return ESP_OK;
 }
 
+static esp_err_t captive_portal_handler(httpd_req_t *req)
+{
+    ESP_LOGI(TAG, "Handling captive portal request for URI: %s", req->uri);
+    // Handle common captive portal detection URIs
+    if (strcmp(req->uri, "/generate_204") == 0 ||
+        strcmp(req->uri, "/generate204") == 0 ||
+        strcmp(req->uri, "/hotspot-detect.html") == 0 ||
+        strcmp(req->uri, "/connecttest.txt") == 0) {
+        httpd_resp_set_status(req, "204 No Content");
+        httpd_resp_send(req, NULL, 0);
+        return ESP_OK;
+    }
+    // Redirect all other requests to /set_wifi
+    char resp_str[2048];
+    snprintf(resp_str, sizeof(resp_str), wifi_config_html, ap_ssid);
+    httpd_resp_set_status(req, "302 Found");
+    httpd_resp_set_hdr(req, "Location", "/set_wifi");
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+    return ESP_OK;
+}
+
 static esp_err_t wifi_config_get_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
@@ -531,14 +627,11 @@ static esp_err_t wifi_form_get_handler(httpd_req_t *req)
 static esp_err_t setup_clock_get_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
-
-    // Get current time for display
     time_t now = time(NULL);
     struct tm *timeinfo = localtime(&now);
     char sys_time[32];
     strftime(sys_time, sizeof(sys_time), "%Y-%m-%d, %H:%M:%S", timeinfo);
 
-    // Load saved timezone from NVS for display
     char saved_timezone[32] = {0};
     size_t timezone_len = sizeof(saved_timezone);
     if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {
@@ -548,7 +641,6 @@ static esp_err_t setup_clock_get_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "Using default timezone for display: %s", ntp_timezone);
     }
 
-    // Send HTML header
     const char *header = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">"
                          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
                          "<title>Time Settings</title>"
@@ -571,7 +663,6 @@ static esp_err_t setup_clock_get_handler(httpd_req_t *req)
     snprintf(header_buf, sizeof(header_buf), header, sys_time);
     httpd_resp_send_chunk(req, header_buf, strlen(header_buf));
 
-    // Send timezone options in chunks
     for (size_t i = 0; i < NUM_TIMEZONES; i++) {
         char option[128];
         snprintf(option, sizeof(option), "<option value=\"%s\" %s>%s</option>\n",
@@ -581,7 +672,6 @@ static esp_err_t setup_clock_get_handler(httpd_req_t *req)
         httpd_resp_send_chunk(req, option, strlen(option));
     }
 
-    // Send form footer
     const char *footer = "</select><br><br>"
                          "<label for=\"hour\">Hour (0-23):</label><br>"
                          "<input type=\"text\" id=\"hour\" name=\"hour\" required pattern=\"[0-9]{1,2}\"><br>"
@@ -591,7 +681,7 @@ static esp_err_t setup_clock_get_handler(httpd_req_t *req)
                          "<input type=\"text\" id=\"second\" name=\"second\" required pattern=\"[0-9]{1,2}\"><br><br>"
                          "<button type=\"submit\">Set Time</button></form></div></body></html>";
     httpd_resp_send_chunk(req, footer, strlen(footer));
-    httpd_resp_send_chunk(req, NULL, 0); // End chunked response
+    httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
 }
 
@@ -623,7 +713,6 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         remaining -= ret;
     }
 
-    // Parse POST data
     char *hour_start = strstr(buf, "hour=");
     char *minute_start = strstr(buf, "minute=");
     char *second_start = strstr(buf, "second=");
@@ -639,14 +728,10 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         char *second_end = strchr(second_start, '&');
         char *tz_end = strchr(tz_start, '&');
 
-        if (!hour_end)
-            hour_end = hour_start + strlen(hour_start);
-        if (!minute_end)
-            minute_end = minute_start + strlen(minute_start);
-        if (!second_end)
-            second_end = second_start + strlen(second_start);
-        if (!tz_end)
-            tz_end = tz_start + strlen(tz_start);
+        if (!hour_end) hour_end = hour_start + strlen(hour_start);
+        if (!minute_end) minute_end = minute_start + strlen(minute_start);
+        if (!second_end) second_end = second_start + strlen(second_start);
+        if (!tz_end) tz_end = tz_start + strlen(tz_start);
 
         strncpy(hour_str, hour_start, MIN(hour_end - hour_start, sizeof(hour_str) - 1));
         strncpy(minute_str, minute_start, MIN(minute_end - minute_start, sizeof(minute_str) - 1));
@@ -657,7 +742,6 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         ESP_LOGW(TAG, "Missing required POST parameters");
     }
 
-    // Validate time inputs
     int hour = atoi(hour_str);
     int minute = atoi(minute_str);
     int second = atoi(second_str);
@@ -666,12 +750,10 @@ static esp_err_t setup_clock_post_handler(httpd_req_t *req)
         ESP_LOGW(TAG, "Validation failed: hour=%d, minute=%d, second=%d", hour, minute, second);
     }
 
-    // Validate and save timezone
     if (strlen(timezone) > 0) {
         url_decode(decoded_timezone, timezone, sizeof(decoded_timezone));
         ESP_LOGI(TAG, "Received timezone: %s, Decoded timezone: %s", timezone, decoded_timezone);
         if (strlen(decoded_timezone) > 0) {
-            // Validate timezone against timezones array
             bool valid_timezone = false;
             for (size_t i = 0; i < NUM_TIMEZONES; i++) {
                 if (strcmp(decoded_timezone, timezones[i].posix_tz) == 0) {
@@ -776,10 +858,8 @@ static esp_err_t wifi_config_post_handler(httpd_req_t *req)
         pass_start += strlen("pass=");
         char *ssid_end = strchr(ssid_start, '&');
         char *pass_end = strchr(pass_start, '&');
-        if (!ssid_end)
-            ssid_end = ssid_start + strlen(ssid_start);
-        if (!pass_end)
-            pass_end = pass_start + strlen(pass_start);
+        if (!ssid_end) ssid_end = ssid_start + strlen(ssid_start);
+        if (!pass_end) pass_end = pass_start + strlen(pass_start);
 
         strncpy(ssid, ssid_start, MIN(ssid_end - ssid_start, sizeof(ssid) - 1));
         strncpy(pass, pass_start, MIN(pass_end - pass_start, sizeof(pass) - 1));
@@ -809,11 +889,7 @@ static esp_err_t wifi_config_post_handler(httpd_req_t *req)
 
 static esp_err_t root_get_handler(httpd_req_t *req)
 {
-    ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
-    httpd_resp_set_status(req, "302 Found");
-    httpd_resp_set_hdr(req, "Location", "/set_wifi");
-    httpd_resp_send(req, NULL, 0);
-    return ESP_OK;
+    return captive_portal_handler(req);
 }
 
 static esp_err_t restart_get_handler(httpd_req_t *req)
@@ -844,8 +920,6 @@ static esp_err_t do_exit_handler(httpd_req_t *req)
     ESP_LOGI(TAG, "Handling GET request for URI: %s", req->uri);
     httpd_resp_send(req, "Disconnecting...", HTTPD_RESP_USE_STRLEN);
     vTaskDelay(500 / portTICK_PERIOD_MS);
-
-    // Stop services
     stop_webserver();
     esp_wifi_stop();
     esp_restart();
@@ -859,13 +933,17 @@ static void stop_webserver(void)
         server = NULL;
         ESP_LOGI(TAG, "Webserver stopped");
     }
+    if (dns_server_running) {
+        dns_server_running = false;
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
 }
 
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 20; // Increase max URI handlers if needed
-    config.stack_size = 24576; // Increase stack size for larger requests
+    config.max_uri_handlers = 20;
+    config.stack_size = 24576;
 
     if (httpd_start(&server, &config) == ESP_OK) {
         ESP_LOGI(TAG, "Starting webserver");
@@ -935,6 +1013,36 @@ static httpd_handle_t start_webserver(void)
             .handler   = setup_clock_post_handler,
             .user_ctx  = NULL
         };
+        httpd_uri_t captive_generate_204 = {
+            .uri       = "/generate_204",
+            .method    = HTTP_GET,
+            .handler   = captive_portal_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t captive_generate204 = {
+            .uri       = "/generate204",
+            .method    = HTTP_GET,
+            .handler   = captive_portal_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t captive_hotspot = {
+            .uri       = "/hotspot-detect.html",
+            .method    = HTTP_GET,
+            .handler   = captive_portal_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t captive_connecttest = {
+            .uri       = "/connecttest.txt",
+            .method    = HTTP_GET,
+            .handler   = captive_portal_handler,
+            .user_ctx  = NULL
+        };
+        httpd_uri_t captive = {
+            .uri       = "/*",
+            .method    = HTTP_GET,
+            .handler   = captive_portal_handler,
+            .user_ctx  = NULL
+        };
 
         httpd_register_uri_handler(server, &root);
         httpd_register_uri_handler(server, &wifi_config);
@@ -947,12 +1055,19 @@ static httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &do_exit);
         httpd_register_uri_handler(server, &setup_clock);
         httpd_register_uri_handler(server, &setup_clock_post);
+        httpd_register_uri_handler(server, &captive_generate_204);
+        httpd_register_uri_handler(server, &captive_generate204);
+        httpd_register_uri_handler(server, &captive_hotspot);
+        httpd_register_uri_handler(server, &captive_connecttest);
+        httpd_register_uri_handler(server, &captive); // Register wildcard last
+
+        xTaskCreate(dns_server_task, "dns_server", 4096, NULL, 5, NULL);
     }
     return server;
 }
 
 static void event_handler(void* arg, esp_event_base_t event_base,
-                            int32_t event_id, void* event_data)
+                         int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
@@ -983,7 +1098,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 void wifi_init(void)
 {
     s_wifi_event_group = xEventGroupCreate();
-
     ESP_ERROR_CHECK(esp_netif_init());
 
     esp_err_t err = esp_event_loop_create_default();
@@ -1017,7 +1131,6 @@ void wifi_init(void)
 
     xTaskCreatePinnedToCore(clock_update_task, "clock_task", 12288, NULL, 2, NULL, 0);
 
-    // Load and apply saved timezone
     char saved_timezone[32] = {0};
     size_t timezone_len = sizeof(saved_timezone);
     if (load_timezone(saved_timezone, &timezone_len) == ESP_OK && strlen(saved_timezone) > 0) {

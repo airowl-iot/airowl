@@ -25,6 +25,7 @@ extern "C" {
 #include "screens/ui_PM25graph.h"
 #include "screens/ui_PM10graph.h"
 #include "screens/ui_TVOCgraph.h"
+#include "screens/ui_matter_qrcode.h"
 
 ///////////////////// VARIABLES ////////////////////
 extern lv_anim_t * blink_Animation(lv_obj_t * TargetObject, int delay);
@@ -40,10 +41,10 @@ extern lv_anim_t * eyeleft_Animation(lv_obj_t * TargetObject, int delay);
 extern lv_obj_t * ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
-LV_IMG_DECLARE(ui_img_loho2_png);    // assets/loho2.png
-LV_IMG_DECLARE(ui_img_airowl_1_png);    // assets/airowl_1.png
-LV_IMG_DECLARE(ui_img_airowl_2_png);    // assets/airowl_2.png
-LV_IMG_DECLARE(ui_img_582762761);    // assets/celsius-degrees-symbol-of-temperature.png
+LV_IMG_DECLARE(ui_img_loho2_png);
+LV_IMG_DECLARE(ui_img_airowl_1_png);
+LV_IMG_DECLARE(ui_img_airowl_2_png);
+LV_IMG_DECLARE(ui_img_582762761);
 
 // FONTS
 LV_FONT_DECLARE(ui_font_clock24);

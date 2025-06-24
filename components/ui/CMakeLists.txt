@@ -7,6 +7,7 @@ SET(SOURCES screens/ui_Intro.c
     screens/ui_PM25graph.c
     screens/ui_PM10graph.c
     screens/ui_TVOCgraph.c
+    screens/ui_matter_qrcode.c
     ui.c
     components/ui_comp_hook.c
     ui_helpers.c
@@ -21,4 +22,4 @@ SET(SOURCES screens/ui_Intro.c
 # Register the component with ESP-IDF
 idf_component_register(SRCS "${SOURCES}"
                        INCLUDE_DIRS "."
-                       REQUIRES lvgl)
+                       REQUIRES lvgl main)
