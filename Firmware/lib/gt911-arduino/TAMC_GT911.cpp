@@ -4,7 +4,6 @@
 
 TAMC_GT911::TAMC_GT911(uint8_t _sda, uint8_t _scl, uint8_t _int, uint8_t _rst, uint16_t _width, uint16_t _height) :
   pinSda(_sda), pinScl(_scl), pinInt(_int), pinRst(_rst), width(_width), height(_height) {
-
 }
 
 void TAMC_GT911::begin(uint8_t _addr) {
@@ -24,7 +23,7 @@ void TAMC_GT911::reset() {
   delay(5);
   digitalWrite(pinInt, 0);
   delay(50);
-  pinMode(pinInt, INPUT);
+  // pinMode(pinInt, INPUT);
   // attachInterrupt(pinInt, TAMC_GT911::onInterrupt, RISING);
   delay(50);
   readBlockData(configBuf, GT911_CONFIG_START, GT911_CONFIG_SIZE);

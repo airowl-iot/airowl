@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "ui.h": "c",
+        "*.tpp": "cpp",
+        "chrono": "c",
+        "functional": "c"
+    },
+    "cmake.sourceDirectory": "E:/Oizom/airowl_tft_display_updated_arduino_gfx_library - Copy/airowl/Firmware/lib/lvgl"
+}

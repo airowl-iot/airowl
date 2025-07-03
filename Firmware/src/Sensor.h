@@ -6,6 +6,7 @@
 #include <SensirionI2CSen5x.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <esp_task_wdt.h>
 
 #define MAXBUF_REQUIREMENT 48
 #define CHART_DATA_LENGTH 15
@@ -157,7 +158,7 @@ boolean reconnect() {
         String clientId = "AIROWL";
         clientId += String(random(0xffffff), HEX);
         if (mqttClient.connect(clientId.c_str(), username, password)) {
-            // M5.Log.println("MQTT Connected");
+            Serial.print("MQTT Connected");
         }
     }
     return mqttClient.connected();
@@ -170,34 +171,34 @@ void setupMQTT() {
 
 void setupCharts() {
     ui_PM1chart_series_1 = lv_chart_add_series(
-        ui_PM1chart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_ext_y_array(ui_PM1chart, ui_PM1chart_series_1,
+        ui_Chart1, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_ext_y_array(ui_Chart1, ui_PM1chart_series_1,
                              ui_PM1chart_series_1_array);
-    lv_chart_set_range(ui_PM1chart, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
+    lv_chart_set_range(ui_Chart1, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
 
     ui_PM25chart_series_1 = lv_chart_add_series(
-        ui_PM25chart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_ext_y_array(ui_PM25chart, ui_PM25chart_series_1,
+        ui_Chart3, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_ext_y_array(ui_Chart3, ui_PM25chart_series_1,
                              ui_PM25chart_series_1_array);
-    lv_chart_set_range(ui_PM25chart, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
+    lv_chart_set_range(ui_Chart3, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
 
     ui_PM10chart_series_1 = lv_chart_add_series(
-        ui_PM10chart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_ext_y_array(ui_PM10chart, ui_PM10chart_series_1,
+        ui_Chart4, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_ext_y_array(ui_Chart4, ui_PM10chart_series_1,
                              ui_PM10chart_series_1_array);
-    lv_chart_set_range(ui_PM10chart, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
+    lv_chart_set_range(ui_Chart4, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
 
     ui_PM4chart_series_1 = lv_chart_add_series(
-        ui_PM4chart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_ext_y_array(ui_PM4chart, ui_PM4chart_series_1,
+        ui_Chart2, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_ext_y_array(ui_Chart2, ui_PM4chart_series_1,
                              ui_PM4chart_series_1_array);
-    lv_chart_set_range(ui_PM4chart, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
+    lv_chart_set_range(ui_Chart2, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
 
     ui_TVOCchart_series_1 = lv_chart_add_series(
-        ui_TVOCchart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_ext_y_array(ui_TVOCchart, ui_TVOCchart_series_1,
+        ui_Chart5, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_ext_y_array(ui_Chart5, ui_TVOCchart_series_1,
                              ui_TVOCchart_series_1_array);
-    lv_chart_set_range(ui_TVOCchart, LV_CHART_AXIS_PRIMARY_Y, 0, 100);
+    lv_chart_set_range(ui_Chart5, LV_CHART_AXIS_PRIMARY_Y, 0, 100);
 }
 
 void sensorData(void *params) {
@@ -208,29 +209,28 @@ void sensorData(void *params) {
     char errorMessage[256];
     error = sen5x.deviceReset();
     if (error) {
-        // M5.Log.print("Error trying to execute deviceReset(): ");
+        // Serial.print("Error trying to execute deviceReset(): ");
         errorToString(error, errorMessage, 256);
-        // M5.Log.println(errorMessage);
+        // Serial.println(errorMessage);
     }
 
     float tempOffset = 0.0;
     error = sen5x.setTemperatureOffsetSimple(tempOffset);
     if (error) {
-        // M5.Log.print("Error trying to execute setTemperatureOffsetSimple():
-        // ");
+        // Serial.print("Error trying to execute setTemperatureOffsetSimple(): ");
         errorToString(error, errorMessage, 256);
-        // M5.Log.println(errorMessage);
+        // Serial.println(errorMessage);
     } else {
-        // M5.Log.print("Temperature Offset set to ");
-        // M5.Log.println(" deg. Celsius (SEN54/SEN55 only");
+        // Serial.print("Temperature Offset set to ");
+        // Serial.println(" deg. Celsius (SEN54/SEN55 only");
     }
 
     // Start Measurement
     error = sen5x.startMeasurement();
     if (error) {
-        // M5.Log.print("Error trying to execute startMeasurement(): ");
+        // Serial.print("Error trying to execute startMeasurement(): ");
         errorToString(error, errorMessage, 256);
-        // M5.Log.println(errorMessage);
+        // Serial.println(errorMessage);
     }
 
     setupCharts();
@@ -270,19 +270,19 @@ void sensorData(void *params) {
 
             char pm1buffer[6] = {0};
             dtostrf(t_pm1, 6, 1, pm1buffer);
-            lv_label_set_text(ui_pm1label, pm1buffer);
+            lv_label_set_text(ui_pm1value, pm1buffer);
 
             char pm25buffer[6] = {0};
             dtostrf(t_pm25, 6, 1, pm25buffer);
-            lv_label_set_text(ui_pm25label, pm25buffer);
+            lv_label_set_text(ui_pm25value, pm25buffer);
 
             char pm4buffer[6] = {0};
             dtostrf(t_pm4, 6, 1, pm4buffer);
-            lv_label_set_text(ui_pm4label, pm4buffer);
+            lv_label_set_text(ui_pm4value, pm4buffer);
 
             char pm10buffer[6] = {0};
             dtostrf(t_pm10, 6, 1, pm10buffer);
-            lv_label_set_text(ui_pm10label, pm10buffer);
+            lv_label_set_text(ui_pm10value, pm10buffer);
 
             char tvocbuffer[6] = {0};
             if (isnan(vocIndex)) {
@@ -290,7 +290,7 @@ void sensorData(void *params) {
             } else {
                 sensor_data.tvoc += vocIndex;
                 dtostrf(vocIndex, 6, 1, tvocbuffer);
-                lv_label_set_text(ui_tvoclabel, tvocbuffer);
+                lv_label_set_text(ui_tvocvalue, tvocbuffer);
             }
 
             char humbuffer[4] = {0};
@@ -298,7 +298,7 @@ void sensorData(void *params) {
                 // Humidity n/a handling (unchanged)
             } else {
                 dtostrf(t_hum, 4, 1, humbuffer);
-                lv_label_set_text(ui_RHlabel, humbuffer);
+                lv_label_set_text(ui_humd, humbuffer);
                 humidity = t_hum; // Update global humidity variable
             }
 
@@ -307,7 +307,7 @@ void sensorData(void *params) {
                 // Temperature n/a handling (unchanged)
             } else {
                 dtostrf(t_temp, 4, 1, tempbuffer);
-                lv_label_set_text(ui_templabel, tempbuffer);
+                lv_label_set_text(ui_temp, tempbuffer);
                 temperature = t_temp; // Update global temperature variable
             }
 
@@ -337,27 +337,27 @@ void sensorData(void *params) {
                 int pm4Index = calculateSubIndex(avgPM4, pm4Bp);
 
                 uint32_t pm25_color = getAQIColor(pm25Index);
-                lv_obj_set_style_text_color(ui_pm25label,
+                lv_obj_set_style_text_color(ui_pm25value,
                                             lv_color_hex(pm25_color),
                                             LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 uint32_t pm10_color = getAQIColor(pm10Index);
-                lv_obj_set_style_text_color(ui_pm10label,
+                lv_obj_set_style_text_color(ui_pm10value,
                                             lv_color_hex(pm10_color),
                                             LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 uint32_t tvoc_color = getAQIColor(tvocIndex);
-                lv_obj_set_style_text_color(ui_tvoclabel,
+                lv_obj_set_style_text_color(ui_tvocvalue,
                                             lv_color_hex(tvoc_color),
                                             LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 uint32_t pm1_color = getAQIColor(pm1Index);
-                lv_obj_set_style_text_color(ui_pm1label,
+                lv_obj_set_style_text_color(ui_pm1value,
                                             lv_color_hex(pm1_color),
                                             LV_PART_MAIN | LV_STATE_DEFAULT);
 
                 uint32_t pm4_color = getAQIColor(pm4Index);
-                lv_obj_set_style_text_color(ui_pm4label,
+                lv_obj_set_style_text_color(ui_pm4value,
                                             lv_color_hex(pm4_color),
                                             LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -381,7 +381,7 @@ void sensorData(void *params) {
                 char pm1avg[6] = {0};
                 char pm1max[6] = {0};
                 dtostrf(avgPM1, 6, 1, pm1avg);
-                lv_label_set_text(ui_pm1avg, pm1avg);
+                // lv_label_set_text(ui_pm1avg, pm1avg);
                 // shift the other values to the left
                 memcpy(ui_PM1chart_series_1_array,
                        ui_PM1chart_series_1_array + 1,
@@ -389,22 +389,22 @@ void sensorData(void *params) {
                 if (sensor_data.pm1_max < avgPM1) {
                     sensor_data.pm1_max = int(avgPM1);
                     if (sensor_data.pm1_max > 50)
-                        lv_chart_set_range(ui_PM1chart, LV_CHART_AXIS_PRIMARY_Y,
+                        lv_chart_set_range(ui_Chart1, LV_CHART_AXIS_PRIMARY_Y,
                                            0, sensor_data.pm1_max + 20);
                 }
                 dtostrf(sensor_data.pm1_max, 6, 1, pm1max);
-                lv_label_set_text(ui_pm1max, pm1max);
+                lv_label_set_text(ui_pm1maxvalue, pm1max);
                 // Insert new value
                 ui_PM1chart_series_1_array[CHART_DATA_LENGTH - 1] =
                     (uint16_t)(avgPM1);
-                lv_chart_set_ext_y_array(ui_PM1chart, ui_PM1chart_series_1,
+                lv_chart_set_ext_y_array(ui_Chart1, ui_PM1chart_series_1,
                                          ui_PM1chart_series_1_array);
 
                 // Set PM2.5 Chart Screens
                 char pm25avg[6] = {0};
                 char pm25max[6] = {0};
                 dtostrf(avgPM25, 6, 1, pm25avg);
-                lv_label_set_text(ui_pm25avg, pm25avg);
+                // lv_label_set_text(ui_pm25avg, pm25avg);
                 // shift the other values to the left
                 memcpy(ui_PM25chart_series_1_array,
                        ui_PM25chart_series_1_array + 1,
@@ -412,23 +412,23 @@ void sensorData(void *params) {
                 if (sensor_data.pm25_max < (avgPM25)) {
                     sensor_data.pm25_max = int(avgPM25);
                     if (sensor_data.pm25_max > 50)
-                        lv_chart_set_range(ui_PM25chart,
+                        lv_chart_set_range(ui_Chart3,
                                            LV_CHART_AXIS_PRIMARY_Y, 0,
                                            sensor_data.pm25_max + 20);
                 }
                 dtostrf(sensor_data.pm25_max, 6, 1, pm25max);
-                lv_label_set_text(ui_pm25max, pm25max);
+                lv_label_set_text(ui_pm25maxvalue, pm25max);
                 // Insert new value
                 ui_PM25chart_series_1_array[CHART_DATA_LENGTH - 1] =
                     (uint16_t)(avgPM25);
-                lv_chart_set_ext_y_array(ui_PM25chart, ui_PM25chart_series_1,
+                lv_chart_set_ext_y_array(ui_Chart3, ui_PM25chart_series_1,
                                          ui_PM25chart_series_1_array);
 
                 // Set PM10 Chart Screens
                 char pm10avg[6] = {0};
                 char pm10max[6] = {0};
                 dtostrf(avgPM10, 6, 1, pm10avg);
-                lv_label_set_text(ui_pm10avg, pm10avg);
+                // lv_label_set_text(ui_pm10avg, pm10avg);
                 // shift the other values to the left
                 memcpy(ui_PM10chart_series_1_array,
                        ui_PM10chart_series_1_array + 1,
@@ -436,23 +436,23 @@ void sensorData(void *params) {
                 if (sensor_data.pm10_max < (avgPM10)) {
                     sensor_data.pm10_max = int(avgPM10);
                     if (sensor_data.pm10_max > 50)
-                        lv_chart_set_range(ui_PM10chart,
+                        lv_chart_set_range(ui_Chart4,
                                            LV_CHART_AXIS_PRIMARY_Y, 0,
                                            sensor_data.pm10_max + 20);
                 }
                 dtostrf(sensor_data.pm10_max, 6, 1, pm10max);
-                lv_label_set_text(ui_pm10max, pm10max);
+                lv_label_set_text(ui_pm10maxvalue, pm10max);
                 // Insert new value
                 ui_PM10chart_series_1_array[CHART_DATA_LENGTH - 1] =
                     (uint16_t)(avgPM10);
-                lv_chart_set_ext_y_array(ui_PM10chart, ui_PM10chart_series_1,
+                lv_chart_set_ext_y_array(ui_Chart4, ui_PM10chart_series_1,
                                          ui_PM10chart_series_1_array);
 
                 // Set PM4 Chart Screens
                 char pm4avg[6] = {0};
                 char pm4max[6] = {0};
                 dtostrf(avgPM4, 6, 1, pm4avg);
-                lv_label_set_text(ui_pm4max, pm4max);
+                // lv_label_set_text(ui_pm4avg, pm4avg);
                 // shift the other values to the left
                 memcpy(ui_PM4chart_series_1_array,
                        ui_PM4chart_series_1_array + 1,
@@ -460,22 +460,22 @@ void sensorData(void *params) {
                 if (sensor_data.pm4_max < (avgPM4)) {
                     sensor_data.pm4_max = int(avgPM4);
                     if (sensor_data.pm4_max > 50)
-                        lv_chart_set_range(ui_PM4chart, LV_CHART_AXIS_PRIMARY_Y,
+                        lv_chart_set_range(ui_Chart2, LV_CHART_AXIS_PRIMARY_Y,
                                            0, sensor_data.pm4_max + 20);
                 }
-                lv_label_set_text(ui_pm4avg, pm4avg);
                 dtostrf(sensor_data.pm4_max, 6, 1, pm4max);
+                lv_label_set_text(ui_pm4maxvalue1, pm4max);
                 // Insert new value
                 ui_PM4chart_series_1_array[CHART_DATA_LENGTH - 1] =
                     (uint16_t)(avgPM4);
-                lv_chart_set_ext_y_array(ui_PM4chart, ui_PM4chart_series_1,
+                lv_chart_set_ext_y_array(ui_Chart2, ui_PM4chart_series_1,
                                          ui_PM4chart_series_1_array);
 
                 // Set TVOC Chart Screens
                 char tvocavg[6] = {0};
                 char tvocmax[6] = {0};
                 dtostrf(avgTVOC, 6, 1, tvocavg);
-                lv_label_set_text(ui_tvocavg, tvocavg);
+                // lv_label_set_text(ui_tvocavg, tvocavg);
                 // shift the other values to the left
                 memcpy(ui_TVOCchart_series_1_array,
                        ui_TVOCchart_series_1_array + 1,
@@ -483,16 +483,16 @@ void sensorData(void *params) {
                 if (sensor_data.tvoc_max < (avgTVOC)) {
                     sensor_data.tvoc_max = int(avgTVOC);
                     if (sensor_data.tvoc_max > 100)
-                        lv_chart_set_range(ui_TVOCchart,
+                        lv_chart_set_range(ui_Chart5,
                                            LV_CHART_AXIS_PRIMARY_Y, 0,
                                            sensor_data.tvoc_max + 20);
                 }
                 dtostrf(sensor_data.tvoc_max, 6, 1, tvocmax);
-                lv_label_set_text(ui_tvocmax, tvocmax);
+                lv_label_set_text(ui_tvocmaxvalue, tvocmax);
                 // Insert new value
                 ui_TVOCchart_series_1_array[CHART_DATA_LENGTH - 1] =
                     (uint16_t)(avgTVOC);
-                lv_chart_set_ext_y_array(ui_TVOCchart, ui_TVOCchart_series_1,
+                lv_chart_set_ext_y_array(ui_Chart5, ui_TVOCchart_series_1,
                                          ui_TVOCchart_series_1_array);
 
                 if (WiFi.status() == WL_CONNECTED) {
@@ -534,6 +534,5 @@ void sensorData(void *params) {
             }
         }
         esp_task_wdt_reset(); // Reset watchdog for this task
-        delay(2000);
     }
 }
