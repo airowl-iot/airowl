@@ -20,7 +20,6 @@
 #define SNTP_ENABLED 0
 #endif
 
-#include <M5Unified.h>
 #include <WiFi.h>
 
 void time_init()
@@ -44,5 +43,5 @@ void update_time()
 
     // Format the time string
     sprintf(time_buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    lv_label_set_text(ui_clock2, time_buf);
+    lv_label_set_text(ui_time, time_buf);
 }

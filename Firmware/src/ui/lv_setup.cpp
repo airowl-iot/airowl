@@ -1,94 +1,126 @@
-
 #include <Arduino.h>
-#if defined(ARDUINO_M5STACK_Core2)
-#include <M5Core2.h>
-#endif
-#if defined(ARDUINO_M5STACK_CORES3)
-// #include <M5CoreS3.h>
-#include <M5Unified.h>
-#endif
+#include <Wire.h>
 #include <lvgl.h>
+#include <Arduino_GFX_Library.h>
+#include <Adafruit_CST8XX.h>
+#include "config.h"
 
-/* Core2 screen size */
-static const uint16_t screenWidth = 320;
-static const uint16_t screenHeight = 240;
+// pin configurations in the config.h file
+Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI);
+Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 2, true, TFT_WIDTH, TFT_HEIGHT);
 
+Adafruit_CST8XX cst8xx;
+static CST_TS_Point last_point;
+
+// Touch Calibration Parameters
+#define TOUCH_RAW_MIN_X 0
+#define TOUCH_RAW_MAX_X 240
+#define TOUCH_RAW_MIN_Y 0
+#define TOUCH_RAW_MAX_Y 320
+
+// LVGL Buffers
+#define DISP_BUF_SIZE (TFT_WIDTH * TFT_HEIGHT / 8) 
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf[screenWidth * screenHeight / 10];
+static lv_color_t buf[DISP_BUF_SIZE];
 
-/* Display flushing */
-static void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
-{
-    uint32_t w = (area->x2 - area->x1 + 1);
-    uint32_t h = (area->y2 - area->y1 + 1);
-
-    M5.Lcd.startWrite();
-    M5.Lcd.setAddrWindow(area->x1, area->y1, w, h);
-    M5.Lcd.pushColors((uint16_t *)&color_p->full, w * h, true);
-    M5.Lcd.endWrite();
-
+// Display Flush
+void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
+    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)color_p,
+                            area->x2 - area->x1 + 1,
+                            area->y2 - area->y1 + 1);
     lv_disp_flush_ready(disp);
 }
 
-/* Read the touchpad */
-static void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
-{
-    uint16_t touchX = 0, touchY = 0;
-#ifdef M5UNIFIED
-    M5.update();
-    auto count = M5.Touch.getCount();
-    if (!count) {
-        data->state = LV_INDEV_STATE_REL;
-        return;
-    }
-    auto t = M5.Touch.getDetail();
-    if (t.wasPressed())  {
-        data->state = LV_INDEV_STATE_PR;
-        /*Set the coordinates*/
-        data->point.x = t.x;
-        data->point.y = t.y;
-        // Serial.println("x: " + String(data->point.x) + " y: " + String(data->point.y));
-    }
-    else
-    {
-        data->state = LV_INDEV_STATE_REL;
-    }
-#else
-    bool touched = M5.Lcd.getTouch(&touchX, &touchY, 600);
-    if (M5.Lcd.getTouch(&touchX, &touchY, 600))
-    {
-        data->state = LV_INDEV_STATE_PR;
-        /*Set the coordinates*/
-        data->point.x = touchX;
-        data->point.y = touchY;
-        // Serial.println("x: " + String(touchX) + " y: " + String(touchY));
-    }
-    else
-    {
-        data->state = LV_INDEV_STATE_REL;
-    }
-#endif
+// Touch Coordinate Mapping
+void map_touch_coordinates(int raw_x, int raw_y, int* mapped_x, int* mapped_y) {
+    
+    // First, apply the rotation transformation
+    int temp_x = TFT_HEIGHT - raw_y;
+    int temp_y = raw_x;
+    
+    // Applied calibration mapping to ensure full screen coverage
+    *mapped_x = map(temp_x, 0, TFT_HEIGHT, 0, TFT_WIDTH);
+    *mapped_y = map(temp_y, 0, TFT_WIDTH, 0, TFT_HEIGHT);
+    
+    // Apply bounds checking with slight tolerance for edge cases
+    *mapped_x = constrain(*mapped_x, 0, TFT_WIDTH - 1);
+    *mapped_y = constrain(*mapped_y, 0, TFT_HEIGHT - 1);
+    
+    // Alternative Option 2B - Try this if above doesn't work for TVOC button:
+    /*
+    *mapped_x = raw_y;
+    *mapped_y = TFT_HEIGHT - raw_x;
+    
+    *mapped_x = constrain(*mapped_x, 0, TFT_WIDTH - 1);
+    *mapped_y = constrain(*mapped_y, 0, TFT_HEIGHT - 1);
+    */
+    
+    // Option 3: Fine-tuned linear mapping based on your actual touch data
+    /*
+    // From your data analysis, it seems like:
+    // Top area (PM1.0): raw_y ~239, should map to y ~0-80
+    // Bottom area (TVOC): raw_y ~224, should map to y ~280-320
+    
+    *mapped_x = map(raw_y, 0, 320, 0, TFT_WIDTH);
+    *mapped_y = map(raw_x, 240, 0, 0, TFT_HEIGHT);  // Note: inverted range for raw_x
+    
+    *mapped_x = constrain(*mapped_x, 0, TFT_WIDTH - 1);
+    *mapped_y = constrain(*mapped_y, 0, TFT_HEIGHT - 1);
+    */
 }
 
-/* Setup lvgl with display and touch pad */
-void lv_begin()
-{
-    lv_init(); // call this before any other lvgl function
+// Touch Read
+void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data) {
+    if (cst8xx.touched()) {
+        CST_TS_Point p = cst8xx.getPoint(0);
+        last_point = p;
 
-    lv_disp_draw_buf_init(&draw_buf, buf, NULL, screenWidth * screenHeight / 10); // initialize the display buffer
+        int mapped_x, mapped_y;
+        map_touch_coordinates(p.x, p.y, &mapped_x, &mapped_y);
+        
+        data->point.x = mapped_x;
+        data->point.y = mapped_y;
+        data->state = LV_INDEV_STATE_PR;
 
-    /*Initialize the display*/
+        // Serial.printf("Touch raw=(%d,%d) -> mapped=(%d,%d)\n", p.x, p.y, mapped_x, mapped_y);
+    } else {
+        data->state = LV_INDEV_STATE_REL;
+    }
+}
+
+// LVGL + Display + Touch Init 
+void lv_begin() {
+    lv_init();
+    gfx->begin();
+    gfx->fillScreen(BLACK);
+
+    pinMode(TFT_BL, OUTPUT);
+    digitalWrite(TFT_BL, HIGH);
+
+    pinMode(TOUCH_RST, OUTPUT);
+    digitalWrite(TOUCH_RST, LOW);
+    delay(50);
+    digitalWrite(TOUCH_RST, HIGH);
+    delay(200);
+
+    Wire.begin(TOUCH_SDA, TOUCH_SCL);
+
+    if (!cst8xx.begin(&Wire, 0x15)) {
+        // Serial.println("CST836U NOT FOUND");
+    } else {
+        // Serial.println("CST836U INITIALIZED");
+    }
+
+    lv_disp_draw_buf_init(&draw_buf, buf, NULL, DISP_BUF_SIZE);
+
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-
-    /*Change the following line to your display resolution*/
-    disp_drv.hor_res = screenWidth;
-    disp_drv.ver_res = screenHeight;
+    disp_drv.hor_res = TFT_WIDTH;
+    disp_drv.ver_res = TFT_HEIGHT;
     disp_drv.flush_cb = my_disp_flush;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
 
-    /*Initialize the input device driver*/
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
@@ -98,7 +130,7 @@ void lv_begin()
     Serial.printf("LVGL v%d.%d.%d initialized\n", lv_version_major(), lv_version_minor(), lv_version_patch());
 }
 
-/* Handles updating the display and touch events */
+// LVGL Tick Handling
 void lv_handler()
 {
     static uint32_t previousUpdate = 0;
@@ -107,6 +139,6 @@ void lv_handler()
     if (millis() - previousUpdate > interval)
     {
         previousUpdate = millis();
-        uint32_t interval = lv_timer_handler(); // Update the UI
+        uint32_t interval = lv_timer_handler(); 
     }
 }

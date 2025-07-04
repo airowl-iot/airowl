@@ -1,7 +1,7 @@
-#ifndef _LVGL_SETUP_H
-#define _LVGL_SETUP_H
+#ifndef _LV_SETUP_H_
+#define _LV_SETUP_H_
 
-void lv_begin();
-void lv_handler();
+void lv_begin();     
+void lv_handler();   
 
 #endif
