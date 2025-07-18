@@ -1,7 +1,10 @@
 #pragma once
 
 #include <Arduino.h>
+
+#ifdef CONFIG_ENABLE_LVGL
 #include "ui/ui.h"
+#endif
 
 //  #define NTP_TIMEZONE  "IST-5:30"
 //  #define NTP_SERVER1   "0.pool.ntp.org"
@@ -21,16 +24,22 @@
 #endif
 
 #include <WiFi.h>
+#include <WiFiManagerTz.h>
+
 
 void time_init()
 {
     if(WiFi.status() == WL_CONNECTED){
         WiFiManagerNS::configTime();
-        lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
+        #ifdef CONFIG_ENABLE_LVGL
+            lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
+        #endif
     }
     else
     {
-        lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
+        #ifdef CONFIG_ENABLE_LVGL
+            lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
+        #endif
     }
 }
 
@@ -43,5 +52,8 @@ void update_time()
 
     // Format the time string
     sprintf(time_buf, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
-    lv_label_set_text(ui_time, time_buf);
+
+    #ifdef CONFIG_ENABLE_LVGL
+        lv_label_set_text(ui_time, time_buf);
+    #endif
 }

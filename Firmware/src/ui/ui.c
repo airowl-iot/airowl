@@ -226,17 +226,16 @@ void ui_matter_qrcode_screen_init(void)
 {
     ui_matter_qrcode = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_matter_qrcode, LV_OBJ_FLAG_SCROLLABLE);
-
-    lv_obj_set_style_bg_color(ui_matter_qrcode, lv_color_white(), 0);
-    lv_obj_set_style_bg_opa(ui_matter_qrcode, LV_OPA_COVER, 0);
+    lv_obj_set_style_bg_color(ui_matter_qrcode, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_matter_qrcode, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     // Top label: "Matter Device"
     ui_matter_label_top = lv_label_create(ui_matter_qrcode);
     lv_label_set_text(ui_matter_label_top, "Matter Device");
     lv_obj_set_style_text_color(ui_matter_label_top, lv_color_black(), 0);
     lv_obj_set_align(ui_matter_label_top, LV_ALIGN_TOP_MID);
-    lv_obj_set_y(ui_matter_label_top, 15);
-
+    lv_obj_set_y(ui_matter_label_top, 30);
+    
     // QR Code
     ui_matter_qrcode_obj = lv_qrcode_create(ui_matter_qrcode, 150, lv_color_black(), lv_color_white());
     lv_qrcode_update(ui_matter_qrcode_obj, ui_matter_qrcodedata, strlen(ui_matter_qrcodedata));
@@ -244,10 +243,21 @@ void ui_matter_qrcode_screen_init(void)
 
     // Bottom label: "pairing code: 34970112332"
     ui_matter_label_bottom = lv_label_create(ui_matter_qrcode);
-    lv_label_set_text(ui_matter_label_bottom, "pairing code: 34970112332");
+    lv_label_set_text(ui_matter_label_bottom, "Pairing Code: 34970112332");
     lv_obj_set_style_text_color(ui_matter_label_bottom, lv_color_black(), 0);
     lv_obj_set_align(ui_matter_label_bottom, LV_ALIGN_BOTTOM_MID);
-    lv_obj_set_y(ui_matter_label_bottom, -15);
+    lv_obj_set_y(ui_matter_label_bottom, -40);
+
+    ui_devicename = lv_label_create(ui_matter_qrcode);
+    lv_obj_set_width(ui_devicename, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_devicename, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_devicename, 0);
+    lv_obj_set_y(ui_devicename, -15);
+    lv_obj_set_align(ui_devicename, LV_ALIGN_BOTTOM_MID);
+    lv_label_set_text(ui_devicename, "OIZOM AIROWL");
+    lv_obj_set_style_text_color(ui_devicename, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_devicename, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_devicename, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_matter_qrcode, ui_event_matter_qrcode, LV_EVENT_ALL, NULL);
 }
@@ -256,6 +266,7 @@ void ui_event_matter_qrcode(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t * target = lv_event_get_target(e);
+
     if (event_code == LV_EVENT_CLICKED) {
         _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
     }
@@ -276,7 +287,9 @@ void ui_event_owl(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t * target = lv_event_get_target(e);
+
     if (event_code == LV_EVENT_SCREEN_LOADED) {
+        lv_indev_reset(NULL, ui_owl);
 
         lv_obj_set_width(ui_rightpupil, 50);
         lv_obj_set_height(ui_rightpupil, 50);
@@ -308,16 +321,17 @@ void ui_event_owl(lv_event_t * e)
         _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_FADE_ON, 500, 20000, &ui_dashboard_screen_init);
     }
     
-    if (event_code == LV_EVENT_CLICKED) {
+    if (event_code == LV_EVENT_CLICKED){ 
         // Check if Matter device is commissioned using the wrapper function
-        if (!is_matter_commissioned()) {
+        if(!is_matter_commissioned()) {
             // Transition to matter_qrcode screen when clicked and device is not commissioned
             _ui_screen_change(&ui_matter_qrcode, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_matter_qrcode_screen_init);
-        } else {
-            // Transition to dashboard screen when clicked and device is commissioned
-            _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
         }
-     }
+        // else {
+            // Transition to dashboard screen when clicked and device is commissioned
+            // _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
+        // }
+    }
 }
 
 ///////////////////// SCREENS ////////////////////

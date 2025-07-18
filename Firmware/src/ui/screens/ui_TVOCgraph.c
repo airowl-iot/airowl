@@ -34,20 +34,20 @@ void ui_TVOCgraph_screen_init(void)
     lv_obj_set_style_bg_opa(ui_TVOCgraph, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Chart5 = lv_chart_create(ui_TVOCgraph);
-    lv_obj_set_width(ui_Chart5, 209);
+    lv_obj_set_width(ui_Chart5, 201);
     lv_obj_set_height(ui_Chart5, 195);
-    lv_obj_set_x(ui_Chart5, 11);
+    lv_obj_set_x(ui_Chart5, 14);
     lv_obj_set_y(ui_Chart5, 4);
     lv_obj_set_align(ui_Chart5, LV_ALIGN_CENTER);
     lv_chart_set_type(ui_Chart5, LV_CHART_TYPE_BAR);
-    lv_chart_set_point_count(ui_Chart5, 16);
+    lv_chart_set_point_count(ui_Chart5, 12);
     lv_chart_set_range(ui_Chart5, LV_CHART_AXIS_PRIMARY_Y, 500, 1800);
     lv_chart_set_div_line_count(ui_Chart5, 0, 0);
-    lv_chart_set_zoom_x(ui_Chart5, 180);
+    lv_chart_set_zoom_x(ui_Chart5, 250);
     lv_chart_set_zoom_y(ui_Chart5, 250);
-    lv_chart_set_axis_tick(ui_Chart5, LV_CHART_AXIS_PRIMARY_X, 0, 0, 8, 1, false, 50);
-    lv_chart_set_axis_tick(ui_Chart5, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 7, 5, true, 20);
-    lv_chart_set_axis_tick(ui_Chart5, LV_CHART_AXIS_SECONDARY_Y, 0, 0, 5, 2, false, 5);
+    lv_chart_set_axis_tick(ui_Chart5, LV_CHART_AXIS_PRIMARY_X, 0, 0, 6, 1, false, 20);
+    lv_chart_set_axis_tick(ui_Chart5, LV_CHART_AXIS_PRIMARY_Y, 4, 2, 5, 2, true, 45);
+    lv_chart_set_axis_tick(ui_Chart5, LV_CHART_AXIS_SECONDARY_Y, 0, 0, 0, 0, false, 0);
     lv_obj_set_style_bg_color(ui_Chart5, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_Chart5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_Chart5, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -56,7 +56,7 @@ void ui_TVOCgraph_screen_init(void)
 
     lv_obj_set_style_text_color(ui_Chart5, lv_color_hex(0xFFFFFF), LV_PART_TICKS | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_Chart5, 255, LV_PART_TICKS | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_Chart5, &lv_font_montserrat_18, LV_PART_TICKS | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Chart5, &lv_font_montserrat_16, LV_PART_TICKS | LV_STATE_DEFAULT);
 
     ui_Container5 = lv_obj_create(ui_TVOCgraph);
     lv_obj_remove_style_all(ui_Container5);
@@ -96,7 +96,7 @@ void ui_TVOCgraph_screen_init(void)
     ui_maxlabel4 = lv_label_create(ui_Container5);
     lv_obj_set_width(ui_maxlabel4, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_maxlabel4, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_maxlabel4, 39);
+    lv_obj_set_x(ui_maxlabel4, 36);
     lv_obj_set_y(ui_maxlabel4, 3);
     lv_obj_set_align(ui_maxlabel4, LV_ALIGN_CENTER);
     lv_label_set_text(ui_maxlabel4, "max");
