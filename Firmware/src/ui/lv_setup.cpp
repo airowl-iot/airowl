@@ -1,29 +1,36 @@
+#ifdef CONFIG_ENABLE_LVGL
+#include "lv_setup.h"
+
 #include <Arduino.h>
 #include <Wire.h>
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
 #include <Adafruit_CST8XX.h>
+#include <esp_task_wdt.h>
 #include "config.h"
 
-// pin configurations in the config.h file
 Arduino_DataBus *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI);
 Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 2, true, TFT_WIDTH, TFT_HEIGHT);
 
 Adafruit_CST8XX cst8xx;
 static CST_TS_Point last_point;
 
-// Touch Calibration Parameters
+extern TwoWire Wire;
+
 #define TOUCH_RAW_MIN_X 0
 #define TOUCH_RAW_MAX_X 240
 #define TOUCH_RAW_MIN_Y 0
 #define TOUCH_RAW_MAX_Y 320
 
-// LVGL Buffers
+// -------------------- LVGL Buffers --------------------
 #define DISP_BUF_SIZE (TFT_WIDTH * TFT_HEIGHT / 8) 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[DISP_BUF_SIZE];
 
-// Display Flush
+// ----------- External Task Handle ----
+TaskHandle_t lvglTaskHandle = nullptr;
+
+// -------------------- Display Flush --------------------
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)color_p,
                             area->x2 - area->x1 + 1,
@@ -31,14 +38,17 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
     lv_disp_flush_ready(disp);
 }
 
-// Touch Coordinate Mapping
+// -------------------- Touch Coordinate Mapping --------------------
 void map_touch_coordinates(int raw_x, int raw_y, int* mapped_x, int* mapped_y) {
+    // Option 2 with extended range for full screen coverage
+    // Standard rotation transformation (90 degrees counterclockwise) with calibration
     
     // First, apply the rotation transformation
     int temp_x = TFT_HEIGHT - raw_y;
     int temp_y = raw_x;
     
-    // Applied calibration mapping to ensure full screen coverage
+    // Apply calibration mapping to ensure full screen coverage
+    // Based on your touch data, we need to map the full touch sensor range
     *mapped_x = map(temp_x, 0, TFT_HEIGHT, 0, TFT_WIDTH);
     *mapped_y = map(temp_y, 0, TFT_WIDTH, 0, TFT_HEIGHT);
     
@@ -69,7 +79,7 @@ void map_touch_coordinates(int raw_x, int raw_y, int* mapped_x, int* mapped_y) {
     */
 }
 
-// Touch Read
+// -------------------- Touch Read --------------------
 void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data) {
     if (cst8xx.touched()) {
         CST_TS_Point p = cst8xx.getPoint(0);
@@ -88,7 +98,36 @@ void my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data) {
     }
 }
 
-// LVGL + Display + Touch Init 
+// ----------- LVGL Task --------------
+void lvgl_task(void *pv) {
+  if (!esp_task_wdt_status(NULL)) esp_task_wdt_add(NULL);
+  const TickType_t d = pdMS_TO_TICKS(16);
+  while (true) {
+    lv_handler();
+    esp_task_wdt_reset();
+    vTaskDelay(d);
+  }
+}
+
+// ----------- Task Restart ----------
+void restartLVGLTask() {
+    // if (lvglTaskHandle) {
+    //     esp_task_wdt_delete(lvglTaskHandle);
+    //     vTaskDelete(lvglTaskHandle);
+    //     lvglTaskHandle = nullptr;
+    // }
+
+    BaseType_t result = xTaskCreatePinnedToCore(lvgl_task, "LVGL", 8192, nullptr, 3, &lvglTaskHandle, 0);
+    if (result == pdPASS && lvglTaskHandle) {
+        esp_task_wdt_add(lvglTaskHandle);
+        Serial.println("[LVGL] LVGL task restarted");
+    } else {
+        Serial.println("[LVGL] Failed to restart LVGL task!");
+        lvglTaskHandle = nullptr;
+    }
+}
+
+// -------------------- LVGL + Display + Touch Init --------------------
 void lv_begin() {
     lv_init();
     gfx->begin();
@@ -103,12 +142,12 @@ void lv_begin() {
     digitalWrite(TOUCH_RST, HIGH);
     delay(200);
 
-    Wire.begin(TOUCH_SDA, TOUCH_SCL);
+    // Wire.begin(TOUCH_SDA, TOUCH_SCL);
 
     if (!cst8xx.begin(&Wire, 0x15)) {
-        // Serial.println("CST836U NOT FOUND");
+        Serial.println("CST836U NOT FOUND");
     } else {
-        // Serial.println("CST836U INITIALIZED");
+        Serial.println("CST836U INITIALIZED");
     }
 
     lv_disp_draw_buf_init(&draw_buf, buf, NULL, DISP_BUF_SIZE);
@@ -130,7 +169,7 @@ void lv_begin() {
     Serial.printf("LVGL v%d.%d.%d initialized\n", lv_version_major(), lv_version_minor(), lv_version_patch());
 }
 
-// LVGL Tick Handling
+// -------------------- LVGL Tick Handling --------------------
 void lv_handler()
 {
     static uint32_t previousUpdate = 0;
@@ -139,6 +178,8 @@ void lv_handler()
     if (millis() - previousUpdate > interval)
     {
         previousUpdate = millis();
-        uint32_t interval = lv_timer_handler(); 
+        interval = lv_timer_handler(); 
     }
 }
+
+#endif // CONFIG_ENABLE_LVGL

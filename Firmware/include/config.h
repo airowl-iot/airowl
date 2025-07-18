@@ -4,7 +4,7 @@
 // I2C Pin Config 
 #define SYS_I2C_PORT 0
 
-// TFT Display Configuration 
+// TFT Display Configuration
 #define TFT_WIDTH  240
 #define TFT_HEIGHT 320
 
@@ -15,11 +15,18 @@
 #define TFT_MOSI   35
 #define TFT_BL     38
 
-// CST836U Touch Configuration
+// Touch Screen Configuration
 #define TOUCH_SDA  4
 #define TOUCH_SCL  5
 #define TOUCH_RST  6
 #define TOUCH_INT  7
+
+// esp-now configuration
+#define MAX_SLAVES 9
+#define ESPNOW_RETRY_COUNT 3
+#define ESPNOW_TIMEOUT_MS 5000
+#define SLAVE_DATA_TIMEOUT 30000
+#define MQTT_PUBLISH_INTERVAL 10000
 
 // Optional features
 #define MONKEY_TEST_ENABLE 0

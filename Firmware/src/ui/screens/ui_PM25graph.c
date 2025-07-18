@@ -35,20 +35,20 @@ void ui_PM25graph_screen_init(void)
     lv_obj_set_style_bg_opa(ui_PM25graph, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Chart3 = lv_chart_create(ui_PM25graph);
-    lv_obj_set_width(ui_Chart3, 209);
+    lv_obj_set_width(ui_Chart3, 201);
     lv_obj_set_height(ui_Chart3, 195);
-    lv_obj_set_x(ui_Chart3, 11);
+    lv_obj_set_x(ui_Chart3, 14);
     lv_obj_set_y(ui_Chart3, 4);
     lv_obj_set_align(ui_Chart3, LV_ALIGN_CENTER);
     lv_chart_set_type(ui_Chart3, LV_CHART_TYPE_BAR);
-    lv_chart_set_point_count(ui_Chart3, 16);
+    lv_chart_set_point_count(ui_Chart3, 12);
     lv_chart_set_range(ui_Chart3, LV_CHART_AXIS_PRIMARY_Y, 500, 1800);
     lv_chart_set_div_line_count(ui_Chart3, 0, 0);
-    lv_chart_set_zoom_x(ui_Chart3, 180);
+    lv_chart_set_zoom_x(ui_Chart3, 250);
     lv_chart_set_zoom_y(ui_Chart3, 250);
-    lv_chart_set_axis_tick(ui_Chart3, LV_CHART_AXIS_PRIMARY_X, 0, 0, 8, 1, false, 50);
-    lv_chart_set_axis_tick(ui_Chart3, LV_CHART_AXIS_PRIMARY_Y, 3, 2, 7, 5, true, 20);
-    lv_chart_set_axis_tick(ui_Chart3, LV_CHART_AXIS_SECONDARY_Y, 0, 0, 5, 2, false, 5);
+    lv_chart_set_axis_tick(ui_Chart3, LV_CHART_AXIS_PRIMARY_X, 0, 0, 6, 1, false, 20);
+    lv_chart_set_axis_tick(ui_Chart3, LV_CHART_AXIS_PRIMARY_Y, 4, 2, 6, 3, true, 45);
+    lv_chart_set_axis_tick(ui_Chart3, LV_CHART_AXIS_SECONDARY_Y, 0, 0, 0, 0, false, 0);
     lv_obj_set_style_bg_color(ui_Chart3, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_Chart3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_Chart3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -57,7 +57,7 @@ void ui_PM25graph_screen_init(void)
 
     lv_obj_set_style_text_color(ui_Chart3, lv_color_hex(0xFFFFFF), LV_PART_TICKS | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_Chart3, 255, LV_PART_TICKS | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_Chart3, &lv_font_montserrat_18, LV_PART_TICKS | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Chart3, &lv_font_montserrat_16, LV_PART_TICKS | LV_STATE_DEFAULT);
 
     ui_Container3 = lv_obj_create(ui_PM25graph);
     lv_obj_remove_style_all(ui_Container3);

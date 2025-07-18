@@ -5,10 +5,24 @@
 extern "C" {
 #endif
 
-bool is_matter_commissioned();
+#pragma once
+
+#ifdef CONFIG_ESP_MATTER_ENABLE
+
+void initMatter();           // Call once in setup
+void matter_loop();          // Call repeatedly in loop
+bool is_matter_commissioned(); // Optional helper
+
+#else
+inline void initMatter() {}
+inline void matter_loop() {}
+inline bool is_matter_commissioned() {return false;}
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
+
