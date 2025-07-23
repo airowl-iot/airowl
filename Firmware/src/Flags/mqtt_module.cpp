@@ -4,9 +4,9 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
 // mqtt credentials
-const char *mqtt_server = "mqtt.oizom.com";
-const char *mqtt_username = "oizom";
-const char *mqtt_password = "12345678";
+const char *mqtt_server = "";
+const char *mqtt_username = "";
+const char *mqtt_password = "";
 
 void mqtt_callback(char* topic, byte* message, unsigned int length) {
     // MQTT message handler
