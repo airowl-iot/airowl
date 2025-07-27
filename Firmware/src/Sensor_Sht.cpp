@@ -9,11 +9,9 @@ SHTSensor sht;
 TaskHandle_t shtTaskHandle = nullptr;
 
 extern TwoWire Wire;
-extern String deviceName;
 
 void ShtData(void *params) {
     
-    // Do NOT re-initialize Wire here — it was already initialized in main 
     if (!sht.init()) {
         Serial.println("[SHT] Init failed!");
     } else {
@@ -44,12 +42,12 @@ void ShtData(void *params) {
 
             String jsonString = "{";
                     jsonString += "\"deviceId\":\"";
-                    jsonString += deviceName;
+                    jsonString += deviceId;
                     jsonString += "\",";
-                    jsonString += "\"p3\":";
+                    jsonString += "\"temp\":";
                     jsonString += String(tempStr, 2);
                     jsonString += ",";
-                    jsonString += "\"p1\":";
+                    jsonString += "\"hum\":";
                     jsonString += String(humStr, 2);
                     jsonString += "}";
             
@@ -58,15 +56,13 @@ void ShtData(void *params) {
                     mqtt_reconnect(deviceId.c_str());
                 }
                 mqtt_publish("airowl",jsonString.c_str());
-                mqtt_publish(tempTopic.c_str(), tempStr);
-                mqtt_publish(humTopic.c_str(), humStr);
             }
         } else {
             Serial.println("[SHT] Sensor read failed!");
         }
 
-        esp_task_wdt_reset();                      //  Reset the watchdog
-        vTaskDelay(pdMS_TO_TICKS(1000));          //  Don't block
+        esp_task_wdt_reset();  
+        vTaskDelay(pdMS_TO_TICKS(1000));          
     }
 }
 
@@ -80,12 +76,6 @@ void initSHTTask() {
 }
 
 void restartSHTTask() {
-    // if (shtTaskHandle) {
-    //     esp_task_wdt_delete(shtTaskHandle);
-    //     vTaskDelete(shtTaskHandle);
-    //     shtTaskHandle = nullptr;
-    // }
-
     BaseType_t result = xTaskCreatePinnedToCore(ShtData, "SHTTask", 4096, nullptr, 2, &shtTaskHandle, 1);
     if (result == pdPASS && shtTaskHandle) {
         esp_task_wdt_add(shtTaskHandle);
