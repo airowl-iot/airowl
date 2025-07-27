@@ -21,9 +21,6 @@ CRGB leds[NUM_LEDS];
 // Adafruit_NeoPixel led = Adafruit_NeoPixel(1, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 static device_state_t current_state = DEVICE_STATE_DISCONNECTED;
-static unsigned long last_update = 0;
-static uint8_t breathe_brightness = 0;
-static int8_t breathe_direction = 1;
 static bool led_on = false;
 
 extern PubSubClient mqttClient; 
@@ -108,33 +105,43 @@ device_state_t get_device_state() {
 // }
 
 void led_status_loop() {
-    static unsigned long last_blink = 0;
-    static bool led_on = false;
+    static unsigned long last_update = 0;
+    static uint8_t brightness = 0;
+    static int8_t direction = 1;
+
     unsigned long now = millis();
-    CRGB color = CRGB::Black;
+
+    // Update brightness every 15ms for smooth breathing
+    if (now - last_update >= 15) {
+        brightness += direction;
+        if (brightness == 0 || brightness == 255) {
+            direction = -direction;
+        }
+        last_update = now;
+    }
+
+    CRGB color;
 
     switch (current_state) {
         case DEVICE_STATE_DISCONNECTED:
-            color = CRGB(0, 255, 0); // Green
+            color = CRGB::Red;
             break;
         case DEVICE_STATE_WIFI_CONNECTED:
-            color = CRGB(255, 0, 0); // Red
+            color = CRGB::Blue;
             break;
         case DEVICE_STATE_MQTT_PUBLISHING:
-            color = CRGB(0, 0, 255); // Blue
+            color = CRGB::Green;
             break;
         default:
             color = CRGB::Black;
             break;
     }
-    if (now - last_blink >= 1000) { // 1 second interval
-        led_on = !led_on;
-        last_blink = now;
-    }
 
-    leds[0] = led_on ? color : CRGB::Black;
+    leds[0] = color;
+    leds[0].fadeLightBy(255 - brightness);  // Apply breathing effect
     FastLED.show();
 }
+
 
 // FreeRTOS LED task
 static void led_task(void *param) {
