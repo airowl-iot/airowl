@@ -34,11 +34,12 @@
 #include "ui/matter_wrapper.h"
 #endif
 
+#include "Flags/mqtt_module.h"
+
 #define WDT_TIMEOUT_SECONDS 30
 #define FIRMWARE_VERSION "version - 3.1"
 
 WiFiManager wm;
-
 extern WiFiManager wm;
 
 // -------------------- Handle NTP sync --------------------
@@ -52,7 +53,7 @@ void on_time_available(struct timeval *t) {
 
 // -------------------- Setup --------------------
 void setup() {
-  bootTime = millis();
+
   Serial.begin(115200);
   Serial.println("===== AIROWL BOOT =====");
 
@@ -73,7 +74,7 @@ void setup() {
 
   String mac = WiFi.macAddress(); mac.replace(":", "");
   String apName = "AIROWL_" + mac.substring(6);
-
+  
   WiFiManagerNS::NTP::onTimeAvailable(&on_time_available);
   WiFiManagerNS::init(&wm, nullptr);
   std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
@@ -83,7 +84,7 @@ void setup() {
   wm.setConfigPortalTimeout(120); // Captive portal timeout
   wm.setConnectTimeout(60);       // WiFi connect timeout
   wm.setDebugOutput(true);
-
+  
   bool connected = wm.autoConnect(apName.c_str(), "12345678");
 
   // Wait for user connection if not auto connected
@@ -98,6 +99,8 @@ void setup() {
   } else {
     Serial.printf("[WiFiManager] Connected to WiFi: %s\n", WiFi.SSID().c_str());
   }
+
+  mqtt_setup();
 
   // ----- LVGL UI -----
   #ifdef CONFIG_ENABLE_LVGL
@@ -153,6 +156,7 @@ void setup() {
     Serial.printf("[RESULT] Total %d I2C device(s) found.\n", devices);
   }
 
+
   // ----- ESP-NOW Comm -----
   #ifdef CONFIG_ENABLE_ESP_NOW
     initESPNow();
@@ -180,9 +184,7 @@ void setup() {
 void loop() {
   #ifdef CONFIG_ENABLE_LVGL
     lv_handler();
-  #endif
-
-  #ifndef CONFIG_ENABLE_LVGL
+  #else
     //led logic if needed
   #endif
 
@@ -191,11 +193,11 @@ void loop() {
   #endif
 
   #ifdef CONFIG_ENABLE_SENSOR_SEN54
-    // Sensor logic handled in task
+    // Sensor logic if required
   #endif
 
-  #ifdef CONFIG_ENABLE_SENSOR_SHT
-    // SHT Sensor logic handled in task
+  #ifdef CONFIG_ENABLE_SENSOR_SHT 
+    // SHT Sensor logic if needed
   #endif
 
   #ifdef CONFIG_ENABLE_ESP_NOW
@@ -207,6 +209,13 @@ void loop() {
     matter_loop();
   #endif
 
+  if (!mqttClient.connected()) {
+    mqtt_reconnect("AIROWL"); // prints the status 
+  } else {
+    mqttClient.loop(); 
+  }
+
   update_time();
   esp_task_wdt_reset(); // Keep watchdog alive
+  delay(10); 
 }
