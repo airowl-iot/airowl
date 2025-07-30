@@ -58,6 +58,7 @@ extern lv_obj_t * ui_TVOCButton;
 extern lv_obj_t * ui_tvoclabel;
 extern lv_obj_t * ui_tvocunit;
 extern lv_obj_t * ui_tvocvalue;
+
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

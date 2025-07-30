@@ -3,7 +3,15 @@
         "ui.h": "c",
         "*.tpp": "cpp",
         "chrono": "c",
-        "functional": "c"
+        "functional": "c",
+        "ui_pm10graph.h": "c",
+        "ui_dashboard.h": "c",
+        "ui_helpers.h": "c",
+        "ui_events.h": "c",
+        "matter_wrapper.h": "c",
+        "voice_assistant.h": "c",
+        "cstdlib": "c",
+        "ostream": "cpp"
     },
-    "cmake.sourceDirectory": "E:/Oizom/airowl_tft_display_updated_arduino_gfx_library - Copy/airowl/Firmware/lib/lvgl"
+    "cmake.sourceDirectory": "D:/OneDrive/Documents/GitHub/airowl3/Firmware/lib/lvgl"
 }

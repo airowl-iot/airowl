@@ -12,7 +12,6 @@ lv_obj_t * ui_righteye = NULL;
 lv_obj_t * ui_rightpupil = NULL;
 lv_obj_t * ui_nose = NULL;
 
-// build funtions
 
 void ui_owl_screen_init(void)
 {
@@ -91,5 +90,4 @@ void ui_owl_screen_destroy(void)
     ui_righteye = NULL;
     ui_rightpupil = NULL;
     ui_nose = NULL;
-
 }

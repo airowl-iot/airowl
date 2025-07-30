@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "ui_helpers.h"
 #include "matter_wrapper.h"
+#include "Voice_assistant.h"
 
 ///////////////////// VARIABLES ////////////////////
 void blink_Animation(lv_obj_t * TargetObject, int delay);
@@ -36,6 +37,9 @@ lv_obj_t * ui____initial_actions0;
 #if LV_COLOR_16_SWAP !=0
     #error "LV_COLOR_16_SWAP should be 0 to match SquareLine Studio's settings"
 #endif
+
+static bool long_press_triggered = false;
+
 
 ///////////////////// ANIMATIONS ////////////////////
 void blink_Animation( lv_obj_t *TargetObject, int delay)
@@ -289,6 +293,7 @@ void ui_event_owl(lv_event_t * e)
     lv_obj_t * target = lv_event_get_target(e);
 
     if (event_code == LV_EVENT_SCREEN_LOADED) {
+        long_press_triggered = false; 
         lv_indev_reset(NULL, ui_owl);
 
         lv_obj_set_width(ui_rightpupil, 50);
@@ -319,11 +324,18 @@ void ui_event_owl(lv_event_t * e)
 
         // Automatic transition to dashboard if not clicked
         _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_FADE_ON, 500, 20000, &ui_dashboard_screen_init);
+
+    }
+
+     if (event_code == LV_EVENT_LONG_PRESSED) {
+        long_press_triggered = true; 
+        _ui_screen_change(&ui_voiceasistant, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_voiceasistant_screen_init);
     }
     
     if (event_code == LV_EVENT_CLICKED){ 
+        if (long_press_triggered) return; 
         // Check if Matter device is commissioned using the wrapper function
-        if(!is_matter_commissioned()) {
+         if(!is_matter_commissioned()) {
             // Transition to matter_qrcode screen when clicked and device is not commissioned
             _ui_screen_change(&ui_matter_qrcode, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_matter_qrcode_screen_init);
         }
@@ -332,6 +344,7 @@ void ui_event_owl(lv_event_t * e)
             // _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
         // }
     }
+    
 }
 
 ///////////////////// SCREENS ////////////////////
@@ -345,6 +358,7 @@ void ui_init(void)
     ui_Intro_screen_init();
     ui_qrcode_screen_init();
     ui_owl_screen_init();
+    ui_voiceasistant_screen_init();
     ui_dashboard_screen_init();
     ui_PM1graph_screen_init();
     ui_PM4graph_screen_init();
@@ -352,6 +366,7 @@ void ui_init(void)
     ui_PM10graph_screen_init();
     ui_TVOCgraph_screen_init();
     ui_matter_qrcode_screen_init();
+    
     ui____initial_actions0 = lv_obj_create(NULL);
     lv_disp_load_scr(ui_Intro);
 }
@@ -361,6 +376,7 @@ void ui_destroy(void)
     ui_Intro_screen_destroy();
     ui_qrcode_screen_destroy();
     ui_owl_screen_destroy();
+    ui_voiceasistant_screen_destroy();
     ui_dashboard_screen_destroy();
     ui_PM1graph_screen_destroy();
     ui_PM4graph_screen_destroy();

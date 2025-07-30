@@ -9,7 +9,7 @@
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 
-#include "config.h"
+#include "configure.h"
 
 #ifdef CONFIG_ENABLE_SENSOR_SEN54
   #include "Sensor.h"

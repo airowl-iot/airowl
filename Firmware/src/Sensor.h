@@ -10,7 +10,7 @@
 #include <vector>
 #include <stdint.h>
 
-#include "config.h"
+#include "configure.h"
 #include "Flags/mqtt_module.h"
 
 #ifdef CONFIG_ENABLE_LVGL

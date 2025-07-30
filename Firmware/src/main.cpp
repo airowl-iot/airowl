@@ -4,8 +4,15 @@
 #include <WiFiManager.h>
 #include <WiFiManagerTz.h>
 #include <Wire.h>
-#include "config.h"
 #include "time_func.h"
+#include "configure.h"
+#include <driver/rtc_io.h>
+#include "Config.h"
+#include "SPIFFS.h"
+#include <driver/touch_sensor.h>
+
+const char* ssid = "Hettzz";
+const char* password = "12345678";
 
 #ifdef CONFIG_ENABLE_LVGL
 #include "ui/lv_setup.h"
@@ -30,6 +37,10 @@
 #include "Flags/espnow_module.h"
 #endif
 
+#ifdef CONFIG_ENABLE_VOICE_ASSISTANT
+#include "Voice_assistant.h"
+#endif
+
 #ifdef CONFIG_ESP_MATTER_ENABLE
 #include "ui/matter_wrapper.h"
 #endif
@@ -38,8 +49,7 @@
 #define FIRMWARE_VERSION "version - 3.1"
 
 WiFiManager wm;
-
-extern WiFiManager wm;
+bool elato_active = false;   // initially false
 
 // -------------------- Handle NTP sync --------------------
 void on_time_available(struct timeval *t) {
@@ -67,9 +77,12 @@ void setup() {
   esp_task_wdt_init(&wdt_config);
   esp_task_wdt_add(NULL);
 
+   WiFi.disconnect(true);  // 🧹 Clear previously saved SSID like "OIZOM"
+    delay(500);
+    
   // ----- Dynamic AP Setup via WiFiManager -----
   WiFi.mode(WIFI_STA);
-  WiFi.begin();
+  WiFi.begin(ssid, password);
 
   String mac = WiFi.macAddress(); mac.replace(":", "");
   String apName = "AIROWL_" + mac.substring(6);
@@ -101,9 +114,12 @@ void setup() {
 
   // ----- LVGL UI -----
   #ifdef CONFIG_ENABLE_LVGL
+    Serial.println("[LVGL] Starting LVGL initialization...");
     lv_begin();
+    Serial.println("[LVGL] LVGL begin completed");
     ui_init();
-    Serial.println("[LVGL] UI initialized");
+ 
+    Serial.println("[LVGL] LVGL task started");
     lv_label_set_text(ui_devicename, apName.c_str());
     lv_label_set_text(ui_qrcodename, apName.c_str());
     lv_label_set_text(ui_firmwareversion, FIRMWARE_VERSION);
@@ -132,9 +148,12 @@ void setup() {
     Serial.println("[SHT] SHT Sensor task started");
   #endif
 
-  Serial.println("\n[SCAN] Starting I2C Bus Scan...");
+  //  ----- voice assistant -----
+  // #ifdef CONFIG_ENABLE_VOICE_ASSISTANT
+  //   initVoiceAssistantTask();
+  // #endif
 
-  Wire.begin(4, 5);
+  Serial.println("\n[SCAN] Starting I2C Bus Scan...");
 
   int devices = 0;
   for (uint8_t address = 1; address < 127; address++) {
@@ -191,15 +210,12 @@ void loop() {
   #endif
 
   #ifdef CONFIG_ENABLE_SENSOR_SEN54
-    // Sensor logic handled in task
   #endif
 
   #ifdef CONFIG_ENABLE_SENSOR_SHT
-    // SHT Sensor logic handled in task
   #endif
 
   #ifdef CONFIG_ENABLE_ESP_NOW
-    // espnow_loop runs inside its task
     espnow_loop();
   #endif
 
@@ -208,5 +224,5 @@ void loop() {
   #endif
 
   update_time();
-  esp_task_wdt_reset(); // Keep watchdog alive
+  esp_task_wdt_reset(); 
 }

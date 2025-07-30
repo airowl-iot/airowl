@@ -36,6 +36,7 @@ extern "C" {
 #include "screens/ui_PM4graph.h"
 #include "screens/ui_PM25graph.h"
 #include "screens/ui_PM10graph.h"
+#include "screens/ui_voiceasistant.h"
 #include "screens/ui_TVOCgraph.h"
 
 ///////////////////// VARIABLES ////////////////////
@@ -67,6 +68,7 @@ LV_IMG_DECLARE(ui_img_oizom_logo_png);    // assets/oizom_logo.png
 LV_IMG_DECLARE(ui_img_airowl_1_png);    // assets/airowl_1.png
 LV_IMG_DECLARE(ui_img_airowl_2_png);    // assets/airowl_2.png
 LV_IMG_DECLARE(ui_img_582762761);    // assets/celsius-degrees-symbol-of-temperature.png
+LV_IMG_DECLARE(ui_img_speaker_png);    // assets/speaker.png
 
 // UI INIT
 void ui_init(void);

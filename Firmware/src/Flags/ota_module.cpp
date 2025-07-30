@@ -49,8 +49,8 @@ bool statusPublished = false;
 
 unsigned long last_check_for_ota_update = 0;
 unsigned long last_heartbeat = 0;
-const unsigned long check_for_ota_interval = 60000;
-const unsigned long heartbeat_interval = 60000;
+const unsigned long check_for_ota_interval = 1800000;
+const unsigned long heartbeat_interval = 300000;
 
 String assetURL = "";
 String deploymentID = "";
@@ -176,6 +176,12 @@ void anedya_update_ota_status(const char *deploymentID, const char *deploymentSt
 
 //---------------------------------- Function to send heartbeat -----------------------------------
 void anedya_sendHeartbeat() {
+  // Check available heap before creating HTTPClient - increased for SSL operations
+  if (esp_get_free_heap_size() < 40000) {  // Increased from 30000 to 40000 for SSL
+    Serial.printf("[OTA] Heap too low (%d bytes) for heartbeat - skipping\n", esp_get_free_heap_size());
+    return;
+  }
+  
   HTTPClient http;
   String url = anedyaApi("/v1/heartbeat");
   http.begin(url);
@@ -198,6 +204,7 @@ void initOTA() {
 /*---------------------LOOP SECTION-------------------------------*/
 void ota_loop() {
   unsigned long now = millis();
+
 
   if (now - last_heartbeat >= heartbeat_interval) {
     last_heartbeat = now;

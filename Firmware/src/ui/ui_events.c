@@ -4,6 +4,7 @@
 // Project name: SquareLine_Project
 
 #include "ui.h"
+#include "ui_events.h"
 
 void logoPressed(lv_event_t * e)
 {
