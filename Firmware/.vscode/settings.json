@@ -11,7 +11,19 @@
         "matter_wrapper.h": "c",
         "voice_assistant.h": "c",
         "cstdlib": "c",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "format": "cpp",
+        "initializer_list": "cpp",
+        "span": "cpp",
+        "regex": "cpp"
     },
     "cmake.sourceDirectory": "D:/OneDrive/Documents/GitHub/airowl3/Firmware/lib/lvgl"
 }

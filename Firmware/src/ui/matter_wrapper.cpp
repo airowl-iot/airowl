@@ -30,14 +30,6 @@ void initMatter() {
     Serial.println("[Matter] Initialization done");
 }
 
-void stopMatter() {
-    if (!matter_initialized) return;
-
-    Serial.println("[Matter] Stopping Matter...");
-    matter_initialized = false;
-    was_commissioned = false;
-}
-
 void matter_loop() {
     if (!matter_initialized || WiFi.status() != WL_CONNECTED)
         return;

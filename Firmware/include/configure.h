@@ -11,17 +11,17 @@
 #define TFT_CS     39
 #define TFT_DC     21
 #define TFT_RST    47
-#define TFT_SCLK   36
-#define TFT_MOSI   35
+#define TFT_SCLK   7
+#define TFT_MOSI   6
 #define TFT_BL     38
 
 // Touch Screen Configuration
 #define TOUCH_SDA  4
 #define TOUCH_SCL  5
-#define TOUCH_RST  6
-#define TOUCH_INT  7
+#define TOUCH_RST  2
+#define TOUCH_INT  45
 
-// esp-now configuration
+// // esp-now configuration
 #define MAX_SLAVES 9
 #define ESPNOW_RETRY_COUNT 3
 #define ESPNOW_TIMEOUT_MS 5000

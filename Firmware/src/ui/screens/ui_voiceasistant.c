@@ -9,6 +9,8 @@
 lv_obj_t * ui_voiceasistant;
 lv_obj_t * ui_speakerbutton;
 
+static bool va_started = false;
+
 // event funtions
 void ui_event_speakerbutton(lv_event_t * e)
 {
@@ -18,7 +20,11 @@ void ui_event_speakerbutton(lv_event_t * e)
         _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 20000, &ui_dashboard_screen_init);
     }
      if(event_code == LV_EVENT_LONG_PRESSED) {
+        if (!va_started) {
+        va_started = true;
         initVoiceAssistantTask();  
+        lv_obj_add_state(ui_speakerbutton, LV_STATE_DISABLED);
+        }
     }
 }
 

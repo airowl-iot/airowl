@@ -15,7 +15,6 @@ void initVoiceAssistantTask();
 void setupDeviceMetadata();
 void getAuthTokenFromNVS();
 void enterSleep();
-void stopTasksForVA() ;
 void restartVoiceAssistantTask();
 void VoiceAssistantTask(void* params);
 
