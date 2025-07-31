@@ -1,6 +1,6 @@
 #include <Config.h>
 #include <nvs_flash.h>
-#include <ESPAsyncWebServer.h> //https://github.com/me-no-dev/ESPAsyncWebServer using the latest dev version from @me-no-dev
+#include <HTTPClient.h>
 
 void setResetComplete() {
     HTTPClient http;
