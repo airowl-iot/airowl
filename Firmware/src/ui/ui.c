@@ -335,10 +335,10 @@ void ui_event_owl(lv_event_t * e)
     if (event_code == LV_EVENT_CLICKED){ 
         if (long_press_triggered) return; 
         // Check if Matter device is commissioned using the wrapper function
-         if(!is_matter_commissioned()) {
-            // Transition to matter_qrcode screen when clicked and device is not commissioned
-            _ui_screen_change(&ui_matter_qrcode, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_matter_qrcode_screen_init);
-        }
+        //  if(!is_matter_commissioned()) {
+        //     // Transition to matter_qrcode screen when clicked and device is not commissioned
+        //     _ui_screen_change(&ui_matter_qrcode, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_matter_qrcode_screen_init);
+        // }
         // else {
             // Transition to dashboard screen when clicked and device is commissioned
             // _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);

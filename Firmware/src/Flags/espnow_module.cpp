@@ -1,7 +1,8 @@
-#include "espnow_module.h"
+
 
 #ifdef CONFIG_ENABLE_ESP_NOW
 
+#include "espnow_module.h"
 #include <esp_now.h>
 #include <WiFi.h>
 #include <Preferences.h>

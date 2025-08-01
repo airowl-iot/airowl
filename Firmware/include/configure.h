@@ -18,8 +18,8 @@
 // Touch Screen Configuration
 #define TOUCH_SDA  4
 #define TOUCH_SCL  5
-#define TOUCH_RST  2
-#define TOUCH_INT  45
+#define TOUCH_RST  42
+#define TOUCH_INT  41
 
 // // esp-now configuration
 #define MAX_SLAVES 9

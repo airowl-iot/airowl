@@ -22,8 +22,6 @@ extern bool statusPublished;
 extern String assetURL;
 extern String deploymentID;
 
-#else
-
 // If OTA disabled, provide safe empty stubs
 inline void setDevice_time() {}
 inline bool anedya_check_ota_update(char *, char *) { return false; }
@@ -32,5 +30,7 @@ inline void anedya_sendHeartbeat() {}
 inline void ota_loop() {}
 inline void initOTA() {}
 inline void HttpEvent(void *) {}
+
+#else
 
 #endif

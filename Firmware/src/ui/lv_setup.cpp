@@ -127,7 +127,7 @@ void restartLVGLTask() {
         lvglTaskHandle = nullptr;
     }
 
-    BaseType_t result = xTaskCreatePinnedToCore(lvgl_task, "LVGL", 8192, nullptr, 3, &lvglTaskHandle, 0);
+    BaseType_t result = xTaskCreatePinnedToCore(lvgl_task, "LVGL", 8192, nullptr, 1, &lvglTaskHandle, 0);
     if (result == pdPASS && lvglTaskHandle) {
         // Add to watchdog only if not already added
         if (!esp_task_wdt_status(lvglTaskHandle)) {

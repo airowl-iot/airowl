@@ -1,24 +1,22 @@
 #include <Arduino.h>
 #include <esp_task_wdt.h>
 #include <WiFi.h>
-#include <WiFiManager.h>
-#include <WiFiManagerTz.h>
+#include "WifiManager.h"
 #include <Wire.h>
-#include "time_func.h"
+// #include "time_func.h"
 #include "configure.h"
 #include <driver/rtc_io.h>
 #include "Config.h"
 #include "SPIFFS.h"
 #include <driver/touch_sensor.h>
 
-const char* ssid = "Hettzz";
-const char* password = "12345678";
+AsyncWebServer webServer(80);
+WIFIMANAGER WifiManager;
+esp_err_t getErr = ESP_OK;
 
 #ifdef CONFIG_ENABLE_LVGL
 #include "ui/lv_setup.h"
 #include "ui/ui.h"
-#else
-#include "Flags/led_module.h"
 #endif
 
 #ifdef CONFIG_ENABLE_SENSOR_SEN54
@@ -45,11 +43,27 @@ const char* password = "12345678";
 #include "ui/matter_wrapper.h"
 #endif
 
-#define WDT_TIMEOUT_SECONDS 30
+#define WDT_TIMEOUT_SECONDS 500
 #define FIRMWARE_VERSION "version - 3.1"
 
-WiFiManager wm;
-bool elato_active = false;   // initially false
+String apName = "AIROWL_XXXX";
+
+void setupWiFi()
+{
+    WifiManager.startBackgroundTask(apName);        // Run the background task to take care of our Wifi
+    WifiManager.fallbackToSoftAp(true);       // Run a SoftAP if no known AP can be reached
+    WifiManager.attachWebServer(&webServer);  // Attach our API to the Webserver 
+    WifiManager.attachUI();                   // Attach the UI to the Webserver
+  
+    // Run the Webserver and add your webpages to it
+    webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->redirect("/wifi");
+    });
+    webServer.onNotFound([&](AsyncWebServerRequest *request) {
+      request->send(404, "text/plain", "Not found");
+    });
+    webServer.begin();
+}
 
 // -------------------- Handle NTP sync --------------------
 void on_time_available(struct timeval *t) {
@@ -62,58 +76,38 @@ void on_time_available(struct timeval *t) {
 
 // -------------------- Setup --------------------
 void setup() {
-  bootTime = millis();
+  
   Serial.begin(115200);
   Serial.println("===== AIROWL BOOT =====");
 
-  Wire.begin(4, 5);
-
-  // Watchdog setup
-  esp_task_wdt_config_t wdt_config = {
-    .timeout_ms = WDT_TIMEOUT_SECONDS * 1000,
-    .idle_core_mask = 0,
-    .trigger_panic = true
-  };
-  esp_task_wdt_init(&wdt_config);
+  esp_task_wdt_init(WDT_TIMEOUT_SECONDS * 1000, true);
   esp_task_wdt_add(NULL);
 
-   WiFi.disconnect(true);  // 🧹 Clear previously saved SSID like "OIZOM"
-    delay(500);
-    
-  // ----- Dynamic AP Setup via WiFiManager -----
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
+  
   String mac = WiFi.macAddress(); mac.replace(":", "");
-  String apName = "AIROWL_" + mac.substring(6);
-
-  WiFiManagerNS::NTP::onTimeAvailable(&on_time_available);
-  WiFiManagerNS::init(&wm, nullptr);
-  std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
-  wm.setMenu(menu);
-  wm.setTitle("AIROWL Configuration");
-  wm.setConfigPortalBlocking(false);
-  wm.setConfigPortalTimeout(120); // Captive portal timeout
-  wm.setConnectTimeout(60);       // WiFi connect timeout
-  wm.setDebugOutput(true);
-
-  bool connected = wm.autoConnect(apName.c_str(), "12345678");
-
-  // Wait for user connection if not auto connected
-  unsigned long wifi_start = millis();
-  while (!WiFi.isConnected() && millis() - wifi_start < 120000) {
-    wm.process();
-    esp_task_wdt_reset();
-  }
-
-  if (!connected) {
-    Serial.println("[WiFiManager] Portal timeout or user exited.");
-  } else {
-    Serial.printf("[WiFiManager] Connected to WiFi: %s\n", WiFi.SSID().c_str());
-  }
-
+  apName = "AIROWL_" + mac.substring(6);
   // ----- LVGL UI -----
   #ifdef CONFIG_ENABLE_LVGL
+    Wire.begin(4, 5);
+    delay(1000);
+    Serial.println("\n[SCAN] Starting I2C Bus Scan...");
+
+    int devices = 0;
+    for (uint8_t address = 1; address < 127; address++) {
+      Wire.beginTransmission(address);
+      if (Wire.endTransmission() == 0) {
+        Serial.print("[FOUND] I2C device at 0x");
+        Serial.println(address, HEX);
+        devices++;
+      }
+      delay(5);
+    }
+
+    if (devices == 0) {
+      Serial.println("[RESULT] No I2C devices found.");
+    } else {
+      Serial.printf("[RESULT] Total %d I2C device(s) found.\n", devices);
+    }
     Serial.println("[LVGL] Starting LVGL initialization...");
     lv_begin();
     Serial.println("[LVGL] LVGL begin completed");
@@ -130,10 +124,10 @@ void setup() {
     lv_qrcode_update(qrcode_obj, qrcodeurl.c_str(), qrcodeurl.length());
   #else
   // ----- Fallback LED status if no LVGL -----
-    delay(500);
-    led_status_init(LED_PIN);   // Initializes the NeoPixel
-    restartLEDTask(); 
-    Serial.println("[LED] LED initialized");
+    // delay(500);
+    // led_status_init(LED_PIN);   // Initializes the NeoPixel
+    // restartLEDTask(); 
+    // Serial.println("[LED] LED initialized");
   #endif
 
   // ----- Sensor Task -----
@@ -149,28 +143,9 @@ void setup() {
   #endif
 
   //  ----- voice assistant -----
-  // #ifdef CONFIG_ENABLE_VOICE_ASSISTANT
-  //   initVoiceAssistantTask();
-  // #endif
-
-  Serial.println("\n[SCAN] Starting I2C Bus Scan...");
-
-  int devices = 0;
-  for (uint8_t address = 1; address < 127; address++) {
-    Wire.beginTransmission(address);
-    if (Wire.endTransmission() == 0) {
-      Serial.print("[FOUND] I2C device at 0x");
-      Serial.println(address, HEX);
-      devices++;
-    }
-    delay(5);
-  }
-
-  if (devices == 0) {
-    Serial.println("[RESULT] No I2C devices found.");
-  } else {
-    Serial.printf("[RESULT] Total %d I2C device(s) found.\n", devices);
-  }
+  #ifdef CONFIG_ENABLE_VOICE_ASSISTANT
+    initVoiceAssistantTask();
+  #endif
 
   // ----- ESP-NOW Comm -----
   #ifdef CONFIG_ENABLE_ESP_NOW
@@ -190,9 +165,9 @@ void setup() {
     initMatter();
     Serial.println("[Matter] Matter Initialized");
   #endif
-
+  setupWiFi();
   // ----- Clock Sync -----
-  time_init();
+  // time_init();
 }
 
 // -------------------- Main Loop --------------------
@@ -223,6 +198,6 @@ void loop() {
     matter_loop();
   #endif
 
-  update_time();
+  // update_time();
   esp_task_wdt_reset(); 
 }

@@ -54,7 +54,7 @@ private:
 
 BufferPrint bufferPrint(audioBuffer);
 OpusAudioDecoder opusDecoder;  //access guarded by wsmutex
-BufferRTOS<uint8_t> audioBuffer(AUDIO_BUFFER_SIZE, AUDIO_CHUNK_SIZE);  //producer: networkTask, consumer: audioStreamTask. Thread safe in single producer->single consumer scenario.
+BufferRTOS<uint8_t> audioBuffer(AUDIO_BUFFER_SIZE, AUDIO_CHUNK_SIZE, true);  //producer: networkTask, consumer: audioStreamTask. Thread safe in single producer->single consumer scenario.
 I2SStream i2s; //access from audioStreamTask only
 
 // OLD with no pitch shift
@@ -89,7 +89,7 @@ void transitionToSpeaking() {
     
     // webSocket.enableHeartbeat(30000, 15000, 3);
     
-    Serial.println("[VA-A] [VA]Transitioned to speaking mode");
+    Serial.println("Transitioned to speaking mode");
 }
 
 // networkTask -> transitionToListening()
@@ -97,12 +97,12 @@ void transitionToSpeaking() {
 void transitionToListening() {
     deviceState = PROCESSING;   
     scheduleListeningRestart = false;
-    Serial.println("[VA-A] [VA]Transitioning to listening mode");
+    Serial.println("Transitioning to listening mode");
 
     i2sInputFlushScheduled = true;
     i2sOutputFlushScheduled = true;
 
-    Serial.println("[VA-A] [VA]Transitioned to listening mode");
+    Serial.println("Transitioned to listening mode");
 
     deviceState = LISTENING;
     digitalWrite(I2S_SD_OUT, LOW);
@@ -111,7 +111,7 @@ void transitionToListening() {
 
 // audioStreamTask -> copier.copy() (conditional on webSocket.isConnected())
 void audioStreamTask(void *parameter) {
-    Serial.println("[VA-A] [VA]Starting I2S stream pipeline...");
+    Serial.println("Starting I2S stream pipeline...");
     
     pinMode(I2S_SD_OUT, OUTPUT);
 
@@ -218,7 +218,7 @@ void micTask(void *parameter) {
     i2sConfig.sample_rate = SAMPLE_RATE;
     i2sConfig.channels = CHANNELS;
     i2sConfig.i2s_format = I2S_LEFT_JUSTIFIED_FORMAT;
-    // i2sConfig.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT; 
+    i2sConfig.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
     // Configure your I2S input pins appropriately here:
     i2sConfig.pin_bck = I2S_SCK;
     i2sConfig.pin_ws  = I2S_WS;
@@ -253,23 +253,23 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     switch (type)
     {
     case WStype_DISCONNECTED:
-        Serial.printf("[VA-A] [WSc] Disconnected!\n");
+        Serial.printf("[WSc] Disconnected!\n");
         deviceState = IDLE;
         break;
     case WStype_CONNECTED:
-        Serial.printf("[VA-A] [WSc] Connected to url: %s\n", payload);
+        Serial.printf("[WSc] Connected to url: %s\n", payload);
         deviceState = PROCESSING;
         break;
     case WStype_TEXT:
     {
-        Serial.printf("[VA-A] [WSc] get text: %s\n", payload);
+        Serial.printf("[WSc] get text: %s\n", payload);
 
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, (char *)payload);
 
         if (error)
         {
-            Serial.println("[VA-A] [VA]Error deserializing JSON");
+            Serial.println("Error deserializing JSON");
             deviceState = IDLE;
             return;
         }
@@ -280,7 +280,8 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         if (strcmp((char*)type.c_str(), "auth") == 0) {
             currentVolume = doc["volume_control"].as<int>();
             currentPitchFactor = doc["pitch_factor"].as<float>();
-            
+
+            bool is_ota = doc["is_ota"].as<bool>();
             bool is_reset = doc["is_reset"].as<bool>();
 
             // Update volumes on both streams
@@ -297,7 +298,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
             }
 
             if (is_reset) {
-                Serial.println("[VA-A] [VA]Factory reset received");
+                Serial.println("Factory reset received");
                 // setFactoryResetStatusInNVS(true);
                 ESP.restart();
             }
@@ -309,7 +310,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
             Serial.println(msg);
 
             if (strcmp((char*)msg.c_str(), "RESPONSE.COMPLETE") == 0 || strcmp((char*)msg.c_str(), "RESPONSE.ERROR") == 0) {
-                Serial.println("[VA-A] [VA]Received RESPONSE.COMPLETE or RESPONSE.ERROR, starting listening again");
+                Serial.println("Received RESPONSE.COMPLETE or RESPONSE.ERROR, starting listening again");
 
                 // Check if volume_control is included in the message
                 if (doc.containsKey("volume_control")) {
@@ -322,10 +323,10 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
             } else if (strcmp((char*)msg.c_str(), "AUDIO.COMMITTED") == 0) {
                 deviceState = PROCESSING; 
             } else if (strcmp((char*)msg.c_str(), "RESPONSE.CREATED") == 0) {
-                Serial.println("[VA-A] [VA]Received RESPONSE.CREATED, transitioning to speaking");
+                Serial.println("Received RESPONSE.CREATED, transitioning to speaking");
                 transitionToSpeaking();
             } else if (strcmp((char*)msg.c_str(), "SESSION.END") == 0) {
-                Serial.println("[VA-A] [VA]Received SESSION.END, going to sleep");
+                Serial.println("Received SESSION.END, going to sleep");
                 sleepRequested = true;
             }
         }
@@ -334,7 +335,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     case WStype_BIN:
     {
         if (scheduleListeningRestart || deviceState != SPEAKING) {
-            Serial.println("[VA-A] [VA]Skipping audio data due to touch interrupt.");
+            Serial.println("Skipping audio data due to touch interrupt.");
             break;
         }
 

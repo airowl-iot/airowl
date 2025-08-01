@@ -16,9 +16,4 @@ extern TaskHandle_t lvglTaskHandle;
 
 #else
 
-// Safe stubs if LVGL is disabled via build flag
-inline void lv_begin() {}
-inline void lv_handler() {}
-inline void lvgl_task(void *) {}
-inline void restartLVGLTask() {}
 #endif

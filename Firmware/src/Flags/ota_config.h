@@ -1,6 +1,7 @@
 // anedya_config.h — Anedya OTA platform definitions
 
 #pragma once
+#ifdef CONFIG_ENABLE_OTA_ANEDYA
 #include <Arduino.h>
 
 #define REGION_CODE "ap-in-1"
@@ -34,3 +35,5 @@ CjAIMAYGBFUdIAAwCgYIKoZIzj0EAwIDRwAwRAIgR/rWSG8+L4XtFLces0JYS7bY
 5NH1diiFk54/E5xmSaICIEYYbhvjrdR0GVLjoay6gFspiRZ7GtDDr9xF91WbsK0P
 -----END CERTIFICATE-----
 )EOF";
+
+#endif

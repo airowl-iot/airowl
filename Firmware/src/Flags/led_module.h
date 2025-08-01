@@ -1,3 +1,4 @@
+#ifdef CONFIG_FASTLED
 #ifndef LED_MODULE_H
 #define LED_MODULE_H
 
@@ -23,3 +24,4 @@ void led_task_start();
 void restartLEDTask();
 
 #endif // LED_MODULE_H
+#endif

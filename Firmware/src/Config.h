@@ -9,7 +9,6 @@
 #include <WiFiClientSecure.h>
 #include <WebSocketsClient.h>
 
-
 // ---------- CHOOSE YOUR MODE ----------
 // Pick one of the following (DEV_MODE, PROD_MODE, ELATO_MODE) , comment the rest
 // For ELATO_MODE, you will need to register your DIY Hardware on the Elato website
@@ -27,17 +26,24 @@
 extern Preferences preferences;
 extern bool factory_reset_status;
 
+enum OtaStatus {
+    OTA_IDLE,
+    OTA_IN_PROGRESS,
+    OTA_COMPLETE
+};
 
-// extern OtaStatus otaState;
+extern OtaStatus otaState;
 
 enum DeviceState
 {
     SETUP,
+    SOFT_AP,
     IDLE,
     LISTENING,
     SPEAKING,
     PROCESSING,
     WAITING,
+    OTA,
     FACTORY_RESET,
     SLEEP
 };
@@ -45,13 +51,13 @@ enum DeviceState
 extern volatile DeviceState deviceState;
 
 // WiFi credentials
-// extern const char *EAP_IDENTITY;
-// extern const char *EAP_USERNAME;
-// extern const char *EAP_PASSWORD;
-// extern const char *ssid;
+extern const char *EAP_IDENTITY;
+extern const char *EAP_USERNAME;
+extern const char *EAP_PASSWORD;
+extern const char *ssid;
 
-// extern const char *ssid_peronal;
-// extern const char *password_personal;
+extern const char *ssid_peronal;
+extern const char *password_personal;
 
 extern String authTokenGlobal;
 
@@ -66,6 +72,10 @@ extern const uint16_t backend_port;
 
 // I2S and Audio parameters
 extern const uint32_t SAMPLE_RATE;
+
+extern const int BLUE_LED_PIN;
+extern const int RED_LED_PIN;
+extern const int GREEN_LED_PIN;
 
 extern const gpio_num_t BUTTON_PIN;
 

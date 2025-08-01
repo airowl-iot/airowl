@@ -68,14 +68,14 @@ const uint32_t SAMPLE_RATE = 24000;
 const i2s_port_t I2S_PORT_IN = I2S_NUM_1;
 const i2s_port_t I2S_PORT_OUT = I2S_NUM_0;
 
-const int I2S_SD = 46;
+const int I2S_SD = 2;
 const int I2S_WS = 48;
 const int I2S_SCK = 14;
 
 const int I2S_WS_OUT = 10;
 const int I2S_BCK_OUT = 11;
 const int I2S_DATA_OUT = 12;
-const int I2S_SD_OUT = 15;
+const int I2S_SD_OUT = 16;
 
 // ------- SSL Certificates -----------------
 

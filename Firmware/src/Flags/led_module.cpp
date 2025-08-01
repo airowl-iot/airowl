@@ -1,4 +1,4 @@
-#ifndef CONFIG_ENABLE_LVGL
+#ifdef CONFIG_FASTLED
 #include "led_module.h"
 
 #ifdef CONFIG_ENABLE_ESP_NOW

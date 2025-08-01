@@ -1,3 +1,5 @@
+#ifdef CONFIG_MQTT
+
 #include "mqtt_module.h"
 
 WiFiClient espClient;
@@ -38,3 +40,4 @@ bool mqtt_publish(const char* topic, const char* payload) {
 bool mqtt_connected() {
     return mqttClient.connected();
 }
+#endif

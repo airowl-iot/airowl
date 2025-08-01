@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef CONFIG_ENABLE_SENSOR_SEN54
+
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -16,8 +18,6 @@
 #ifdef CONFIG_ENABLE_LVGL
 #include "ui/ui.h"
 #endif
-
-#ifdef CONFIG_ENABLE_SENSOR_SEN54
 
 #define MAXBUF_REQUIREMENT 48
 #define CHART_DATA_LENGTH 15
