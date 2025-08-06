@@ -6,8 +6,8 @@
 #define REGION_CODE "ap-in-1"
 
 // Connection credentials
-static const char *CONNECTION_KEY = "344da985cd08fe5d0bd34b4fa633fecf";
-static const char *PHYSICAL_DEVICE_ID = "cf3fef7e-856a-4ace-b45e-ca089f18060e";
+static const char *CONNECTION_KEY = " ";
+static const char *PHYSICAL_DEVICE_ID = " ";
 
 // Anedya API helpers
 inline String anedyaDeviceHost() {
