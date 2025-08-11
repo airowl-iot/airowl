@@ -539,7 +539,7 @@ void sensorData(void *params) {
     }
 }
 
-void initSensor()
+void initSensirion()
 {
     xTaskCreatePinnedToCore(sensorData, "SensorTask", 8192, nullptr, 2, &sensorTaskHandle, 1);
     if (sensorTaskHandle) {
@@ -549,7 +549,7 @@ void initSensor()
     }
 }
 
-void restartSensorTask() {
+void restartSensirionTask() {
     // if (sensorTaskHandle) {
     //     esp_task_wdt_delete(sensorTaskHandle);
     //     vTaskDelete(sensorTaskHandle);
