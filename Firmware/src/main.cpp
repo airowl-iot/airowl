@@ -18,6 +18,10 @@
 #include "Sensor.h"
 #endif
 
+#ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+#include "Flags/Sensor_Pms.h"
+#endif
+
 #ifdef CONFIG_ENABLE_SENSOR_SHT
 #include "Sensor_sht.h"
 #endif
@@ -36,7 +40,7 @@
 
 #include "Flags/mqtt_module.h"
 
-#define WDT_TIMEOUT_SECONDS 30
+#define WDT_TIMEOUT_SECONDS 500
 #define FIRMWARE_VERSION "version - 3.1"
 
 WiFiManager wm;
@@ -47,8 +51,6 @@ void on_time_available(struct timeval *t) {
   struct tm timeInfo;
   getLocalTime(&timeInfo, 1000);
   Serial.println(&timeInfo, "%A, %B %d %Y %H:%M:%S zone %Z %z ");
-  // Serial.printf("[Time] NTP time set: %ld\n", t->tv_sec);
-  // settimeofday(t, nullptr);
 }
 
 // -------------------- Setup --------------------
@@ -57,9 +59,6 @@ void setup() {
   Serial.begin(115200);
   Serial.println("===== AIROWL BOOT =====");
 
-  Wire.begin(4, 5);
-
-  // Watchdog setup
   esp_task_wdt_config_t wdt_config = {
     .timeout_ms = WDT_TIMEOUT_SECONDS * 1000,
     .idle_core_mask = 0,
@@ -104,9 +103,32 @@ void setup() {
 
   // ----- LVGL UI -----
   #ifdef CONFIG_ENABLE_LVGL
+  Wire.begin(4, 5);
+  delay(1000);
+  Serial.println("\n[SCAN] Starting I2C Bus Scan...");
+
+  int devices = 0;
+  for (uint8_t address = 1; address < 127; address++) {
+    Wire.beginTransmission(address);
+    if (Wire.endTransmission() == 0) {
+      Serial.print("[FOUND] I2C device at 0x");
+      Serial.println(address, HEX);
+      devices++;
+    }
+    delay(5);
+  }
+
+  if (devices == 0) {
+      Serial.println("[RESULT] No I2C devices found.");
+    } else {
+      Serial.printf("[RESULT] Total %d I2C device(s) found.\n", devices);
+    }
+    Serial.println("[LVGL] Starting LVGL initialization...");
     lv_begin();
+    Serial.println("[LVGL] LVGL begin completed");
     ui_init();
-    Serial.println("[LVGL] UI initialized");
+
+    Serial.println("[LVGL] LVGL task started");
     lv_label_set_text(ui_devicename, apName.c_str());
     lv_label_set_text(ui_qrcodename, apName.c_str());
     lv_label_set_text(ui_firmwareversion, FIRMWARE_VERSION);
@@ -122,11 +144,16 @@ void setup() {
     restartLEDTask(); 
     Serial.println("[LED] LED initialized");
   #endif
-
+  
   // ----- Sensor Task -----
   #ifdef CONFIG_ENABLE_SENSOR_SEN54
-    initSensor();
+    initSensirion();
     Serial.println("[Sensor] Sensor task started");
+  #endif
+
+  #ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+    initSensor();
+    Serial.println("[Sensor-PMS] PM Sensor task started");
   #endif
 
   // ----- SHT Sensor Task -----
@@ -136,26 +163,6 @@ void setup() {
   #endif
 
   Serial.println("\n[SCAN] Starting I2C Bus Scan...");
-
-  Wire.begin(4, 5);
-
-  int devices = 0;
-  for (uint8_t address = 1; address < 127; address++) {
-    Wire.beginTransmission(address);
-    if (Wire.endTransmission() == 0) {
-      Serial.print("[FOUND] I2C device at 0x");
-      Serial.println(address, HEX);
-      devices++;
-    }
-    delay(5);
-  }
-
-  if (devices == 0) {
-    Serial.println("[RESULT] No I2C devices found.");
-  } else {
-    Serial.printf("[RESULT] Total %d I2C device(s) found.\n", devices);
-  }
-
 
   // ----- ESP-NOW Comm -----
   #ifdef CONFIG_ENABLE_ESP_NOW
@@ -184,7 +191,9 @@ void setup() {
 void loop() {
   #ifdef CONFIG_ENABLE_LVGL
     lv_handler();
-  #else
+  #endif
+
+  #ifndef CONFIG_ENABLE_LVGL
     //led logic if needed
   #endif
 
@@ -194,6 +203,10 @@ void loop() {
 
   #ifdef CONFIG_ENABLE_SENSOR_SEN54
     // Sensor logic if required
+  #endif
+
+   #ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+    //  Serial.println("[PM] PM sensor Initialized");
   #endif
 
   #ifdef CONFIG_ENABLE_SENSOR_SHT 
