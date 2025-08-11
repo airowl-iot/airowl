@@ -6,12 +6,16 @@
 #include "HttpsOTAUpdate.h"
 
 
-#ifdef CONFIG_ENABLE_SENSOR_SEN54
-#include "Sensor.h"
-#endif
+// #ifdef CONFIG_ENABLE_SENSOR_SEN54
+// #include "Sensor.h"
+// #endif
 
 #ifdef CONFIG_ENABLE_SENSOR_SHT
 #include "Sensor_sht.h"
+#endif
+
+#ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+#include "Flags/Sensor_Pms.h"
 #endif
 
 #ifdef CONFIG_ENABLE_LVGL
@@ -36,11 +40,13 @@ extern WiFiManager wm;
 WiFiClientSecure httpsClient;
 static HttpsOTAStatus_t otaStatus;
 
-extern TaskHandle_t sensorTaskHandle;
+// extern TaskHandle_t sensorTaskHandle;
+extern TaskHandle_t PMSTaskHandle;
 extern TaskHandle_t lvglTaskHandle;
 extern TaskHandle_t ledTaskHandle;
 extern TaskHandle_t wifiTaskHandle;
 extern TaskHandle_t espnowTaskHandle;
+extern TaskHandle_t PMSTaskHandle;
 
 bool otaInProgress = false;
 bool suppressSensorPrinting = false;
@@ -219,14 +225,14 @@ void ota_loop() {
     otaInProgress = true;
     suppressSensorPrinting = true;
 
-    #ifdef CONFIG_ENABLE_SENSOR_SEN54
-      if (sensorTaskHandle) {
-        Serial.println("[OTA] Stopping sensor task");
-        esp_task_wdt_delete(sensorTaskHandle);
-        vTaskDelete(sensorTaskHandle);
-        sensorTaskHandle = nullptr;
-      }
-    #endif
+    // #ifdef CONFIG_ENABLE_SENSOR_SEN54
+    //   if (sensorTaskHandle) {
+    //     Serial.println("[OTA] Stopping sensor task");
+    //     esp_task_wdt_delete(sensorTaskHandle);
+    //     vTaskDelete(sensorTaskHandle);
+    //     sensorTaskHandle = nullptr;
+    //   }
+    // #endif
 
     #ifdef CONFIG_SENSOR_SHT
       if (shtTaskHandle) {
@@ -236,6 +242,16 @@ void ota_loop() {
         shtTaskHandle = nullptr;
       }
     #endif
+
+    #ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+    if (PMSTaskHandle) {
+        Serial.println("[OTA] Stopping PM Sensor task");
+        esp_task_wdt_delete(PMSTaskHandle);
+        vTaskDelete(PMSTaskHandle);
+        PMSTaskHandle = nullptr;
+      }
+    #endif
+
 
     #ifdef CONFIG_ENABLE_LVGL
       if (lvglTaskHandle) {
@@ -317,12 +333,16 @@ void ota_loop() {
     };
     esp_task_wdt_reconfigure(&wdt_normal);
 
-    #ifdef CONFIG_ENABLE_SENSOR_SEN54
-    restartSensorTask();
-    #endif
+    // #ifdef CONFIG_ENABLE_SENSOR_SEN54
+    // restartSensorTask();
+    // #endif
 
     #ifdef CONFIG_ENABLE_SENSOR_SHT
       restartSHTTask();
+    #endif
+
+    #ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+        restartSensorTask();
     #endif
     
     #ifdef CONFIG_ENABLE_LVGL
