@@ -91,10 +91,10 @@ void sensorData(void* parameter);
 void setupCharts();
 #endif
 
-void initSensor();
-void restartSensorTask();
+void initSensirion();
+void restartSensirionTask();
 
 #else
-inline void initSensor() {}
+inline void initSensirion() {}
 inline void sensorData(void *) {}
 #endif
