@@ -1,7 +1,6 @@
-#include "espnow_module.h"
-
 #ifdef CONFIG_ENABLE_ESP_NOW
 
+#include "espnow_module.h"
 #include <esp_now.h>
 #include <WiFi.h>
 #include <Preferences.h>
@@ -11,9 +10,14 @@
 
 #include "config.h"
 
-#ifdef CONFIG_ENABLE_SENSOR_SEN54
-  #include "Sensor.h"
+// #ifdef CONFIG_ENABLE_SENSOR_SEN54
+//   #include "Sensor.h"
+// #endif
+
+#ifdef CONFIG_ENABLE_SENSOR_PMSA003A
+  #include "Flags/Sensor_Pms.h"
 #endif
+
 
 #include "mqtt_module.h"
 
