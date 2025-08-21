@@ -12,11 +12,13 @@ extern "C" {
 void initMatter();           // Call once in setup
 void matter_loop();          // Call repeatedly in loop
 bool is_matter_commissioned(); // Optional helper
+void cleanupMatter();        // Call to clean up resources
 
 #else
 inline void initMatter() {}
 inline void matter_loop() {}
 inline bool is_matter_commissioned() {return false;}
+inline void cleanupMatter() {}
 #endif
 
 #ifdef __cplusplus

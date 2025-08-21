@@ -7,6 +7,7 @@
 
 lv_obj_t * ui_qrcode = NULL;
 lv_obj_t * ui_qrcodename = NULL;
+lv_obj_t * ui_name = NULL;
 // event funtions
 void ui_event_qrcode(lv_event_t * e)
 {
@@ -48,5 +49,6 @@ void ui_qrcode_screen_destroy(void)
     // NULL screen variables
     ui_qrcode = NULL;
     ui_qrcodename = NULL;
+    ui_name = NULL;
 
 }

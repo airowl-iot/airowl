@@ -99,7 +99,9 @@ void sensorData(void *params) {
     deviceName = "AIROWL_" + mac.substring(6);
 
     while (1) {
+         esp_task_wdt_reset();
           if (pms.read(pmsData)) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
             pmsensor_data.pm1 += pmsData.PM_AE_UG_1_0;
             pmsensor_data.pm25 += pmsData.PM_AE_UG_2_5;
             pmsensor_data.pm10 += pmsData.PM_AE_UG_10_0;

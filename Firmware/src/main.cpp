@@ -1,111 +1,118 @@
 #include <Arduino.h>
 #include <esp_task_wdt.h>
-#include <WiFi.h>
-#include <WiFiManager.h>
-#include <WiFiManagerTz.h>
 #include <Wire.h>
 #include "config.h"
-#include "time_func.h"
+#include "esp_system.h"
+#include "esp_mac.h"
+#include "hal/hal_wifi.h"
+#include "hal/hal_pms.h"
+#include "hal/hal_aht.h"
+#include "hal/hal_ens160.h"
 
-#ifdef CONFIG_ENABLE_LVGL
-#include "ui/lv_setup.h"
-#include "ui/ui.h"
-#else
-#include "Flags/led_module.h"
-#endif
+// Core components
+#include "core/event_bus.h"
 
-#ifdef CONFIG_ENABLE_SENSOR_SEN54
-#include "Sensor.h"
-#endif
-
-#ifdef CONFIG_ENABLE_SENSOR_PMSA003A
-#include "Flags/Sensor_Pms.h"
-#endif
-
-#ifdef CONFIG_ENABLE_SENSOR_SHT
-#include "Sensor_sht.h"
-#endif
+// svc
+#include "svc/wifi_service.h"
+#include "svc/mqtt_service.h"
 
 #ifdef CONFIG_ENABLE_OTA_ANEDYA
-#include "Flags/ota_module.h"
+#include "svc/ota_service.h"
 #endif
 
 #ifdef CONFIG_ENABLE_ESP_NOW
-#include "Flags/espnow_module.h"
+#include "svc/espnow_service.h"
+#endif
+
+// Application modules
+#include "app/sensor_manager.h"
+#include "app/ui_controller.h"
+#include "app/mode_manager.h"
+
+#ifdef CONFIG_ENABLE_LVGL
+#include "hal/hal_display.h"
+#include "ui/ui.h"
 #endif
 
 #ifdef CONFIG_ESP_MATTER_ENABLE
 #include "ui/matter_wrapper.h"
 #endif
 
-#include "Flags/mqtt_module.h"
-
-#define WDT_TIMEOUT_SECONDS 500
 #define FIRMWARE_VERSION "version - 3.1"
 
-WiFiManager wm;
-extern WiFiManager wm;
-
-// -------------------- Handle NTP sync --------------------
-void on_time_available(struct timeval *t) {
-  struct tm timeInfo;
-  getLocalTime(&timeInfo, 1000);
-  Serial.println(&timeInfo, "%A, %B %d %Y %H:%M:%S zone %Z %z ");
+void shutdownHandler() {
+  Serial.println("[SYSTEM] Shutdown handler called");
+  
+  #ifdef CONFIG_ESP_MATTER_ENABLE
+  Serial.println("[Matter] Cleaning up Matter resources");
+  cleanupMatter();
+  #endif
 }
 
 // -------------------- Setup --------------------
 void setup() {
-
   Serial.begin(115200);
   Serial.println("===== AIROWL BOOT =====");
-
-  esp_task_wdt_config_t wdt_config = {
-    .timeout_ms = WDT_TIMEOUT_SECONDS * 1000,
-    .idle_core_mask = 0,
-    .trigger_panic = true
-  };
-  esp_task_wdt_init(&wdt_config);
-  esp_task_wdt_add(NULL);
-
-  // ----- Dynamic AP Setup via WiFiManager -----
-  WiFi.mode(WIFI_STA);
-  WiFi.begin();
-
-  String mac = WiFi.macAddress(); mac.replace(":", "");
-  String apName = "AIROWL_" + mac.substring(6);
+  Serial.println("Firmware: " + String(FIRMWARE_VERSION));
   
-  WiFiManagerNS::NTP::onTimeAvailable(&on_time_available);
-  WiFiManagerNS::init(&wm, nullptr);
-  std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
-  wm.setMenu(menu);
-  wm.setTitle("AIROWL Configuration");
-  wm.setConfigPortalBlocking(false);
-  wm.setConfigPortalTimeout(120); // Captive portal timeout
-  wm.setConnectTimeout(60);       // WiFi connect timeout
-  wm.setDebugOutput(true);
+  esp_register_shutdown_handler(shutdownHandler);
   
-  bool connected = wm.autoConnect(apName.c_str(), "12345678");
-
-  // Wait for user connection if not auto connected
-  unsigned long wifi_start = millis();
-  while (!WiFi.isConnected() && millis() - wifi_start < 120000) {
-    wm.process();
-    esp_task_wdt_reset();
-  }
-
-  if (!connected) {
-    Serial.println("[WiFiManager] Portal timeout or user exited.");
+  #ifdef CONFIG_ENABLE_PMS
+  if (HAL::PMS::init()) {
+    Serial.println("[HAL] PMS sensor initialized");
   } else {
-    Serial.printf("[WiFiManager] Connected to WiFi: %s\n", WiFi.SSID().c_str());
+    Serial.println("[HAL] PMS sensor initialization failed");
+  }
+  #endif
+  
+  #ifdef CONFIG_ENABLE_SENSOR_AHT
+  if (HAL::AHT::init()) {
+    Serial.println("[HAL] AHT sensor initialized");
+  } else {
+    Serial.println("[HAL] AHT sensor initialization failed");
+  }
+  #endif
+  
+  #ifdef CONFIG_ENABLE_SENSOR_ENS160
+  if (HAL::ENS160::init()) {
+    Serial.println("[HAL] ENS160 sensor initialized");
+  } else {
+    Serial.println("[HAL] ENS160 sensor initialization failed");
+  }
+  #endif
+  
+  Serial.println("[BOOT] Initializing core components...");
+  CORE::EventBus::getInstance().clear();
+
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+  char deviceId[13];
+  sprintf(deviceId, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  String apName = "AIROWL_" + String(deviceId).substring(6);
+  
+  Serial.println("[BOOT] Initializing svc...");
+
+  if (SVC::WiFiService::init(apName.c_str())) {
+    Serial.println("[SVC] WiFi service initialized");
+    delay(500);
+    SVC::WiFiService::startTask();
+    SVC::WiFiService::connect(); 
+  } else {
+    Serial.println("[SVC] WiFi service initialization failed");
   }
 
-  mqtt_setup();
+    if (SVC::MQTTService::init(apName.c_str())) {
+    Serial.println("[SVC] MQTT service initialized");
+    SVC::MQTTService::startTask();
+  } else {
+    Serial.println("[SVC] MQTT service initialization failed");
+  }
 
-  // ----- LVGL UI -----
-  #ifdef CONFIG_ENABLE_LVGL
-  Wire.begin(4, 5);
-  delay(1000);
-  Serial.println("\n[SCAN] Starting I2C Bus Scan...");
+ #ifdef CONFIG_ENABLE_LVGL
+
+  Wire.begin(4,5);
+  Wire.setClock(100000);
+  delay(100);
 
   int devices = 0;
   for (uint8_t address = 1; address < 127; address++) {
@@ -123,112 +130,168 @@ void setup() {
     } else {
       Serial.printf("[RESULT] Total %d I2C device(s) found.\n", devices);
     }
-    Serial.println("[LVGL] Starting LVGL initialization...");
-    lv_begin();
-    Serial.println("[LVGL] LVGL begin completed");
-    ui_init();
-
-    Serial.println("[LVGL] LVGL task started");
-    lv_label_set_text(ui_devicename, apName.c_str());
-    lv_label_set_text(ui_qrcodename, apName.c_str());
-    lv_label_set_text(ui_firmwareversion, FIRMWARE_VERSION);
-
-    String qrcodeurl = (WiFi.status() == WL_CONNECTED) ? "https://opendata.oizom.com/device/" + apName : "WIFI:T:WPA;S:" + apName + ";P:12345678;;";
-    lv_obj_t* qrcode_obj = lv_qrcode_create(ui_qrcode, 150, lv_color_black(), lv_color_white());
-    lv_obj_center(qrcode_obj);
-    lv_qrcode_update(qrcode_obj, qrcodeurl.c_str(), qrcodeurl.length());
-  #else
-  // ----- Fallback LED status if no LVGL -----
-    delay(500);
-    led_status_init(LED_PIN);   // Initializes the NeoPixel
-    restartLEDTask(); 
-    Serial.println("[LED] LED initialized");
-  #endif
+  Serial.println("[BOOT] Initializing Display and LVGL...");
   
-  // ----- Sensor Task -----
-  #ifdef CONFIG_ENABLE_SENSOR_SEN54
-    initSensirion();
-    Serial.println("[Sensor] Sensor task started");
-  #endif
+ 
+  if (HAL::Display::init()) {
+    ui_init();
+    // lv_label_set_text(ui_devicename, apName.c_str());
+    // lv_label_set_text(ui_qrcodename, apName.c_str());
+    // lv_label_set_text(ui_firmwareversion, FIRMWARE_VERSION);
+    
+    // String qrcodeurl = "WIFI:T:WPA;S:" + apName + ";P:12345678;;";
+    // lv_obj_t* qrcode_obj = lv_qrcode_create(ui_qrcode, 150, lv_color_black(), lv_color_white());
+    // lv_obj_center(qrcode_obj);
+    // lv_qrcode_update(qrcode_obj, qrcodeurl.c_str(), qrcodeurl.length());
 
-  #ifdef CONFIG_ENABLE_SENSOR_PMSA003A
-    initSensor();
-    Serial.println("[Sensor-PMS] PM Sensor task started");
-  #endif
+    if (HAL::Display::restartTask()) {
+      Serial.println("[DEBUG][MAIN] LVGL task started");
+    } else {
+      Serial.println("[DEBUG][MAIN] Failed to start LVGL task");
+    }
 
-  // ----- SHT Sensor Task -----
-  #ifdef CONFIG_ENABLE_SENSOR_SHT
-    initSHTTask();
-    Serial.println("[SHT] SHT Sensor task started");
-  #endif
-
-  Serial.println("\n[SCAN] Starting I2C Bus Scan...");
-
-  // ----- ESP-NOW Comm -----
-  #ifdef CONFIG_ENABLE_ESP_NOW
-    initESPNow();
-    restartESPNowTask();
-    Serial.println("[ESP-NOW] ESP-NOW initialized and task started");
-  #endif
-
-  // ----- Anedya OTA -----
-  #ifdef CONFIG_ENABLE_OTA_ANEDYA
-    initOTA();
-    Serial.println("[OTA] OTA initialized");
-  #endif
-
-  // ----- Matter -----
-  #ifdef CONFIG_ESP_MATTER_ENABLE
-    initMatter();
-    Serial.println("[Matter] Matter Initialized");
-  #endif
-
-  // ----- Clock Sync -----
-  time_init();
-}
-
-// -------------------- Main Loop --------------------
-void loop() {
-  #ifdef CONFIG_ENABLE_LVGL
-    lv_handler();
-  #endif
-
-  #ifndef CONFIG_ENABLE_LVGL
-    //led logic if needed
-  #endif
-
-  #ifdef CONFIG_ENABLE_OTA_ANEDYA
-    ota_loop();
-  #endif
-
-  #ifdef CONFIG_ENABLE_SENSOR_SEN54
-    // Sensor logic if required
-  #endif
-
-   #ifdef CONFIG_ENABLE_SENSOR_PMSA003A
-    //  Serial.println("[PM] PM sensor Initialized");
-  #endif
-
-  #ifdef CONFIG_ENABLE_SENSOR_SHT 
-    // SHT Sensor logic if needed
-  #endif
-
-  #ifdef CONFIG_ENABLE_ESP_NOW
-    // espnow_loop runs inside its task
-    espnow_loop();
-  #endif
-
-  #ifdef CONFIG_ESP_MATTER_ENABLE
-    matter_loop();
-  #endif
-
-  if (!mqttClient.connected()) {
-    mqtt_reconnect("AIROWL"); // prints the status 
+    // lv_obj_t * test_msg = lv_label_create(ui_Intro);
+    // lv_label_set_text(test_msg, "Display Test - Working!");
+    // lv_obj_set_style_text_color(test_msg, lv_color_white(), 0);
+    // lv_obj_align(test_msg, LV_ALIGN_BOTTOM_MID, 0, -20);
   } else {
-    mqttClient.loop(); 
+    Serial.println("[HAL] Display initialization failed!");
+  }
+  #endif
+
+    #ifdef CONFIG_ENABLE_ESPNOW
+  if (SVC::ESPNowService::init()) {
+    Serial.println("[SVC] ESP-NOW service initialized");
+    SVC::ESPNowService::startTask();
+  } else {
+    Serial.println("[SVC] ESP-NOW service initialization failed");
+  }
+  #endif
+
+  #ifdef CONFIG_ESP_MATTER_ENABLE
+  Serial.println("[BOOT] Initializing Matter...");
+  try {
+    initMatter();
+    Serial.println("[Matter] Matter initialized");
+  } catch (const std::exception& e) {
+    Serial.printf("[Matter] Initialization failed: %s\n", e.what());
+    cleanupMatter();
+  } catch (...) {
+    Serial.println("[Matter] Initialization failed with unknown error");
+    cleanupMatter();
+  }
+  #endif
+
+  Serial.println("[BOOT] Initializing application modules...");
+  
+  APP::SensorManager::SensorConfig pmsConfig = {
+    .enabled = true,
+    .readInterval = 1000,
+    .publishInterval = 60000
+  };
+  
+  APP::SensorManager::SensorConfig ahtConfig = {
+    .enabled = true,
+    .readInterval = 1000,
+    .publishInterval = 60000
+  };
+  
+  APP::SensorManager::SensorConfig ens160Config = {
+    .enabled = true,
+    .readInterval = 1000,
+    .publishInterval = 60000
+  };
+  
+  if (APP::SensorManager::init(pmsConfig, ahtConfig, ens160Config)) {
+    Serial.println("[APP] Sensor manager initialized");
+    APP::SensorManager::start();
+    APP::SensorManager::startTask();
+  } else {
+    Serial.println("[APP] Sensor manager initialization failed");
+  }
+  
+  if (APP::UIController::init()) {
+    Serial.println("[APP] UI controller initialized");
+    APP::UIController::startTask();
+  } else {
+    Serial.println("[APP] UI controller initialization failed");
   }
 
-  update_time();
-  esp_task_wdt_reset(); // Keep watchdog alive
-  delay(10); 
+  if (APP::ModeManager::init(APP::ModeManager::Mode::NORMAL)) {
+    Serial.println("[APP] Mode manager initialized");
+    APP::ModeManager::startTask();
+  } else {
+    Serial.println("[APP] Mode manager initialization failed");
+  }
+  
+  Serial.println("[BOOT] System initialization complete");
+}
+
+void loop() {
+
+  #ifdef CONFIG_ENABLE_LVGL
+  static unsigned long lastDisplayDebug = 0;
+  if (millis() - lastDisplayDebug > 1000) { 
+    lastDisplayDebug = millis();
+  }
+
+  static unsigned long lastTimeUpdate = 0;
+  if (millis() - lastTimeUpdate > 1000) {
+    lastTimeUpdate = millis();
+    time_t now = time(nullptr);
+    struct tm timeinfo;
+    localtime_r(&now, &timeinfo);
+    char timeStr[9];
+    strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
+    lv_label_set_text(ui_time, timeStr);
+  }
+
+  static unsigned long lastDisplayUpdate = 0;
+  if (millis() - lastDisplayUpdate > 5000) {
+    lastDisplayUpdate = millis();
+    
+    time_t now = time(nullptr);
+    struct tm timeinfo;
+    localtime_r(&now, &timeinfo);
+    
+    char timeStr[32];
+    strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
+    
+    // Serial.printf("[DEBUG][MAIN] Display update cycle - Current time: %s\n", timeStr);
+    // Serial.printf("[DISPLAY] Current time: %s\n", timeStr);
+    
+    //   Serial.printf("[DEBUG][MAIN] Free heap: %u bytes\n", ESP.getFreeHeap());
+    //   Serial.printf("[DISPLAY] Free heap: %u bytes\n", ESP.getFreeHeap());
+
+  }
+  #endif
+  
+  #ifdef CONFIG_ESP_MATTER_ENABLE
+  try {
+    matter_loop();
+  } catch (const std::exception& e) {
+    Serial.printf("[Matter] Error in matter_loop: %s\n", e.what());
+  } catch (...) {
+    Serial.println("[Matter] Unknown error in matter_loop");
+  }
+  #endif
+
+  static unsigned long lastHealthLog = 0;
+  if (millis() - lastHealthLog > 60000) {
+    lastHealthLog = millis();
+    // Serial.printf("[HEALTH] Free heap: %u bytes\n", ESP.getFreeHeap());
+    
+    unsigned long uptime = millis() / 1000;
+    unsigned long days = uptime / (24 * 3600);
+    unsigned long hours = (uptime % (24 * 3600)) / 3600;
+    unsigned long minutes = (uptime % 3600) / 60;
+    unsigned long seconds = uptime % 60;
+    Serial.printf("[HEALTH] Uptime: %lu days, %lu hours, %lu minutes, %lu seconds\n", 
+                  days, hours, minutes, seconds);
+  }
+  
+  // Reset watchdog timer
+  // esp_task_wdt_reset();
+
+  delay(10);
 }

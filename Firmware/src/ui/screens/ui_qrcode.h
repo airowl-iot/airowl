@@ -16,6 +16,7 @@ extern void ui_qrcode_screen_destroy(void);
 extern void ui_event_qrcode(lv_event_t * e);
 extern lv_obj_t * ui_qrcode;
 extern lv_obj_t * ui_qrcodename;
+extern lv_obj_t * ui_name;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

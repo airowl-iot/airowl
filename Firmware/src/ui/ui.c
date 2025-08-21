@@ -338,22 +338,76 @@ void ui_event_owl(lv_event_t * e)
 
 void ui_init(void)
 {
+    //Serial.println("[DEBUG][UI] Starting UI initialization...");
+    
     lv_disp_t * dispp = lv_disp_get_default();
+    // Serial.println("[DEBUG][UI] Got default display");
+    
     lv_theme_t * theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
                                                true, LV_FONT_DEFAULT);
+   // Serial.println("[DEBUG][UI] Theme initialized");
+    
     lv_disp_set_theme(dispp, theme);
+    // Serial.println("[DEBUG][UI] Theme set for display");
+    
+    // Initialize all screens
+    // Serial.println("[DEBUG][UI] Initializing intro screen...");
     ui_Intro_screen_init();
+    // Serial.println("[DEBUG][UI] Intro screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing QR code screen...");
     ui_qrcode_screen_init();
+    // Serial.println("[DEBUG][UI] QR code screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing owl screen...");
     ui_owl_screen_init();
+    // Serial.println("[DEBUG][UI] Owl screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing dashboard screen...");
     ui_dashboard_screen_init();
+    // Serial.println("[DEBUG][UI] Dashboard screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing PM1 graph screen...");
     ui_PM1graph_screen_init();
+    // Serial.println("[DEBUG][UI] PM1 graph screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing PM4 graph screen...");
     ui_PM4graph_screen_init();
+    // Serial.println("[DEBUG][UI] PM4 graph screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing PM25 graph screen...");
     ui_PM25graph_screen_init();
+    // Serial.println("[DEBUG][UI] PM25 graph screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing PM10 graph screen...");
     ui_PM10graph_screen_init();
+    // Serial.println("[DEBUG][UI] PM10 graph screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing TVOC graph screen...");
     ui_TVOCgraph_screen_init();
+    // Serial.println("[DEBUG][UI] TVOC graph screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Initializing Matter QR code screen...");
     ui_matter_qrcode_screen_init();
+    // Serial.println("[DEBUG][UI] Matter QR code screen initialized");
+    
+    // Serial.println("[DEBUG][UI] Creating initial actions object...");
     ui____initial_actions0 = lv_obj_create(NULL);
+    // Serial.println("[DEBUG][UI] Initial actions object created");
+    
+    // // Load the intro screen first
+    // Serial.println("[DEBUG][UI] Loading intro screen...");
     lv_disp_load_scr(ui_Intro);
+    // Serial.println("[DEBUG][UI] Intro screen loaded");
+    
+    // // Add a simple test label to verify display is working
+    // Serial.println("[DEBUG][UI] Creating test label...");
+    lv_obj_t * test_label = lv_label_create(ui_Intro);
+    lv_label_set_text(test_label, "AIROWL 3.0 - UI Ready!");
+    lv_obj_align(test_label, LV_ALIGN_TOP_MID, 0, 10);
+    // Serial.println("[DEBUG][UI] Test label created and positioned");
+    
+    // Serial.println("[DEBUG][UI] UI initialization complete!");
 }
 
 void ui_destroy(void)
