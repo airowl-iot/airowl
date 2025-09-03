@@ -35,6 +35,7 @@ public:
     static void updatePM25Chart(float pm25_value);
     static void setupPM10Chart();
     static void updatePM10Chart(float pm10_value);
+    // static void initializeUILabels(const char* apName);
     static void task(void* parameter);
     static bool startTask();
     static bool restartTask();

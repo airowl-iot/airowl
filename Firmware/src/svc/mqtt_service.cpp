@@ -12,21 +12,25 @@ namespace {
     SVC::MQTTService::MessageCallback messageCallback = nullptr;
     SVC::MQTTService::StateCallback stateCallback = nullptr;
     TaskHandle_t mqttTaskHandle = nullptr;
-
+    
+    // MQTT client
     WiFiClient wifiClient;
     PubSubClient mqttClient(wifiClient);
     
+    // Connection parameters
     String mqttServer= "mqtt.oizom.com";
     uint16_t mqttPort = 1883;
     String mqttUsername= "oizom";
     String mqttPassword= "12345678";
     String mqttClientId;
     
+    // Reconnection parameters
     const uint32_t RECONNECT_INTERVAL_MS = 5000;  
     const uint32_t MAX_RECONNECT_ATTEMPTS = 10;   
     uint32_t reconnectAttempts = 0;
     unsigned long lastReconnectAttempt = 0;
     
+    // Message retry queue 
     struct PendingMessage {
         String topic;
         String payload;
@@ -38,7 +42,7 @@ namespace {
     
     const size_t MAX_PENDING_MESSAGES = 20;
     const uint8_t MAX_RETRY_ATTEMPTS = 3;
-    const unsigned long RETRY_INTERVAL_MS = 3000; 
+    const unsigned long RETRY_INTERVAL_MS = 3000; // 3 seconds between retries
     
     PendingMessage pendingMessages[MAX_PENDING_MESSAGES];
     size_t pendingMessageCount = 0;
@@ -140,6 +144,7 @@ bool MQTTService::connect(const char* server, uint16_t port,
         }
     }
 
+    // Defensive parameter validation
     if (!server || !server[0]) {
         Serial.println("[MQTT] ERROR: Invalid server parameter");
         updateState(State::FAILED);
@@ -147,6 +152,7 @@ bool MQTTService::connect(const char* server, uint16_t port,
     }
     
     try {
+        // Check WiFi status with exception protection
         wl_status_t wifiStatus = WL_DISCONNECTED;
         try {
             wifiStatus = WiFi.status();
@@ -173,6 +179,7 @@ bool MQTTService::connect(const char* server, uint16_t port,
         mqttUsername = username ? username : "";
         mqttPassword = password ? password : "";
         
+        // Safely set server
         try {
             mqttClient.setServer(mqttServer.c_str(), mqttPort);
         }
@@ -357,9 +364,11 @@ bool MQTTService::publishSensorData(const char* deviceId, float pm25, float pm10
     
     String payload = "{";
     payload += "\"deviceId\":\"" + String(deviceId) + "\",";
-    payload += "\"p1\":" + String(pm25, 2) + ",";    
-    payload += "\"p2\":" + String(pm10, 2) + ",";    
-    payload += "\"v2\":" + String(tvoc, 2);          
+    // payload += "\"p3\":" + String(pm1, 2) + ",";     // PM1.0
+    payload += "\"p1\":" + String(pm25, 2) + ",";    // PM2.5
+    payload += "\"p2\":" + String(pm10, 2) + ",";    // PM10
+    // payload += "\"p5\":" + String(pm4, 2) + ",";     // PM4.0
+    payload += "\"v2\":" + String(tvoc, 2);          // TVOC
     payload += "}";
     
     const char* topic = "airowl";
@@ -396,7 +405,8 @@ void MQTTService::task(void* parameter) {
         try {
             // Reset watchdog
             esp_task_wdt_reset();
-
+            
+            // Safely check WiFi status
             wl_status_t wifiStatus = WL_DISCONNECTED;
             try {
                 wifiStatus = WiFi.status();
@@ -415,6 +425,7 @@ void MQTTService::task(void* parameter) {
                             reconnectAttempts = 0;
                             lastReconnectAttempt = millis();
                         } else {
+                            // Safely process pending messages
                             try {
                                 processPendingMessages();
                             }

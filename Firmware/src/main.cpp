@@ -20,6 +20,10 @@
 #include "svc/ota_service.h"
 #endif
 
+#ifdef CONFIG_ENABLE_ESP_NOW
+#include "svc/espnow_service.h"
+#endif
+
 // Application modules
 #include "app/sensor_manager.h"
 #include "app/ui_controller.h"
@@ -156,6 +160,7 @@ void setup() {
     Serial.println("[APP] UI controller initialization failed");
   }
   
+  // Use the pre-generated AP name for WiFi service
   if (SVC::WiFiService::init(apName.c_str())) {
     Serial.println("[SVC] WiFi service initialized");
     vTaskDelay(pdMS_TO_TICKS(500));
@@ -171,6 +176,28 @@ void setup() {
   } else {
     Serial.println("[SVC] MQTT service initialization failed");
   } 
+
+  #ifdef CONFIG_ENABLE_ESP_NOW
+  bool deviceIsMaster = true;  
+  
+  if (SVC::ESPNowService::init(deviceIsMaster)) {
+    Serial.println("[SVC] ESP-NOW service initialized");
+    
+    if (!deviceIsMaster) {
+      Serial.println("[CONFIG] Device configured as SLAVE - set master MAC using setMasterMac()");
+    } else {
+      Serial.println("[CONFIG] Device configured as MASTER");
+    }
+    
+    if (SVC::ESPNowService::startTask()) {
+      Serial.println("[SVC] ESP-NOW task started");
+    } else {
+      Serial.println("[SVC] Failed to start ESP-NOW task");
+    }
+  } else {
+    Serial.println("[SVC] ESP-NOW service initialization failed");
+  }
+  #endif
 
   #ifdef CONFIG_ENABLE_OTA_ANEDYA
   Serial.println("[BOOT] Initializing OTA service...");

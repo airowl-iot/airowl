@@ -39,7 +39,7 @@ namespace APP{
     
     lv_obj_t* qrCodeObj = nullptr;
     String lastQRCodeUrl = "";
-    String storedApName = ""; 
+    String storedApName = ""; // Store the actual AP name from main.cpp
 
     uint32_t sensorReadingSubscriptionId = 0;
     uint32_t commandReceivedSubscriptionId = 0;
@@ -65,7 +65,10 @@ namespace APP{
     }   
 }
     void calculateSensorAverages( float& avgPM25, float& avgPM10) {
+        // Calculate 1-minute averages from stored sensor readings for MQTT publishing
+        // Display shows real-time values, MQTT gets smoothed 1-minute averages
         if (bufferCount == 0) {
+            // If no buffered data, use last known values
             avgPM25 = lastPM25;
             avgPM10 = lastPM10;
             return;
@@ -90,14 +93,22 @@ namespace APP{
     
     #define CHART_DATA_LENGTH 12
 
+    // lv_chart_series_t *ui_PM1chart_series_1 = nullptr;
+    // static lv_coord_t ui_PM1chart_series_1_array[CHART_DATA_LENGTH] = {0};
+    // static float pm1_max_value = 0.0;
+    // static int pm1_data_index = 0;
+    
+    // PM25 Chart series and data
     lv_chart_series_t *ui_PM25chart_series_1 = nullptr;
     static lv_coord_t ui_PM25chart_series_1_array[CHART_DATA_LENGTH] = {0};
     static float pm25_max_value = 0.0;
-
+    
+    // PM10 Chart series and data
     lv_chart_series_t *ui_PM10chart_series_1 = nullptr;
     static lv_coord_t ui_PM10chart_series_1_array[CHART_DATA_LENGTH] = {0};
     static float pm10_max_value = 0.0;
-
+    
+    // AQI breakpoints for PM2.5 (US EPA standard)
     struct AQIBreakpoint {
         float low;
         float high;
@@ -123,18 +134,63 @@ namespace APP{
         {425.0, 604.0, 301, 500}
     };
     
+    
     AQIBreakpoint getBreakpoint(float value, const AQIBreakpoint* breakpoints, int count) {
         for (int i = 0; i < count; i++) {
             if (value >= breakpoints[i].low && value <= breakpoints[i].high) {
                 return breakpoints[i];
             }
         }
+        // Return highest breakpoint if value exceeds all ranges
         return breakpoints[count - 1];
     }
     
     int calculateSubIndex(float value, const AQIBreakpoint& bp) {
         return ((bp.aqiHigh - bp.aqiLow) / (bp.high - bp.low)) * (value - bp.low) + bp.aqiLow;
     }
+    
+    // void UIController::setupPM1Chart() {
+    //     #ifdef CONFIG_ENABLE_LVGL
+    //     if (ui_Chart1 != nullptr) {
+    //         lv_chart_set_type(ui_Chart1, LV_CHART_TYPE_LINE);
+    //         lv_chart_set_point_count(ui_Chart1, CHART_DATA_LENGTH);
+    //         lv_chart_set_range(ui_Chart1, LV_CHART_AXIS_PRIMARY_Y, 0, 600); 
+            
+    //         ui_PM1chart_series_1 = lv_chart_add_series(
+    //             ui_Chart1, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+    //         lv_chart_set_ext_y_array(ui_Chart1, ui_PM1chart_series_1,
+    //                                ui_PM1chart_series_1_array);
+
+    //         for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+    //             ui_PM1chart_series_1_array[i] = 0;
+    //         }
+            
+    //         Serial.println("[UIController] PM1 Chart initialized");
+    //     }
+    //     #endif
+    // }
+    
+    // void UIController::updatePM1Chart(float pm1_value) {
+    //     #ifdef CONFIG_ENABLE_LVGL
+    //     if (ui_PM1chart_series_1 != nullptr && ui_Chart1 != nullptr) {
+    //         for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
+    //             ui_PM1chart_series_1_array[i] = ui_PM1chart_series_1_array[i + 1];
+    //         }
+
+    //         ui_PM1chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm1_value * 10); // Scale for display
+
+    //         if (pm1_value > pm1_max_value) {
+    //             pm1_max_value = pm1_value;
+    //             if (ui_pm1maxvalue != nullptr) {
+    //                 char maxBuffer[8];
+    //                 dtostrf(pm1_max_value, 4, 1, maxBuffer);
+    //                 lv_label_set_text(ui_pm1maxvalue, maxBuffer);
+    //             }
+    //         }
+    //         lv_chart_refresh(ui_Chart1);
+    //     }
+    //     #endif
+    // }
     
     void UIController::setupPM25Chart() {
         #ifdef CONFIG_ENABLE_LVGL
@@ -164,7 +220,7 @@ namespace APP{
                 ui_PM25chart_series_1_array[i] = ui_PM25chart_series_1_array[i + 1];
             }
 
-            ui_PM25chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm25_value * 10); 
+            ui_PM25chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm25_value * 10); // Scale for display
 
             if (pm25_value > pm25_max_value) {
                 pm25_max_value = pm25_value;
@@ -184,7 +240,7 @@ namespace APP{
         if (ui_Chart4 != nullptr) {
             lv_chart_set_type(ui_Chart4, LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(ui_Chart4, CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_Chart4, LV_CHART_AXIS_PRIMARY_Y, 0, 600); 
+            lv_chart_set_range(ui_Chart4, LV_CHART_AXIS_PRIMARY_Y, 0, 600); // Adjust range for PM10 values
 
             ui_PM10chart_series_1 = lv_chart_add_series(
                 ui_Chart4, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
@@ -206,7 +262,7 @@ namespace APP{
             for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
                 ui_PM10chart_series_1_array[i] = ui_PM10chart_series_1_array[i + 1];
             }
-            ui_PM10chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm10_value * 10); 
+            ui_PM10chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm10_value * 10); // Scale for display
             
             if (pm10_value > pm10_max_value) {
                 pm10_max_value = pm10_value;
@@ -238,7 +294,7 @@ bool UIController::init() {
     }
     
     bootTime = millis();
-    configTime(19800, 0, "pool.ntp.org", "time.nist.gov"); 
+    configTime(19800, 0, "pool.ntp.org", "time.nist.gov"); // GMT+5:30 for India
     Serial.println("[UIController] NTP time synchronization started");
     
     if (!HAL::Display::init()) {
@@ -257,6 +313,7 @@ bool UIController::init() {
     ui_TVOCgraph_screen_init();
     ui_eCO2graph_screen_init();
 
+    // setupPM1Chart();
     setupPM25Chart();
     setupPM10Chart();
 
@@ -348,9 +405,11 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                 updatePM25Chart(values[0]);
                 updatePM10Chart(values[1]);
 
+                // Store current values for reference
                 lastPM25 = values[0];
                 lastPM10 = values[1];
 
+                // Store values in averaging buffer for MQTT 1-minute averages
                 if (millis() - lastSensorStore >= SENSOR_STORE_INTERVAL) {
 
                     pm25Buffer[bufferIndex] = values[0];
@@ -365,6 +424,8 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                     Serial.printf("[UIController] Stored PMS sensor reading #%d (buffer: %d/%d) for MQTT averaging\n", 
                                  bufferIndex, bufferCount, SENSOR_BUFFER_SIZE);
                 }
+
+                // Update real-time color coding
                 updateSensorColors(values);
                 #endif
             }
@@ -373,20 +434,33 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
         case CORE::SensorReadingEvent::SensorType::PM700:
             if (valueCount >= 5) {
                 #ifdef CONFIG_ENABLE_LVGL
+                // Real-time display update with current sensor values
                 char  pm25buffer[8], pm10buffer[8];
                 dtostrf(values[0], 6, 1, pm25buffer); 
                 dtostrf(values[1], 6, 1, pm10buffer);
                 
+                // Update real-time display values
+                // lv_label_set_text(ui_pm1value, pm1buffer);
                 lv_label_set_text(ui_pm25value, pm25buffer);
+                // lv_label_set_text(ui_pm4value, pm4buffer);
                 lv_label_set_text(ui_pm10value, pm10buffer);
 
+                // Update real-time charts
+                // updatePM1Chart(values[0]);
                 updatePM25Chart(values[0]);
                 updatePM10Chart(values[1]);
+
+                // Store current values for reference
+                // lastPM1 = values[0];
                 lastPM25 = values[0];
+                // lastPM4 = values[2]; 
                 lastPM10 = values[1];
 
+                // Store values in averaging buffer for MQTT 1-minute averages
                 if (millis() - lastSensorStore >= SENSOR_STORE_INTERVAL) {
+                    // pm1Buffer[bufferIndex] = values[0];
                     pm25Buffer[bufferIndex] = values[0];
+                    // pm4Buffer[bufferIndex] = values[2];
                     pm10Buffer[bufferIndex] = values[1];
                     
                     bufferIndex = (bufferIndex + 1) % SENSOR_BUFFER_SIZE;
@@ -399,6 +473,7 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                                  bufferIndex, bufferCount, SENSOR_BUFFER_SIZE, values[2]);
                 }
 
+                // Update real-time color coding
                 updateSensorColors(values);
                 #endif
             }
@@ -407,10 +482,16 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
         case CORE::SensorReadingEvent::SensorType::AHT:
             if (valueCount >= 2) {
                 #ifdef CONFIG_ENABLE_LVGL
+                // Real-time display update with current temperature and humidity values
                 char tempbuffer[8], humbuffer[8];
                 dtostrf(values[0], 4, 1, tempbuffer);
                 dtostrf(values[1], 4, 1, humbuffer);
+                
+                // Update real-time display values
+                // lv_label_set_text(ui_temp, tempbuffer);
+                // lv_label_set_text(ui_humd, humbuffer);
 
+                // Store current values for reference
                 lastTemp = values[0];
                 lastHumidity = values[1];
                 #endif
@@ -451,7 +532,10 @@ void UIController::updateWiFiStatus() {
 void UIController::updateQRCode() {
     if (!running || !ui_qrcode) return;
 
+    // Use stored AP name if available, otherwise fall back to generating one
     String apName = storedApName.isEmpty() ? HAL::WiFi::generateApName() : storedApName;
+
+    
     String qrcodeurl = (HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED) 
         ? "https://opendata.oizom.com/device/" + apName 
         : "WIFI:T:WPA;S:" + apName + ";P:12345678;;";
@@ -469,23 +553,28 @@ void UIController::updateQRCode() {
         lv_obj_center(qrCodeObj);
 
         lastQRCodeUrl = qrcodeurl;
+
         Serial.printf("[UIController] UI labels initialized with AP name: %s\n", apName);
         #endif
     }
+
         #ifdef CONFIG_ENABLE_LVGL
         lv_label_set_text(ui_devicename, apName.c_str());
         lv_label_set_text(ui_qrcodename, apName.c_str());
         lv_label_set_text(ui_firmwareversion, FIRMWARE_VERSION);
         #endif
+
 }
 
 void UIController::updateSensorColors(const float* pmValues) {
     if (!running) return;
     
     #ifdef CONFIG_ENABLE_LVGL
+    // AQIBreakpoint pm1Bp = getBreakpoint(pmValues[0], pm1Bps, sizeof(pm1Bps) / sizeof(pm1Bps[0]));
     AQIBreakpoint pm25Bp = getBreakpoint(pmValues[0], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
     AQIBreakpoint pm10Bp = getBreakpoint(pmValues[1], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
- 
+    
+    // int pm1Index = calculateSubIndex(pmValues[0], pm1Bp);
     int pm25Index = calculateSubIndex(pmValues[0], pm25Bp);
     int pm10Index = calculateSubIndex(pmValues[1], pm10Bp);
     uint32_t  pm25_color, pm10_color;
@@ -495,11 +584,13 @@ void UIController::updateSensorColors(const float* pmValues) {
     } else {
         pm25_color = getAQIColor(pm25Index);
         pm10_color = getAQIColor(pm10Index);
+
     }
     lv_obj_set_style_text_color(ui_pm25value, lv_color_hex(pm25_color), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(ui_pm10value, lv_color_hex(pm10_color), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     int overallAQI = max(pm25Index, pm10Index);
+
     uint32_t eyeColor = (millis() - bootTime < EYE_COLOR_ACTIVATION_DELAY) ? 0xFFFFFF : getAQIColor(overallAQI);
     updateEyeColors(eyeColor);
     #endif
@@ -524,10 +615,13 @@ uint32_t UIController::getAQIColor(int aqi) {
 }
 
 int UIController::calculateAQI(const float* pmValues) {
+    // Calculate individual AQI values
     AQIBreakpoint pm25Bp = getBreakpoint(pmValues[0], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
     AQIBreakpoint pm10Bp = getBreakpoint(pmValues[1], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
+
     int pm25Index = calculateSubIndex(pmValues[0], pm25Bp);
     int pm10Index = calculateSubIndex(pmValues[1], pm10Bp);
+    
     return max(pm25Index, pm10Index);
 }
 
@@ -543,9 +637,11 @@ void UIController::updateTimeDisplay() {
         strftime(timeStr, sizeof(timeStr), "%H:%M:%S", &timeinfo);
         lv_label_set_text(ui_time, timeStr);
 
+        // Update date (if ui_date exists)
         if (ui_date) {
             char dateStr[20];
             strftime(dateStr, sizeof(dateStr), "%d-%m-%Y", &timeinfo);  
+            // you can change format to "%Y-%m-%d" or "%b %d, %Y" as per your UI
             lv_label_set_text(ui_date, dateStr);
         }
     } else {
@@ -557,7 +653,7 @@ void UIController::updateTimeDisplay() {
         snprintf(uptimeStr, sizeof(uptimeStr), "%02lu:%02lu:%02lu", hours, minutes, seconds);
         lv_label_set_text(ui_time, uptimeStr);
 
-        if (ui_date) {
+         if (ui_date) {
             lv_label_set_text(ui_date, "--");
         }
     }
@@ -566,6 +662,7 @@ void UIController::updateTimeDisplay() {
 
 void UIController::handleSensorReadingEvent(const CORE::Event& event) {
     const CORE::SensorReadingEvent& sensorEvent = static_cast<const CORE::SensorReadingEvent&>(event);
+
     updateSensorDisplay(
         sensorEvent.getSensorType(),
         sensorEvent.getValues(),
@@ -573,10 +670,13 @@ void UIController::handleSensorReadingEvent(const CORE::Event& event) {
     );
 }
 
+
 void UIController::handleCommandReceivedEvent(const CORE::Event& event) {
     const CORE::CommandReceivedEvent& cmdEvent = static_cast<const CORE::CommandReceivedEvent&>(event);
+
     const String& command = cmdEvent.getCommand();
     const String& payload = cmdEvent.getPayload();
+
     if (command == "screen" && payload.length() > 0) {
         switchScreen(payload.c_str());
     }
@@ -596,21 +696,29 @@ void UIController::task(void* parameter) {
             if (millis() - lastWiFiUpdate >= 1000) {
                 updateWiFiStatus();
                 updateQRCode(); 
+                
                 updateTimeDisplay();
+
                 if (HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED && 
                     SVC::MQTTService::getState() == SVC::MQTTService::State::DISCONNECTED) {
                     SVC::MQTTService::connectToOizom();
                 }
+                
                 lastWiFiUpdate = millis();
             }
+            
             if (millis() - lastMqttPublish >= MQTT_PUBLISH_INTERVAL) {
                 Serial.printf("[UIController] MQTT publish interval reached (%lu ms) - preparing 1-minute averaged data\n", MQTT_PUBLISH_INTERVAL);
                 Serial.printf("[UIController] MQTT State: %d\n", (int)SVC::MQTTService::getState());
                 
                 if (SVC::MQTTService::getState() == SVC::MQTTService::State::CONNECTED) {
+
+                    // Use stored AP name if available, otherwise generate one
                     String deviceId = storedApName.isEmpty() ? HAL::WiFi::generateApName() : storedApName;
+
                     float avgPM25, avgPM10;
                     calculateSensorAverages(avgPM25, avgPM10);
+                    
                     Serial.printf("[UIController] Publishing 1-minute averaged sensor data for device: %s\n", deviceId.c_str());
                     Serial.printf("[UIController] Averaged values (from %d readings) -  PM2.5: %.2f, PM10: %.2f\n", 
                                  bufferCount, avgPM25,  avgPM10);
@@ -620,6 +728,7 @@ void UIController::task(void* parameter) {
                         avgPM25, avgPM10, 
                         0.0)) { 
                         Serial.println("[UIController] ✓ 1-minute averaged sensor data published to MQTT successfully");
+
                         bufferCount = 0;
                         bufferIndex = 0;
                         Serial.println("[UIController] Reset averaging buffer for next 1-minute period");
@@ -633,6 +742,7 @@ void UIController::task(void* parameter) {
                         SVC::MQTTService::connectToOizom();
                     }
                 }
+                
                 lastMqttPublish = millis();
             }
         }

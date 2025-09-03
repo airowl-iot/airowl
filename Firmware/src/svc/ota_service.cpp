@@ -40,10 +40,16 @@ extern TaskHandle_t sensorTaskHandle;
 extern TaskHandle_t lvglTaskHandle;
 #endif
 
+#ifdef CONFIG_ENABLE_ESP_NOW
+#include "svc/espnow_service.h"
+extern TaskHandle_t espnowTaskHandle;
+#endif
+
 #define FIRMWARE_VERSION "3.0"
 
-const unsigned long check_for_ota_interval = 30000; 
-const unsigned long heartbeat_interval = 60000 ;   
+const unsigned long check_for_ota_interval = 30000; // 30 seconds (you had comment 5 minutes)
+const unsigned long heartbeat_interval = 60000 ;    // 1 minute
+
 
 namespace {
     extern String regionCode;
@@ -75,8 +81,8 @@ namespace {
 
     unsigned long lastOtaCheck = 0;
     unsigned long lastHeartbeat = 0;
-    const unsigned long OTA_CHECK_INTERVAL = 120000; 
-    const unsigned long HEARTBEAT_INTERVAL = 60000;  
+    const unsigned long OTA_CHECK_INTERVAL = 120000; // 2 minutes
+    const unsigned long HEARTBEAT_INTERVAL = 60000;  // 1 minute
     
     TaskHandle_t suspendedTasks[10]; 
     int suspendedTaskCount = 0;
@@ -121,6 +127,7 @@ namespace {
             Serial.printf("[OTA] Http Event On Header, key=%s, value=%s\n", event->header_key, event->header_value);
             break;
         case HTTP_EVENT_ON_DATA:
+            // Don't spam logs with data events
             break;
         case HTTP_EVENT_ON_FINISH:
             Serial.println("[OTA] Http Event On Finish");
@@ -136,6 +143,7 @@ namespace {
     
     bool performUpdateCheck() {
         Serial.println("[OTA] Checking for OTA updates...");
+        
         if (HAL::WiFi::getStatus() != HAL::WiFi::Status::CONNECTED) {
             Serial.println("[OTA] ERROR: WiFi not connected");
             updateState(SVC::OTA::State::FAILED, 0, "WiFi not connected");
@@ -143,6 +151,7 @@ namespace {
         }
         
         updateState(SVC::OTA::State::CHECKING, 0, "Checking for updates...");
+        
         HTTPClient http;
         String url = anedyaApi("/v1/ota/next");
         
@@ -200,20 +209,27 @@ namespace {
             return false;
         }
 
+        // Initialize OTA state
         SVC::OTA::otaInProgress = true;
         SVC::OTA::suppressSensorPrinting = true;
         
         Serial.println("\n[OTA] ⚠️ FIRMWARE UPDATE AVAILABLE - SUSPENDING NON-CRITICAL TASKS");
+        
+        // Suspend non-critical tasks to free up resources
         SVC::OTA::suspendOtherTasks();
         vTaskDelay(pdMS_TO_TICKS(100));
+        
+        // Configure watchdog with a longer timeout for OTA
+        // First delete from current watchdog if exists
         esp_task_wdt_delete(NULL);
         
         esp_task_wdt_config_t wdt_config = {
-            .timeout_ms = 120000,  
+            .timeout_ms = 120000,  // 120 second timeout for OTA (doubled for SSL issues)
             .idle_core_mask = 0,
             .trigger_panic = true
         };
-
+        
+        // Deinitialize current watchdog and reinitialize
         esp_task_wdt_deinit();
         esp_err_t wdt_result = esp_task_wdt_init(&wdt_config);
         if (wdt_result == ESP_OK) {
@@ -224,8 +240,8 @@ namespace {
         }
         
         esp_http_client_config_t config = {};
-        config.timeout_ms = 60000; 
-        config.skip_cert_common_name_check = true; 
+        config.timeout_ms = 60000;  // Increased timeout for SSL handshake
+        config.skip_cert_common_name_check = true;  // Skip cert name check to avoid SSL issues
         config.cert_pem = ca_cert;
         config.keep_alive_enable = true;
         config.keep_alive_idle = 5;
@@ -253,12 +269,13 @@ namespace {
 
         HttpsOTA.onHttpEvent(httpEventHandler);
         HTTPClient http;
-        http.setConnectTimeout(60000);  
-        http.setTimeout(60000);        
+        http.setConnectTimeout(60000);  // 60s connection timeout for SSL handshake
+        http.setTimeout(60000);         // 60s response timeout (within uint16_t range)
         
-        HttpsOTA.begin(assetURL.c_str(), ca_cert, false);  
+        // Begin OTA with relaxed certificate verification
+        HttpsOTA.begin(assetURL.c_str(), ca_cert, false);  // Disable strict cert verification
         
-        const uint32_t OTA_TIMEOUT = 300000; 
+        const uint32_t OTA_TIMEOUT = 300000;  // 5 minutes total timeout
         uint32_t startTime = millis();
         uint32_t lastProgressUpdate = 0;
         int lastProgress = -1;
@@ -266,30 +283,33 @@ namespace {
         const int MAX_RETRIES = 3;
         
         while (SVC::OTA::otaInProgress && (millis() - startTime) < OTA_TIMEOUT) {
+            // Reset watchdog more frequently
             esp_task_wdt_reset();
 
+            // Check connectivity and handle retries
             if (WiFi.status() != WL_CONNECTED) {
                 if (retryCount >= MAX_RETRIES) {
                     Serial.println("[OTA] Network disconnected and max retries reached");
                     updateState(SVC::OTA::State::FAILED, 0, "Network disconnected");
                     break;
                 }
-
+                
+                // Reset WiFi if multiple failures
                 if (retryCount > 0 && retryCount % 2 == 0) {
                     Serial.println("[OTA] Resetting WiFi connection...");
                     WiFi.disconnect();
                     vTaskDelay(pdMS_TO_TICKS(1000));
-                    esp_task_wdt_reset();  
+                    esp_task_wdt_reset();  // Reset watchdog during WiFi reconnect
                     WiFi.reconnect();
                     vTaskDelay(pdMS_TO_TICKS(2000));
-                    esp_task_wdt_reset(); 
+                    esp_task_wdt_reset();  // Reset watchdog after reconnect
                 }
                 
                 Serial.printf("[OTA] Network disconnected, retry %d/%d...\n", retryCount + 1, MAX_RETRIES);
                 uint32_t backoff_time = 2000 * (retryCount + 1);
                 uint32_t backoff_start = millis();
                 while ((millis() - backoff_start) < backoff_time) {
-                    esp_task_wdt_reset();  
+                    esp_task_wdt_reset();  // Keep feeding watchdog during backoff
                     vTaskDelay(pdMS_TO_TICKS(500));
                 }
                 retryCount++;
@@ -326,15 +346,17 @@ namespace {
                     if (retryCount < MAX_RETRIES) {
                         retryCount++;
                         Serial.printf("[OTA] OTA error/status=%d, retry %d/%d\n", otaStatus, retryCount, MAX_RETRIES);
-
+                        
+                        // For SSL/TLS errors, try with different certificate settings
                         if (retryCount == 2) {
                             Serial.println("[OTA] SSL error detected, retrying with insecure connection");
                             HttpsOTA.begin(assetURL.c_str(), "", false);  // Try without certificate
                         }
+                        
                         uint32_t retry_delay = 3000 * retryCount;
                         uint32_t retry_start = millis();
                         while ((millis() - retry_start) < retry_delay) {
-                            esp_task_wdt_reset();  
+                            esp_task_wdt_reset();  // Keep feeding watchdog during retry delay
                             vTaskDelay(pdMS_TO_TICKS(500));
                         }
                         continue;
@@ -344,6 +366,7 @@ namespace {
                     SVC::OTA::updateOTAStatus(deploymentID.c_str(), "failure");
                     SVC::OTA::otaInProgress = false;
                     break;
+
                 default:
                     break;
             }
@@ -359,10 +382,12 @@ namespace {
             }
         }
 
+        // Reset state
         SVC::OTA::otaInProgress = false;
         SVC::OTA::deploymentAvailable = false;
         SVC::OTA::suppressSensorPrinting = false;
-
+        
+        // Reset watchdog to normal configuration
         esp_task_wdt_delete(NULL);
         esp_task_wdt_deinit();
         
@@ -379,11 +404,23 @@ namespace {
             Serial.printf("[OTA] Warning: Normal watchdog init failed: %d\n", wdt_normal_result);
         }
 
+        // Resume suspended tasks
         SVC::OTA::resumeOtherTasks();
+        
         Serial.printf("[OTA] OTA update finished. Free heap: %d\n", esp_get_free_heap_size());
         return false;
     }
-} 
+
+    void resumeLegacyTasks() {
+        #ifdef CONFIG_ENABLE_LVGL
+        // restartLVGLTask();
+        #endif
+        
+        #ifdef CONFIG_ENABLE_ESP_NOW
+        // restartESPNowTask();
+        #endif
+    }
+} // end anonymous namespace
 
 namespace SVC {
 
@@ -401,7 +438,9 @@ void OTA::httpEventHandler(HttpEvent_t* event) {
 bool OTA::init(const char* region, const char* connKey, 
                            const char* deviceId, const char* caCert) {
     if (initialized) return true;
+    
     Serial.println("[OTA] Initializing OTA service...");
+    
     regionCode = region;
     connectionKey = connKey;
     physicalDeviceId = deviceId;
@@ -411,8 +450,10 @@ bool OTA::init(const char* region, const char* connKey,
     HttpsOTA.onHttpEvent(httpEventHandler);
     
     synchronizeTime();
+    
     initialized = true;
     updateState(State::IDLE, 0, " OTA service initialized");
+    
     Serial.printf("[OTA] ✓ Initialized with region: %s\n", region);
     return true;
 }
@@ -564,6 +605,18 @@ void OTA::suspendOtherTasks() {
         }
     }
     #endif
+
+    #ifdef CONFIG_ENABLE_ESP_NOW
+    if (espnowTaskHandle) {
+        Serial.println("[OTA] Suspending ESP-NOW task (handle)");
+        vTaskSuspend(espnowTaskHandle);
+        if (suspendedTaskCount < (int)(sizeof(suspendedTasks)/sizeof(suspendedTasks[0]))) {
+            suspendedTasks[suspendedTaskCount++] = espnowTaskHandle;
+        }
+    }
+    #endif
+
+    // Common app task names to suspend (these must match your created task names)
     const char* TASKS_TO_SUSPEND[] = {
         "UIController",
         "ModeManager",
@@ -576,6 +629,7 @@ void OTA::suspendOtherTasks() {
     };
     const size_t TASK_COUNT = sizeof(TASKS_TO_SUSPEND) / sizeof(TASKS_TO_SUSPEND[0]);
 
+    // System tasks to keep running (case-insensitive compare)
     const char* SYSTEM_KEEP[] = {
         "OTA","IDLE","IDLE0","IDLE1","Tmr Svc","ipc0","ipc1",
         "esp_timer","wifi","tcpip_task","WiFiService",
@@ -609,8 +663,10 @@ void OTA::suspendOtherTasks() {
         Serial.printf("[OTA] Suspending app task by name: %s\n", tname);
         vTaskSuspend(h);
 
+        // Safely remove from watchdog - check if task was registered first
         esp_err_t e = esp_task_wdt_delete(h);
         if (e == ESP_ERR_NOT_FOUND) {
+            // Task wasn't registered with WDT, which is fine
             Serial.printf("[OTA] WDT: task %s not registered (ok)\n", tname);
         } else if (e == ESP_ERR_INVALID_ARG) {
             Serial.printf("[OTA] WDT: invalid task handle for %s (ok)\n", tname);
@@ -641,7 +697,8 @@ void OTA::resumeOtherTasks() {
         eTaskState state = eTaskGetState(h);
         if (state == eSuspended) {
             vTaskResume(h);
-
+            
+            // Only re-add to watchdog if it exists and accepts new tasks
             esp_err_t e = esp_task_wdt_add(h);
             if (e == ESP_OK) {
                 Serial.printf("[OTA] WDT: added subscription for handle %p\n", h);
@@ -652,9 +709,10 @@ void OTA::resumeOtherTasks() {
             } else {
                 Serial.printf("[OTA] WDT: esp_task_wdt_add(handle=%p) returned %d\n", h, e);
             }
+
             resumedCount++;
             Serial.printf("[OTA] Resumed task handle %p\n", h);
-            vTaskDelay(pdMS_TO_TICKS(10)); 
+            vTaskDelay(pdMS_TO_TICKS(10)); // small pause to let it run
         } else {
             Serial.printf("[OTA] Not resuming handle %p (state=%d)\n", h, state);
         }
@@ -703,12 +761,13 @@ void OTA::task(void* parameter) {
         if (HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED) {
             loop();
         }
-        vTaskDelay(pdMS_TO_TICKS(5000)); 
+        vTaskDelay(pdMS_TO_TICKS(5000)); // 5 second task cycle
     }
 }
 
 bool OTA::startTask() {
     if (otaTaskHandle != nullptr) return true;
+    
     BaseType_t result = xTaskCreatePinnedToCore(
         task,
         "OTA",
@@ -718,6 +777,7 @@ bool OTA::startTask() {
         &otaTaskHandle,
         0
     );
+    
     if (result == pdPASS) {
         Serial.println("[OTA] ✓ Task started successfully");
         return true;

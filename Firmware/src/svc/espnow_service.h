@@ -1,117 +1,91 @@
-// espnow_service.h - ESP-NOW Service interface for Airowl 3.0
 #pragma once
 
 #ifdef CONFIG_ENABLE_ESP_NOW
 
 #include <Arduino.h>
 #include <esp_now.h>
+#include <functional>
 
 namespace SVC {
 
 class ESPNowService {
 public:
     /**
-     * @brief Maximum size of ESP-NOW message payload
+     * @brief Slave data structure for master devices
      */
-    static constexpr size_t MAX_MESSAGE_SIZE = 250;
-    
+    struct SlaveData {
+        float temp;
+        float hum;
+        float pm1;
+        float pm25;
+        float pm4;
+        float pm10;
+        float tvoc;
+        uint32_t timestamp;
+        bool valid;
+    };
+
     /**
-     * @brief ESP-NOW message structure
+     * @brief Supported ESP-NOW message types
+     */
+    enum class MessageType : uint8_t {
+        SENSOR_DATA = 0x01,
+        COMMAND     = 0x02,
+        HEARTBEAT   = 0x03,
+        STATUS      = 0x04
+    };
+
+    /**
+     * @brief Structure for received messages
      */
     struct Message {
-        uint8_t type;                       ///< Message type
-        uint8_t id;                         ///< Message ID for tracking
-        uint8_t data[MAX_MESSAGE_SIZE];     ///< Message payload
-        size_t length;                      ///< Actual payload length
-        uint8_t macAddress[6];              ///< Sender/target MAC address
+        MessageType type;
+        const uint8_t* data;
+        size_t length;
+        uint8_t macAddress[6];
     };
+
+    /**
+     * @brief Callback types
+     */
+    using MessageCallback  = std::function<void(const Message& message)>;
+    using DeliveryCallback = std::function<void(const uint8_t* mac, bool success)>;
+
+    /**
+     * @brief Initialize ESP-NOW service
+     * @param master Whether device runs as master
+     * @return true if initialization succeeded
+     */
+    static bool init(bool master = true);
+
+    /**
+     * @brief Send sensor data (slave mode)
+     * @param slaveId Slave device ID
+     * @param temp Temperature value
+     * @param hum Humidity value
+     * @return true if sent successfully
+     */
+    static bool send(uint8_t slaveId, float temp, float hum);
+
+    /**
+     * @brief Set master/slave mode
+     * @param isMaster True for master mode, false for slave mode
+     * @return True if mode was set successfully
+     */
+    static bool setMasterMode(bool isMaster);
     
     /**
-     * @brief Message delivery status
+     * @brief Check if device is in master mode
+     * @return True if device is master, false if slave
      */
-    enum class DeliveryStatus {
-        PENDING,        ///< Message delivery pending
-        DELIVERED,      ///< Message successfully delivered
-        FAILED,         ///< Message delivery failed
-        TIMEOUT         ///< Message delivery timed out
-    };
+    static bool isMaster();
     
     /**
-     * @brief Message callback type
+     * @brief Set master device MAC address (for slaves)
+     * @param mac Master device MAC address
      */
-    using MessageCallback = std::function<void(const Message& message)>;
-    
-    /**
-     * @brief Delivery status callback type
-     */
-    using DeliveryCallback = std::function<void(uint8_t id, DeliveryStatus status)>;
-    
-    /**
-     * @brief Initialize the ESP-NOW service
-     * @param isMaster Whether this device is a master device
-     * @return True if initialization was successful
-     */
-    static bool init(bool isMaster);
-    
-    /**
-     * @brief Send a message to a specific peer
-     * @param type Message type
-     * @param data Message data
-     * @param length Message data length
-     * @param macAddress Target MAC address
-     * @param retries Number of retries if delivery fails
-     * @param timeout Timeout in milliseconds for delivery confirmation
-     * @return Message ID if sent successfully, 0 if failed
-     */
-    static uint8_t sendMessage(uint8_t type, const uint8_t* data, size_t length, 
-                               const uint8_t* macAddress, uint8_t retries = 3, 
-                               unsigned long timeout = 1000);
-    
-    /**
-     * @brief Send a broadcast message to all peers
-     * @param type Message type
-     * @param data Message data
-     * @param length Message data length
-     * @return Message ID if sent successfully, 0 if failed
-     */
-    static uint8_t broadcastMessage(uint8_t type, const uint8_t* data, size_t length);
-    
-    /**
-     * @brief Add a peer to the ESP-NOW network
-     * @param macAddress Peer MAC address
-     * @param channel WiFi channel (0 = current channel)
-     * @param encrypt Whether to encrypt communication with this peer
-     * @param key Encryption key (if encrypt is true)
-     * @return True if peer was added successfully
-     */
-    static bool addPeer(const uint8_t* macAddress, uint8_t channel = 0, 
-                        bool encrypt = false, const uint8_t* key = nullptr);
-    
-    /**
-     * @brief Remove a peer from the ESP-NOW network
-     * @param macAddress Peer MAC address
-     * @return True if peer was removed successfully
-     */
-    static bool removePeer(const uint8_t* macAddress);
-    
-    /**
-     * @brief Register callback for incoming messages
-     * @param callback Function to call when a message is received
-     */
-    static void onMessage(MessageCallback callback);
-    
-    /**
-     * @brief Register callback for delivery status updates
-     * @param callback Function to call when delivery status changes
-     */
-    static void onDeliveryStatus(DeliveryCallback callback);
-    
-    /**
-     * @brief ESP-NOW service task function
-     * @param parameter Task parameters (unused)
-     */
-    static void task(void* parameter);
-    
+    static void setMasterMac(const uint8_t* mac);
+
     /**
      * @brief Start the ESP-NOW service task
      * @return True if task was started successfully
@@ -123,9 +97,30 @@ public:
      * @return True if task was restarted successfully
      */
     static bool restartTask();
-    
+
+    /**
+     * @brief Debug function to print current ESP-NOW status and configuration
+     */
+    static void debugStatus();
+
+    /**
+     * @brief Get the current device MAC address
+     * @param mac Buffer to store MAC address (6 bytes)
+     */
+    static void getDeviceMAC(uint8_t* mac);
+
+    /**
+     * @brief Register callback for incoming messages
+     */
+    static void setMessageCallback(MessageCallback cb);
+
+    /**
+     * @brief Register callback for delivery status
+     */
+    static void setDeliveryCallback(DeliveryCallback cb);
+
 private:
-    // Private implementation details
+    ESPNowService() = default; // prevent instantiation
 };
 
 } // namespace SVC

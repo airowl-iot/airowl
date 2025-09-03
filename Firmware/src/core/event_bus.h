@@ -24,6 +24,7 @@ public:
         MQTT_DISCONNECTED,  ///< MQTT connection lost
         OTA_PROGRESS,       ///< OTA update progress
         COMMAND_RECEIVED,   ///< Command received from external source
+        ESP_NOW_MESSAGE,    ///< ESP-NOW message received
         UI_EVENT,           ///< User interface event
         SYSTEM_ERROR        ///< System error occurred
     };
@@ -141,7 +142,7 @@ public:
     /**
      * @brief Constructor
      * @param state New WiFi state
-     * @param ssid SSID when connected 
+     * @param ssid SSID when connected (empty otherwise)
      * @param rssi RSSI value when connected
      */
     WiFiStateChangedEvent(WiFiState state, const String& ssid = "", int rssi = 0)
@@ -270,6 +271,7 @@ public:
      */
     enum class Source {
         MQTT,       ///< Command received via MQTT
+        ESP_NOW,    ///< Command received via ESP-NOW
         SERIAL_PORT,     ///< Command received via Serial
         OTHER       ///< Other source
     };
@@ -311,6 +313,72 @@ private:
 };
 
 /**
+ * @brief ESP-NOW Message Event
+ */
+class ESPNowMessageEvent : public Event {
+public:
+    /**
+     * @brief ESP-NOW message types
+     */
+    enum class MessageType {
+        SENSOR_DATA,  ///< Sensor data from slave
+        COMMAND,      ///< Command message
+        HEARTBEAT,    ///< Heartbeat message
+        STATUS        ///< Status update
+    };
+    
+    /**
+     * @brief Constructor
+     * @param messageType Type of ESP-NOW message
+     * @param slaveId ID of sending slave device
+     * @param data Message data
+     * @param length Data length
+     */
+    ESPNowMessageEvent(MessageType messageType, uint8_t slaveId, 
+                       const uint8_t* data, size_t length)
+        : Event(Type::ESP_NOW_MESSAGE),
+          messageType_(messageType),
+          slaveId_(slaveId),
+          length_(length) {
+        // Copy data (up to MAX_DATA_SIZE)
+        size_t copyLength = (length > MAX_DATA_SIZE) ? MAX_DATA_SIZE : length;
+        memcpy(data_, data, copyLength);
+        length_ = copyLength;
+    }
+    
+    /**
+     * @brief Get message type
+     * @return Message type
+     */
+    MessageType getMessageType() const { return messageType_; }
+    
+    /**
+     * @brief Get slave ID
+     * @return Slave ID
+     */
+    uint8_t getSlaveId() const { return slaveId_; }
+    
+    /**
+     * @brief Get message data
+     * @return Pointer to message data
+     */
+    const uint8_t* getData() const { return data_; }
+    
+    /**
+     * @brief Get data length
+     * @return Data length
+     */
+    size_t getLength() const { return length_; }
+
+private:
+    static constexpr size_t MAX_DATA_SIZE = 64; ///< Maximum data size
+    MessageType messageType_;                   ///< Message type
+    uint8_t slaveId_;                          ///< Slave device ID
+    uint8_t data_[MAX_DATA_SIZE];              ///< Message data
+    size_t length_;                            ///< Data length
+};
+
+/**
  * @brief UI Event
  */
 class UIEvent : public Event {
@@ -319,8 +387,11 @@ public:
      * @brief UI event types
      */
     enum class UIEventType {
+        BUTTON_PRESSED,   ///< Button pressed
         SCREEN_CHANGED,   ///< Screen changed
         VALUE_CHANGED,    ///< Value changed
+        GESTURE,          ///< Gesture detected
+        OTHER             ///< Other UI event
     };
     
     /**

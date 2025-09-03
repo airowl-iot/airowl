@@ -12,30 +12,33 @@ namespace {
     bool initialized = false;
     bool running = false;
     
+    
+    // Sensor configurations
     APP::SensorManager::SensorConfig pmsConfig = {
         .enabled = true,
-        .readInterval = 10000,     
-        .publishInterval = 60000  
+        .readInterval = 10000,     // 10 seconds
+        .publishInterval = 60000    // 1 minute
     };
     
     APP::SensorManager::SensorConfig pm700Config = {
         .enabled = true,
-        .readInterval = 10000,    
-        .publishInterval = 60000    
+        .readInterval = 10000,     // 10 seconds
+        .publishInterval = 60000    // 1 minute
     };
     
     APP::SensorManager::SensorConfig ahtConfig = {
         .enabled = true,
-        .readInterval = 5000,      
-        .publishInterval = 30000    
+        .readInterval = 5000,      // 5 seconds
+        .publishInterval = 30000    // 30 seconds
     };
     
     APP::SensorManager::SensorConfig ens160Config = {
         .enabled = true,
-        .readInterval = 5000,     
-        .publishInterval = 30000    
+        .readInterval = 5000,      // 5 seconds
+        .publishInterval = 30000    // 30 seconds
     };
     
+    // Sensor reading timestamps
     unsigned long lastPMSRead = 0;
     unsigned long lastPM700Read = 0;
     unsigned long lastAHTRead = 0;
@@ -44,7 +47,8 @@ namespace {
     unsigned long lastPM700Publish = 0;
     unsigned long lastAHTPublish = 0;
     unsigned long lastENS160Publish = 0;
-
+    
+    // Sensor data
     HAL::PMS::Data lastPMSData;
     HAL::PM700::Data lastPM700Data;
     HAL::AHT::Data lastAHTData;
@@ -55,9 +59,11 @@ namespace {
     bool newENS160Data = false;
 }
 
-namespace APP { 
+namespace APP {
+
 bool SensorManager::init(const SensorConfig& pmsConfig, const SensorConfig& pm700Config, const SensorConfig& ahtConfig, const SensorConfig& ens160Config) {
     if (initialized) return true;
+    
     // Store configurations
     ::pmsConfig = pmsConfig;
     ::pm700Config = pm700Config;
@@ -89,6 +95,7 @@ bool SensorManager::init(const SensorConfig& pmsConfig, const SensorConfig& pm70
         ens160Initialized = HAL::ENS160::init();
         Serial.println("[Sensor Manager] ENS initialized");
     }
+    
     initialized = pmsInitialized || pm700Initialized || ahtInitialized || ens160Initialized;
     return initialized;
 }
@@ -96,7 +103,7 @@ bool SensorManager::init(const SensorConfig& pmsConfig, const SensorConfig& pm70
 bool SensorManager::start() {
     if (!initialized) return false;
     running = true;
-    Serial.println("[Sensor Manager] PMS, PM700, AHT or ENS160 started");
+    Serial.println("[Sensor Manager] PMS, PM700, AHT and ENS160 started");
     return true;
 }
 
@@ -116,6 +123,7 @@ void SensorManager::updateConfig(const SensorConfig& pmsConfig, const SensorConf
     bool ahtWasEnabled = ::ahtConfig.enabled;
     bool ens160WasEnabled = ::ens160Config.enabled;
     
+    // Update configurations
     ::pmsConfig = pmsConfig;
     ::pm700Config = pm700Config;
     ::ahtConfig = ahtConfig;
@@ -177,8 +185,11 @@ void SensorManager::readPMSSensor() {
             if (HAL::PMS::isDataAvailable()) {
                 Serial.println("[Sensor Manager] PMS data available - publishing real-time to display");
                 newPMSData = true;
-
+                
+                // Always publish to EventBus for real-time display updates
                 publishPMSData(lastPMSData);
+                
+                // Track publish timing for logging only
                 if (currentTime - lastPMSPublish >= pmsConfig.publishInterval) {
                     lastPMSPublish = currentTime;
                     Serial.printf("[Sensor Manager] PMS publish interval reached (%lu ms)\n", pmsConfig.publishInterval);
@@ -200,8 +211,11 @@ void SensorManager::readPM700Sensor() {
             if (HAL::PM700::isDataAvailable()) {
                 Serial.println("[Sensor Manager] PM700 data available - publishing real-time to display");
                 newPM700Data = true;
-
+                
+                // Always publish to EventBus for real-time display updates
                 publishPM700Data(lastPM700Data);
+                
+                // Track publish timing for logging only
                 if (currentTime - lastPM700Publish >= pm700Config.publishInterval) {
                     lastPM700Publish = currentTime;
                     Serial.printf("[Sensor Manager] PM700 publish interval reached (%lu ms)\n", pm700Config.publishInterval);
@@ -223,8 +237,11 @@ void SensorManager::readAHTSensor() {
             if (HAL::AHT::isDataAvailable()) {
                 Serial.println("[Sensor Manager] AHT data available - publishing real-time to display");
                 newAHTData = true;
-
+                
+                // Always publish to EventBus for real-time display updates
                 publishAHTData(lastAHTData);
+                
+                // Track publish timing for logging only
                 if (currentTime - lastAHTPublish >= ahtConfig.publishInterval) {
                     lastAHTPublish = currentTime;
                     Serial.printf("[Sensor Manager] AHT publish interval reached (%lu ms)\n", ahtConfig.publishInterval);
@@ -262,9 +279,9 @@ void SensorManager::publishPM700Data(const HAL::PM700::Data& data) {
     float values[5] = {
         data.pm1,
         data.pm25,
-        0.0f,       
+        0.0f,        // PM4 not available on PM700
         data.pm10,
-        data.p03   
+        data.p03     // 0.3μm particle count
     };
     
     CORE::SensorReadingEvent event(
@@ -273,6 +290,7 @@ void SensorManager::publishPM700Data(const HAL::PM700::Data& data) {
         values,
         5  
     );
+    
     CORE::EventBus::getInstance().publish(event);
 }
 
@@ -284,10 +302,11 @@ void SensorManager::publishAHTData(const HAL::AHT::Data& data) {
 
     CORE::SensorReadingEvent event(
         CORE::SensorReadingEvent::SensorType::AHT,
-        0, 
+        0, // Sensor ID 
         values,
-        2  
+        2  // Number of values
     );
+    
     CORE::EventBus::getInstance().publish(event);
 }
 
@@ -295,18 +314,25 @@ void SensorManager::readENS160Sensor() {
     if (!ens160Config.enabled || !running) return;
     
     unsigned long currentTime = millis();
+
     if (currentTime - lastENS160Read >= ens160Config.readInterval) {
         lastENS160Read = currentTime;
+  
         if (newAHTData) {
             HAL::ENS160::setEnvironmentalData(lastAHTData.temperature, lastAHTData.humidity);
         }
+        
         if (HAL::ENS160::read(&lastENS160Data) == HAL::ENS160::Error::NONE) {
             if (HAL::ENS160::isDataAvailable()) {
                 Serial.println("[Sensor Manager] ENS160 data available - publishing real-time to display");
                 newENS160Data = true;
+                
                 AQI = static_cast<float>(lastENS160Data.aqi);
-                publishENS160Data(lastENS160Data);
 
+                // Always publish to EventBus for real-time display updates
+                publishENS160Data(lastENS160Data);
+                
+                // Track publish timing for logging only
                 if (currentTime - lastENS160Publish >= ens160Config.publishInterval) {
                     lastENS160Publish = currentTime;
                     Serial.printf("[Sensor Manager] ENS160 publish interval reached (%lu ms)\n", ens160Config.publishInterval);
@@ -322,25 +348,29 @@ void SensorManager::publishENS160Data(const HAL::ENS160::Data& data) {
         static_cast<float>(data.tvoc),
         static_cast<float>(data.eco2)
     };
+    
     CORE::SensorReadingEvent event(
         CORE::SensorReadingEvent::SensorType::OTHER,
-        0, 
+        0, // Sensor ID 
         values,
-        3  
+        3  // Number of values
     );
     CORE::EventBus::getInstance().publish(event);
 }
 
 void SensorManager::task(void* parameter) {
     esp_task_wdt_add(NULL);
+    
     while (true) {
         esp_task_wdt_reset();
+        
         if (running) {
             readPMSSensor();
             readPM700Sensor();
             readAHTSensor();
             readENS160Sensor();
         }
+
         vTaskDelay(pdMS_TO_TICKS(100)); 
     }
 }
@@ -368,6 +398,7 @@ bool SensorManager::restartTask() {
         vTaskDelete(sensorTaskHandle);
         sensorTaskHandle = nullptr;
     }
+    
     return startTask();
 }
 
