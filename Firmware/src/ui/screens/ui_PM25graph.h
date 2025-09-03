@@ -16,7 +16,7 @@ extern void ui_PM25graph_screen_destroy(void);
 extern lv_obj_t * ui_PM25graph;
 extern lv_obj_t * ui_Chart3;
 extern lv_obj_t * ui_Container3;
-extern lv_obj_t * ui_pmlabel2;
+extern lv_obj_t * ui_templabel2;
 extern lv_obj_t * ui_gpunit2;
 extern lv_obj_t * ui_cube2;
 extern lv_obj_t * ui_maxlabel2;

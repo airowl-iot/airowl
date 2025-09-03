@@ -14,8 +14,6 @@ namespace {
 
     bool initialized = false;
     HAL::PMS::Error lastError = HAL::PMS::Error::NONE;
-    
-    // Last valid reading
     HAL::PMS::Data lastReading = {0};
     bool newDataAvailable = false;
 }
@@ -26,12 +24,12 @@ bool PMS::init() {
     if (initialized) return true;
 
     pmsSerial.begin(PMS_SERIAL_BAUD, SERIAL_8N1, PMS_RX_PIN, -1);
-    delay(100); 
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     Serial.printf("[PMS][HAL] UART1 RX=%d @ %d baud\n", PMS_RX_PIN, PMS_SERIAL_BAUD);
 
     pms.wakeUp();
-    delay(100);
+    vTaskDelay(pdMS_TO_TICKS(100));
     Serial.printf("[PMS][HAL] done\n");
     pms.activeMode();
     Serial.printf("[PMS][HAL] done2\n");

@@ -16,7 +16,7 @@ extern void ui_PM10graph_screen_destroy(void);
 extern lv_obj_t * ui_PM10graph;
 extern lv_obj_t * ui_Chart4;
 extern lv_obj_t * ui_Container4;
-extern lv_obj_t * ui_pmlabel3;
+extern lv_obj_t * ui_templabel3;
 extern lv_obj_t * ui_gpunit3;
 extern lv_obj_t * ui_cube3;
 extern lv_obj_t * ui_maxlabel3;

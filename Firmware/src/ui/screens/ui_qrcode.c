@@ -33,7 +33,7 @@ void ui_qrcode_screen_init(void)
     lv_obj_set_x(ui_qrcodename, 0);
     lv_obj_set_y(ui_qrcodename, 117);
     lv_obj_set_align(ui_qrcodename, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_qrcodename, "OIZOM AIROWL");
+    lv_label_set_text(ui_qrcodename, "");
     lv_obj_set_style_text_color(ui_qrcodename, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_qrcodename, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_qrcodename, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -8,7 +8,7 @@
 lv_obj_t * ui_PM25graph = NULL;
 lv_obj_t * ui_Chart3 = NULL;
 lv_obj_t * ui_Container3 = NULL;
-lv_obj_t * ui_pmlabel2 = NULL;
+lv_obj_t * ui_templabel2 = NULL;
 lv_obj_t * ui_gpunit2 = NULL;
 lv_obj_t * ui_cube2 = NULL;
 lv_obj_t * ui_maxlabel2 = NULL;
@@ -71,17 +71,17 @@ void ui_PM25graph_screen_init(void)
     lv_obj_set_style_border_opa(ui_Container3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(ui_Container3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_pmlabel2 = lv_label_create(ui_Container3);
-    lv_obj_set_width(ui_pmlabel2, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_pmlabel2, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_pmlabel2, -79);
-    lv_obj_set_y(ui_pmlabel2, 2);
-    lv_obj_set_align(ui_pmlabel2, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_pmlabel2, "PM2.5");
-    lv_obj_set_style_text_color(ui_pmlabel2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_pmlabel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_align(ui_pmlabel2, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_pmlabel2, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_templabel2 = lv_label_create(ui_Container3);
+    lv_obj_set_width(ui_templabel2, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_templabel2, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_templabel2, -79);
+    lv_obj_set_y(ui_templabel2, 2);
+    lv_obj_set_align(ui_templabel2, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_templabel2, "PM2.5");
+    lv_obj_set_style_text_color(ui_templabel2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_templabel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_templabel2, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_templabel2, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_gpunit2 = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_gpunit2, LV_SIZE_CONTENT);   /// 1
@@ -160,7 +160,7 @@ void ui_PM25graph_screen_destroy(void)
     ui_PM25graph = NULL;
     ui_Chart3 = NULL;
     ui_Container3 = NULL;
-    ui_pmlabel2 = NULL;
+    ui_templabel2 = NULL;
     ui_gpunit2 = NULL;
     ui_cube2 = NULL;
     ui_maxlabel2 = NULL;

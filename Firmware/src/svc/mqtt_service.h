@@ -116,14 +116,12 @@ public:
     /**
      * @brief Publish sensor data to MQTT broker
      * @param deviceId Device identifier
-     * @param pm1 PM1.0 value
      * @param pm25 PM2.5 value
-     * @param pm4 PM4.0 value
      * @param pm10 PM10.0 value
      * @param tvoc TVOC value
      * @return true if publish was successful, false otherwise
      */
-    static bool publishSensorData(const char* deviceId, float pm1, float pm25, float pm4, float pm10, float tvoc);
+    static bool publishSensorData(const char* deviceId, float pm25, float pm10, float tvoc);
     
     /**
      * @brief Register message callback

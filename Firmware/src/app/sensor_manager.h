@@ -6,6 +6,7 @@
 #include <functional>
 #include "../core/event_bus.h"
 #include "../hal/hal_pms.h"
+#include "../hal/hal_pm700.h"
 #include "../hal/hal_aht.h"
 #include "../hal/hal_ens160.h"
 
@@ -25,10 +26,12 @@ public:
     /**
      * @brief Initialize the sensor manager
      * @param pmsConfig PMS sensor configuration
+     * @param pm700Config PM700 sensor configuration
      * @param ahtConfig AHT sensor configuration
+     * @param ens160Config ENS160 sensor configuration
      * @return True if initialization was successful
      */
-    static bool init(const SensorConfig& pmsConfig, const SensorConfig& ahtConfig, const SensorConfig& ens160Config);
+    static bool init(const SensorConfig& pmsConfig, const SensorConfig& pm700Config, const SensorConfig& ahtConfig, const SensorConfig& ens160Config);
     
     /**
      * @brief Start sensor readings
@@ -50,15 +53,23 @@ public:
     /**
      * @brief Update sensor configuration
      * @param pmsConfig PMS sensor configuration
+     * @param pm700Config PM700 sensor configuration
      * @param ahtConfig AHT sensor configuration
+     * @param ens160Config ENS160 sensor configuration
      */
-    static void updateConfig(const SensorConfig& pmsConfig, const SensorConfig& ahtConfig, const SensorConfig& ens160Config);
+    static void updateConfig(const SensorConfig& pmsConfig, const SensorConfig& pm700Config, const SensorConfig& ahtConfig, const SensorConfig& ens160Config);
     
     /**
      * @brief Get current PMS sensor configuration
      * @return PMS sensor configuration
      */
     static const SensorConfig& getPMSConfig();
+    
+    /**
+     * @brief Get current PM700 sensor configuration
+     * @return PM700 sensor configuration
+     */
+    static const SensorConfig& getPM700Config();
     
     /**
      * @brief Get current AHT sensor configuration
@@ -99,6 +110,11 @@ private:
     static void readPMSSensor();
     
     /**
+     * @brief Read PM700 sensor data
+     */
+    static void readPM700Sensor();
+    
+    /**
      * @brief Read AHT sensor data
      */
     static void readAHTSensor();
@@ -113,6 +129,12 @@ private:
      * @param data PMS sensor data
      */
     static void publishPMSData(const HAL::PMS::Data& data);
+    
+    /**
+     * @brief Publish PM700 sensor data
+     * @param data PM700 sensor data
+     */
+    static void publishPM700Data(const HAL::PM700::Data& data);
     
     /**
      * @brief Publish AHT sensor data

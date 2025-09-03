@@ -24,9 +24,15 @@
 #define TOUCH_RST 42
 #define TOUCH_INT 41
 
-#define PMS_SERIAL_BAUD 9600
+// Sensor I2C Bus
+#define I2C_SENSOR_SDA 18  // Use different pins for sensors
+#define I2C_SENSOR_SCL 19
 
+#define PMS_SERIAL_BAUD 9600
 #define PMS_RX_PIN 44
+
+#define PM700_SERIAL_BAUD 9600
+#define PM700_RX_PIN 15
 
 #define CONFIG_ENS160_SDA 4
 #define CONFIG_ENS160_SCL 5
@@ -34,16 +40,23 @@
 #define CONFIG_AHT_SDA 4
 #define CONFIG_AHT_SCL 5
 
-// esp-now configuration
-#define MAX_SLAVES 9
-#define ESPNOW_RETRY_COUNT 3
-#define ESPNOW_TIMEOUT_MS 5000
 #define SLAVE_DATA_TIMEOUT 30000
 #define MQTT_PUBLISH_INTERVAL 10000
 
-// OTA Update Configuration
 #ifdef CONFIG_ENABLE_OTA_ANEDYA
-#define OTA_UPDATE_SERVER "https://airowl-updates.example.com/firmware"
-#endif
+#define REGION_CODE "ap-in-1"
 
-#endif  // __CONFIG_H
+static const char *CONNECTION_KEY = "bf84ac9d5e797a798429628d5b2abdab";
+static const char *PHYSICAL_DEVICE_ID = "1970582f-42c4-4d67-82e9-b3b3df260125";
+
+// Anedya API helpers
+inline String anedyaDeviceHost() {
+  return "device." + String(REGION_CODE) + ".anedya.io";
+}
+
+inline String anedyaApi(const char *path) {
+  return String("https://") + anedyaDeviceHost() + path;
+}
+
+#endif // CONFIG_ENABLE_OTA_ANEDYA
+#endif 

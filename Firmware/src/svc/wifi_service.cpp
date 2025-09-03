@@ -45,7 +45,7 @@ bool WiFiService::connect(const char* ssid, const char* password) {
 
     if (!currentSSID.isEmpty() && !currentPassword.isEmpty()) {
         HAL::WiFi::disconnect();
-        delay(500);
+        vTaskDelay(pdMS_TO_TICKS(500));
         updateState(State::CONNECTING);
         return HAL::WiFi::connect(currentSSID.c_str(), currentPassword.c_str());
     }
@@ -86,10 +86,6 @@ HAL::WiFi::ConnectionInfo WiFiService::getConnectionInfo() {
 void WiFiService::onEvent(EventCallback callback) { eventCallback = callback; }
 
 void WiFiService::task(void* parameter) {
-//    if (esp_task_wdt_add(NULL) != ESP_ERR_INVALID_STATE) {
-//         Serial.println("[SVC][WiFiService] Watchdog added");
-//     }
-
     while (true) {
         // esp_task_wdt_reset();
         HAL::WiFi::Status halStatus = HAL::WiFi::getStatus();

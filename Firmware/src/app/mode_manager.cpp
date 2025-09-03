@@ -17,7 +17,7 @@ namespace {
     TaskHandle_t modeTaskHandle = nullptr;
     
     uint32_t wifiStateChangedSubscriptionId = 0;
-    #ifdef CONFIG_ENABLE_OTA_ANEDYA
+    #ifndef CONFIG_ENABLE_OTA_ANEDYA
         uint32_t otaProgressSubscriptionId = 0;
     #endif
     uint32_t commandReceivedSubscriptionId = 0;
@@ -25,7 +25,7 @@ namespace {
     bool provisioningRequested = false;
     bool normalModeRequested = false;
     
-    #ifdef CONFIG_ENABLE_OTA_ANEDYA
+    #ifndef CONFIG_ENABLE_OTA_ANEDYA
         bool otaUpdateRequested = false;
     #endif
 
@@ -50,7 +50,7 @@ namespace {
                 SVC::MQTTService::disconnect();
                 break;
                 
-    #ifdef CONFIG_ENABLE_OTA_ANEDYA
+    #ifndef CONFIG_ENABLE_OTA_ANEDYA
             case APP::ModeManager::Mode::OTA_UPDATE:
                 APP::SensorManager::stop();
                 APP::UIController::startTask();
@@ -70,21 +70,19 @@ namespace APP {
 
 bool ModeManager::init(Mode initialMode) {
     if (initialized) return true;
-    
-    // Subscribe to events
-    CORE::EventBus& eventBus = CORE::EventBus::getInstance();
-    
+
+    CORE::EventBus& eventBus = CORE::EventBus::getInstance();    
     wifiStateChangedSubscriptionId = eventBus.subscribe(
         CORE::Event::Type::WIFI_STATE_CHANGED, 
         handleWiFiStateChangedEvent
     );
     
-#ifdef CONFIG_ENABLE_OTA_ANEDYA
+    #ifndef CONFIG_ENABLE_OTA_ANEDYA
     otaProgressSubscriptionId = eventBus.subscribe(
         CORE::Event::Type::OTA_PROGRESS, 
         handleOTAProgressEvent
     );
-#endif
+    #endif
     
     commandReceivedSubscriptionId = eventBus.subscribe(
         CORE::Event::Type::COMMAND_RECEIVED, 
@@ -105,17 +103,15 @@ bool ModeManager::changeMode(Mode newMode) {
     switch (newMode) {
         case Mode::NORMAL:
             normalModeRequested = true;
-            break;
-            
+            break;       
         case Mode::PROVISIONING:
             provisioningRequested = true;
-            break;
-            
-    #ifdef CONFIG_ENABLE_OTA_ANEDYA
+            break;  
+        #ifndef CONFIG_ENABLE_OTA_ANEDYA
         case Mode::OTA_UPDATE:
             otaUpdateRequested = true;
             break;
-    #endif     
+        #endif     
     }
     return true;
 }
@@ -126,26 +122,23 @@ void ModeManager::onModeChange(ModeChangeCallback callback) {
 
 void ModeManager::handleWiFiStateChangedEvent(const CORE::Event& event) {
     const CORE::WiFiStateChangedEvent& wifiEvent = static_cast<const CORE::WiFiStateChangedEvent&>(event);
-
     switch (wifiEvent.getState()) {
         case CORE::WiFiStateChangedEvent::WiFiState::PROVISIONING:
             if (currentMode != Mode::PROVISIONING) {
                 provisioningRequested = true;
             }
-            break;
-            
+            break;  
         case CORE::WiFiStateChangedEvent::WiFiState::CONNECTED:
             if (currentMode == Mode::PROVISIONING) {
                 normalModeRequested = true;
             }
             break;
-            
         default:
             break;
     }
 }
 
-#ifdef CONFIG_ENABLE_OTA_ANEDYA
+#ifndef CONFIG_ENABLE_OTA_ANEDYA
 void ModeManager::handleOTAProgressEvent(const CORE::Event& event) {
     const CORE::OTAProgressEvent& otaEvent = static_cast<const CORE::OTAProgressEvent&>(event);
 
@@ -173,7 +166,6 @@ void ModeManager::handleOTAProgressEvent(const CORE::Event& event) {
 
 void ModeManager::handleCommandReceivedEvent(const CORE::Event& event) {
     const CORE::CommandReceivedEvent& cmdEvent = static_cast<const CORE::CommandReceivedEvent&>(event);
-    
     const String& command = cmdEvent.getCommand();
     
     if (command == "mode") {
@@ -184,11 +176,10 @@ void ModeManager::handleCommandReceivedEvent(const CORE::Event& event) {
         } else if (payload == "provisioning") {
             provisioningRequested = true;
 
-            #ifdef CONFIG_ENABLE_OTA_ANEDYA
+            #ifndef CONFIG_ENABLE_OTA_ANEDYA
         } else if (payload == "ota") {
             otaUpdateRequested = true;
             #endif
-
         } 
     }
 }
@@ -206,13 +197,11 @@ void ModeManager::task(void* parameter) {
             provisioningRequested = false;
             enterMode(Mode::PROVISIONING);
 
-            #ifdef CONFIG_ENABLE_OTA_ANEDYA
-
+        #ifndef CONFIG_ENABLE_OTA_ANEDYA
         } else if (otaUpdateRequested) {
             otaUpdateRequested = false;
             enterMode(Mode::OTA_UPDATE);
-
-            #endif
+        #endif
         } 
         vTaskDelay(pdMS_TO_TICKS(100)); 
     }
@@ -242,6 +231,6 @@ bool ModeManager::restartTask() {
         modeTaskHandle = nullptr;
     }
     return startTask();
-}
+    }
 }
  // namespace APP

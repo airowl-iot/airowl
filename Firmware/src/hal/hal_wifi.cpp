@@ -1,6 +1,7 @@
 #include "hal_wifi.h"
 #include "config.h"
-
+#include "esp_system.h"
+#include "esp_mac.h"
 #include <WiFi.h>
 #include <WiFiManager.h>
 #include <WiFiManagerTz.h>
@@ -30,7 +31,7 @@ bool WiFi::connect(const char* ssid, const char* password) {
         return false;
     }
     ::WiFi.disconnect(true, true);
-    delay(200);
+    vTaskDelay(pdMS_TO_TICKS(200));
 
     Serial.printf("[HAL][WiFi] Connecting to SSID: %s\n", ssid);
     ::WiFi.begin(ssid, password);
@@ -38,7 +39,7 @@ bool WiFi::connect(const char* ssid, const char* password) {
 
     unsigned long startTime = millis();
     while (::WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
-        delay(500);
+        vTaskDelay(pdMS_TO_TICKS(500));
         Serial.print(".");
     }
     Serial.println();
@@ -58,15 +59,15 @@ bool WiFi::connect(const char* ssid, const char* password) {
 
 String WiFi::generateApName(const char* baseName) {
     
-    if (::WiFi.getMode() == WIFI_MODE_NULL) {
-        ::WiFi.mode(WIFI_STA);
-        delay(100); 
-    }
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);   // Always valid
+    char deviceId[13];
+    sprintf(deviceId, "%02X%02X%02X%02X%02X%02X",
+            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-    String mac = ::WiFi.macAddress();
-    mac.replace(":", "");   
-    String suffix = mac.substring(6); 
-    String fullApName = String(baseName) + "_" + suffix;
+    String suffix = String(deviceId).substring(6);
+    String fullApName = String(baseName ? baseName : "AIROWL") + "_" + suffix;
+
     // Serial.printf("[HAL][WiFi] Generated AP Name: %s\n", fullApName.c_str());
     return fullApName;
 }
@@ -77,7 +78,6 @@ bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
     Serial.printf("[HAL][WiFi] Starting Config Portal as: %s\n", fullApName.c_str());
     
     WiFiManagerNS::init(&wm, nullptr);
-    // Configure WiFiManager
     std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
     wm.setMenu(menu);
     wm.setTitle("AIROWL Configuration");
@@ -87,7 +87,7 @@ bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
     wm.setDebugOutput(true);
 
     bool connected = wm.startConfigPortal(fullApName.c_str(), "12345678");
-    
+   
     if (connected) {
         Serial.println("[HAL][WiFi] User configured WiFi, saving credentials...");
         currentStatus = Status::CONNECTED;
@@ -95,7 +95,6 @@ bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
         Serial.println("[HAL][WiFi] Config portal timeout or failed");
         currentStatus = Status::FAILED;
     }
-
     return connected;
 }
 
@@ -106,7 +105,6 @@ bool WiFi::disconnect() {
 }
 
 WiFi::Status WiFi::getStatus() {
-   
     switch (::WiFi.status()) {
         case WL_CONNECTED: return Status::CONNECTED;
         case WL_DISCONNECTED: return Status::DISCONNECTED;

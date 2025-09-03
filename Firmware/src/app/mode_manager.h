@@ -6,20 +6,17 @@
 #include "../core/event_bus.h"
 
 namespace APP {
-
 class ModeManager {
 public:
     /**
      * @brief Operating modes
      */
     enum class Mode {
-        NORMAL,         ///< Normal operation mode
-        PROVISIONING,   ///< WiFi provisioning mode
-        // LOW_POWER,      ///< Low power mode
-#ifdef CONFIG_ENABLE_OTA_ANEDYA
-        OTA_UPDATE,     ///< OTA update mode
-#endif
-        // FACTORY_RESET   ///< Factory reset mode
+        NORMAL,        
+        PROVISIONING,  
+        #ifndef CONFIG_ENABLE_OTA_ANEDYA
+            OTA_UPDATE,     
+        #endif
     };
     
     /**
@@ -72,15 +69,13 @@ public:
     static bool restartTask();
 
 private:
-    // Private implementation details
-    
     /**
      * @brief Handle WiFi state changed events
      * @param event WiFi state changed event
      */
     static void handleWiFiStateChangedEvent(const CORE::Event& event);
     
-#ifdef CONFIG_ENABLE_OTA_ANEDYA
+#ifndef CONFIG_ENABLE_OTA_ANEDYA
     /**
      * @brief Handle OTA progress events
      * @param event OTA progress event

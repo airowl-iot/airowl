@@ -65,7 +65,8 @@ public:
      * @brief Sensor types
      */
     enum class SensorType {
-        PMS,        ///< Particulate Matter Sensor
+        PMS,        ///< Particulate Matter Sensor (Plantower)
+        PM700,      ///< Particulate Matter Sensor (Temtop PM700)
         AHT,        ///< Temperature/Humidity Sensor
         OTHER       ///< Other sensor type
     };
@@ -140,7 +141,7 @@ public:
     /**
      * @brief Constructor
      * @param state New WiFi state
-     * @param ssid SSID when connected (empty otherwise)
+     * @param ssid SSID when connected 
      * @param rssi RSSI value when connected
      */
     WiFiStateChangedEvent(WiFiState state, const String& ssid = "", int rssi = 0)
@@ -269,9 +270,7 @@ public:
      */
     enum class Source {
         MQTT,       ///< Command received via MQTT
-        ESP_NOW,    ///< Command received via ESP-NOW
         SERIAL_PORT,     ///< Command received via Serial
-        BLE,        ///< Command received via BLE
         OTHER       ///< Other source
     };
     
@@ -320,11 +319,8 @@ public:
      * @brief UI event types
      */
     enum class UIEventType {
-        BUTTON_PRESSED,   ///< Button pressed
         SCREEN_CHANGED,   ///< Screen changed
         VALUE_CHANGED,    ///< Value changed
-        GESTURE,          ///< Gesture detected
-        OTHER             ///< Other UI event
     };
     
     /**

@@ -2,7 +2,7 @@ ui_Intro.c
 ui_qrcode.c
 ui_owl.c
 ui_dashboard.c
-ui_PM1graph.c
+ui_Tempgraph.c
 ui_PM4graph.c
 ui_PM25graph.c
 ui_PM10graph.c

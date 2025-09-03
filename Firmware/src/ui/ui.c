@@ -5,7 +5,7 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
-#include "matter_wrapper.h"
+// #include "matter_wrapper.h"
 
 ///////////////////// VARIABLES ////////////////////
 void blink_Animation(lv_obj_t * TargetObject, int delay);
@@ -17,12 +17,12 @@ void eyeL_Animation(lv_obj_t * TargetObject, int delay);
 void eyeright_Animation(lv_obj_t * TargetObject, int delay);
 void eyeleft_Animation(lv_obj_t * TargetObject, int delay);
 
-// SCREEN: ui_matter_qrcode
-lv_obj_t *ui_matter_qrcode;
-lv_obj_t *ui_matter_label_top;
-lv_obj_t *ui_matter_qrcode_obj;
-lv_obj_t *ui_matter_label_bottom;
-const char *ui_matter_qrcodedata = "MT:Y.K9042C00KA0648G00";
+// // SCREEN: ui_matter_qrcode
+// lv_obj_t *ui_matter_qrcode;
+// lv_obj_t *ui_matter_label_top;
+// lv_obj_t *ui_matter_qrcode_obj;
+// lv_obj_t *ui_matter_label_bottom;
+// const char *ui_matter_qrcodedata = "MT:Y.K9042C00KA0648G00";
 
 // EVENTS
 lv_obj_t * ui____initial_actions0;
@@ -220,68 +220,6 @@ lv_anim_set_early_apply( &PropertyAnimation_0, false );
 lv_anim_start(&PropertyAnimation_0);
 
 }
-///////////////////// FUNCTIONS ////////////////////
-
-void ui_matter_qrcode_screen_init(void)
-{
-    ui_matter_qrcode = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_matter_qrcode, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_bg_color(ui_matter_qrcode, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_matter_qrcode, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    // Top label: "Matter Device"
-    ui_matter_label_top = lv_label_create(ui_matter_qrcode);
-    lv_label_set_text(ui_matter_label_top, "Matter Device");
-    lv_obj_set_style_text_color(ui_matter_label_top, lv_color_black(), 0);
-    lv_obj_set_align(ui_matter_label_top, LV_ALIGN_TOP_MID);
-    lv_obj_set_y(ui_matter_label_top, 30);
-    
-    // QR Code
-    ui_matter_qrcode_obj = lv_qrcode_create(ui_matter_qrcode, 150, lv_color_black(), lv_color_white());
-    lv_qrcode_update(ui_matter_qrcode_obj, ui_matter_qrcodedata, strlen(ui_matter_qrcodedata));
-    lv_obj_center(ui_matter_qrcode_obj);
-
-    // Bottom label: "pairing code: 34970112332"
-    ui_matter_label_bottom = lv_label_create(ui_matter_qrcode);
-    lv_label_set_text(ui_matter_label_bottom, "Pairing Code: 34970112332");
-    lv_obj_set_style_text_color(ui_matter_label_bottom, lv_color_black(), 0);
-    lv_obj_set_align(ui_matter_label_bottom, LV_ALIGN_BOTTOM_MID);
-    lv_obj_set_y(ui_matter_label_bottom, -40);
-
-    ui_devicename = lv_label_create(ui_matter_qrcode);
-    lv_obj_set_width(ui_devicename, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_devicename, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_devicename, 0);
-    lv_obj_set_y(ui_devicename, -15);
-    lv_obj_set_align(ui_devicename, LV_ALIGN_BOTTOM_MID);
-    lv_label_set_text(ui_devicename, "OIZOM AIROWL");
-    lv_obj_set_style_text_color(ui_devicename, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_devicename, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_devicename, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_add_event_cb(ui_matter_qrcode, ui_event_matter_qrcode, LV_EVENT_ALL, NULL);
-}
-
-void ui_event_matter_qrcode(lv_event_t * e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t * target = lv_event_get_target(e);
-
-    if (event_code == LV_EVENT_CLICKED) {
-        _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
-    }
-}
-
-void ui_matter_qrcode_screen_destroy(void)
-{
-    if(ui_matter_qrcode) lv_obj_del(ui_matter_qrcode);
-
-    // NULL screen variables
-    ui_matter_qrcode = NULL;
-    ui_matter_label_top = NULL;
-    ui_matter_qrcode_obj = NULL;
-    ui_matter_label_bottom = NULL;
-}
 
 void ui_event_owl(lv_event_t * e)
 {
@@ -322,19 +260,16 @@ void ui_event_owl(lv_event_t * e)
     }
     
     if (event_code == LV_EVENT_CLICKED){ 
-        // Check if Matter device is commissioned using the wrapper function
-        if(!is_matter_commissioned()) {
-            // Transition to matter_qrcode screen when clicked and device is not commissioned
-            _ui_screen_change(&ui_matter_qrcode, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_matter_qrcode_screen_init);
-        }
+        // if(!is_matter_commissioned()) {
+        //     // Transition to matter_qrcode screen when clicked and device is not commissioned
+        //     _ui_screen_change(&ui_matter_qrcode, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_matter_qrcode_screen_init);
+        // }
         // else {
             // Transition to dashboard screen when clicked and device is commissioned
-            // _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
+            _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
         // }
     }
 }
-
-///////////////////// SCREENS ////////////////////
 
 void ui_init(void)
 {
@@ -348,10 +283,7 @@ void ui_init(void)
    // Serial.println("[DEBUG][UI] Theme initialized");
     
     lv_disp_set_theme(dispp, theme);
-    // Serial.println("[DEBUG][UI] Theme set for display");
-    
-    // Initialize all screens
-    // Serial.println("[DEBUG][UI] Initializing intro screen...");
+ 
     ui_Intro_screen_init();
     // Serial.println("[DEBUG][UI] Intro screen initialized");
     
@@ -368,11 +300,11 @@ void ui_init(void)
     // Serial.println("[DEBUG][UI] Dashboard screen initialized");
     
     // Serial.println("[DEBUG][UI] Initializing PM1 graph screen...");
-    ui_PM1graph_screen_init();
+    ui_Tempgraph_screen_init();
     // Serial.println("[DEBUG][UI] PM1 graph screen initialized");
     
     // Serial.println("[DEBUG][UI] Initializing PM4 graph screen...");
-    ui_PM4graph_screen_init();
+    ui_Humdgraph_screen_init();
     // Serial.println("[DEBUG][UI] PM4 graph screen initialized");
     
     // Serial.println("[DEBUG][UI] Initializing PM25 graph screen...");
@@ -387,9 +319,11 @@ void ui_init(void)
     ui_TVOCgraph_screen_init();
     // Serial.println("[DEBUG][UI] TVOC graph screen initialized");
     
-    // Serial.println("[DEBUG][UI] Initializing Matter QR code screen...");
-    ui_matter_qrcode_screen_init();
-    // Serial.println("[DEBUG][UI] Matter QR code screen initialized");
+    ui_eCO2graph_screen_init();
+
+    // // Serial.println("[DEBUG][UI] Initializing Matter QR code screen...");
+    // ui_matter_qrcode_screen_init();
+    // // Serial.println("[DEBUG][UI]  QR code screen initialized");
     
     // Serial.println("[DEBUG][UI] Creating initial actions object...");
     ui____initial_actions0 = lv_obj_create(NULL);
@@ -416,10 +350,11 @@ void ui_destroy(void)
     ui_qrcode_screen_destroy();
     ui_owl_screen_destroy();
     ui_dashboard_screen_destroy();
-    ui_PM1graph_screen_destroy();
-    ui_PM4graph_screen_destroy();
+    ui_Tempgraph_screen_destroy();
+    ui_Humdgraph_screen_destroy();
     ui_PM25graph_screen_destroy();
     ui_PM10graph_screen_destroy();
     ui_TVOCgraph_screen_destroy();
-    ui_matter_qrcode_screen_destroy();
+    ui_eCO2graph_screen_destroy();
+    // ui__qrcode_screen_destroy();
 }

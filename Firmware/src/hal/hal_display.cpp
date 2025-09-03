@@ -17,7 +17,7 @@ static Arduino_DataBus* bus = nullptr;
 static Arduino_GFX* gfx = nullptr;
 static Adafruit_CST8XX cst8xx;
 static lv_disp_draw_buf_t draw_buf;
-static TaskHandle_t lvglTaskHandle = nullptr;
+TaskHandle_t lvglTaskHandle = nullptr;
 static bool initializedDisplay = false;
 
 static void my_disp_flush(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
@@ -68,9 +68,9 @@ bool Display::init() {
 
     pinMode(TOUCH_RST, OUTPUT);
     digitalWrite(TOUCH_RST, LOW);
-    delay(50);
+    vTaskDelay(pdMS_TO_TICKS(50));
     digitalWrite(TOUCH_RST, HIGH);
-    delay(200);
+    vTaskDelay(pdMS_TO_TICKS(200));
 
     lv_init();
 
@@ -113,6 +113,7 @@ bool Display::restartTask() {
     if (lvglTaskHandle != nullptr) {
         vTaskDelete(lvglTaskHandle);
         lvglTaskHandle = nullptr;
+        Serial.println("[OTA] Deleted LVGL task to free heap");
     }
 
     BaseType_t result = xTaskCreatePinnedToCore(

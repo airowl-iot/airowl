@@ -21,28 +21,23 @@ namespace {
     HAL::ENS160::Data lastReading = {0};
     bool newDataAvailable = false;
     unsigned long lastReadTime = 0;
-    const unsigned long READ_INTERVAL = 1000; // Minimum time between reads (ms)
+    const unsigned long READ_INTERVAL = 1000; 
 }
 
 namespace HAL {
 
 bool ENS160::init() {
     if (initialized) return true;
-    
-
     if (!ens160.begin()) {
         lastError = Error::COMM_ERROR;
         Serial.println("[ENS160][HAL] Init failed (COMM_ERROR)");
         return false;
     }
-    
-    // Set to standard mode
     if (!ens160.setMode(ENS160_OPMODE_STD)) {
         lastError = Error::COMM_ERROR;
         Serial.println("[ENS160][HAL] Failed to set STD mode (COMM_ERROR)");
         return false;
     }
-    
     initialized = true;
     lastError = Error::NONE;
     Serial.println("[ENS160][HAL] Init success, running in STD mode");
@@ -54,30 +49,24 @@ ENS160::Error ENS160::read(Data* data) {
         lastError = Error::NOT_INITIALIZED;
         return lastError;
     }
-    
     unsigned long currentTime = millis();
     if (currentTime - lastReadTime < READ_INTERVAL) {
-        // Return last reading if read interval hasn't passed
         if (data) *data = lastReading;
         return lastError;
     }
     
     lastReadTime = currentTime;
-
     if (!ens160.measure(true)) {
         lastError = Error::COMM_ERROR;
         Serial.println("[ENS160][HAL] Measurement failed (COMM_ERROR)");
         return lastError;
-    }
-    
+    }  
     lastReading.aqi = ens160.getAQI();
     lastReading.tvoc = ens160.getTVOC();
     lastReading.eco2 = ens160.geteCO2();
-    lastReading.timestamp = currentTime;
-    
+    lastReading.timestamp = currentTime;    
     newDataAvailable = true;
-    
-    // Copy data if pointer is provided
+
     if (data) *data = lastReading;
     Serial.printf("[ENS160][HAL][RAW] AQI=%u, TVOC=%u ppb, eCO2=%u ppm\n",
                   lastReading.aqi,
@@ -92,12 +81,10 @@ ENS160::Error ENS160::setEnvironmentalData(float temperature, float humidity) {
         lastError = Error::NOT_INITIALIZED;
         return lastError;
     }
-    
     if (!ens160.set_envdata(temperature, humidity)) {
         lastError = Error::COMM_ERROR;
         return lastError;
     }
-    
     lastError = Error::NONE;
     return lastError;
 }

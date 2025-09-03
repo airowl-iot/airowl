@@ -32,11 +32,12 @@ extern "C" {
 #include "screens/ui_qrcode.h"
 #include "screens/ui_owl.h"
 #include "screens/ui_dashboard.h"
-#include "screens/ui_PM1graph.h"
-#include "screens/ui_PM4graph.h"
+#include "screens/ui_Tempgraph.h"
+#include "screens/ui_Humdgraph.h"
 #include "screens/ui_PM25graph.h"
 #include "screens/ui_PM10graph.h"
 #include "screens/ui_TVOCgraph.h"
+#include "screens/ui_eCO2graph.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -49,15 +50,6 @@ extern void eyeL_Animation(lv_obj_t * TargetObject, int delay);
 extern void eyeright_Animation(lv_obj_t * TargetObject, int delay);
 extern void eyeleft_Animation(lv_obj_t * TargetObject, int delay);
 
-// SCREEN: ui_matter_qrcode
-void ui_matter_qrcode_screen_init(void);
-void ui_event_matter_qrcode(lv_event_t * e);
-extern lv_obj_t *ui_matter_qrcode;
-extern lv_obj_t *ui_matter_label_top;
-extern lv_obj_t *ui_matter_qrcode_obj;
-extern lv_obj_t *ui_matter_label_bottom;
-extern const char *ui_matter_qrcodedata;
-
 // EVENTS
 
 extern lv_obj_t * ui____initial_actions0;
@@ -67,6 +59,10 @@ LV_IMG_DECLARE(ui_img_oizom_logo_png);    // assets/oizom_logo.png
 LV_IMG_DECLARE(ui_img_airowl_1_png);    // assets/airowl_1.png
 LV_IMG_DECLARE(ui_img_airowl_2_png);    // assets/airowl_2.png
 LV_IMG_DECLARE(ui_img_582762761);    // assets/celsius-degrees-symbol-of-temperature.png
+LV_IMG_DECLARE(ui_img_26368195); 
+LV_IMG_DECLARE(ui_img_26368195); 
+LV_IMG_DECLARE(ui_img_wifi_off_png);
+LV_IMG_DECLARE(ui_img_wifi_on_png);
 
 // UI INIT
 void ui_init(void);
