@@ -2,7 +2,7 @@
 #include "hal_aht.h"
 #include "config.h"
 
-#ifndef CONFIG_ENABLE_SENSOR_AHT
+#ifdef CONFIG_ENABLE_SENSOR_AHT
 #include <Wire.h>
 #include <Adafruit_AHTX0.h>
 

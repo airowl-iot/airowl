@@ -2,7 +2,7 @@
 #include "hal_ens160.h"
 #include "config.h"
 
-#ifndef CONFIG_ENABLE_SENSOR_ENS160
+#ifdef CONFIG_ENABLE_SENSOR_ENS160
 #include <Wire.h>
 #include <ScioSense_ENS160.h>
 
