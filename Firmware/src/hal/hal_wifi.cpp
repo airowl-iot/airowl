@@ -1,5 +1,5 @@
 #include "hal_wifi.h"
-#include "config.h"
+#include "airowl_config.h"
 #include "esp_system.h"
 #include "esp_mac.h"
 #include <WiFi.h>
@@ -15,20 +15,28 @@ namespace {
 namespace HAL {
 
 bool WiFi::init() {
+    ::WiFi.disconnect(true, false);
+    vTaskDelay(pdMS_TO_TICKS(100));
+
     ::WiFi.persistent(true);
     ::WiFi.setSleep(false);
     ::WiFi.mode(WIFI_STA);
     ::WiFi.setAutoReconnect(true);
-    
+
     currentStatus = Status::IDLE;
+    Serial.println("[HAL][WiFi] WiFi HAL initialized");
     return true;
 }
 
 bool WiFi::connect(const char* ssid, const char* password) {
-    if (!ssid || !password || !ssid[0]) {
-        Serial.println("[HAL][WiFi] Missing SSID/pass, cannot connect");
+    if (!ssid || !ssid[0]) {
+        Serial.println("[HAL][WiFi] Missing SSID, cannot connect");
         currentStatus = Status::FAILED;
         return false;
+    }
+
+    if (!password) {
+        password = "";  
     }
     ::WiFi.disconnect(true, true);
     vTaskDelay(pdMS_TO_TICKS(200));
@@ -45,13 +53,14 @@ bool WiFi::connect(const char* ssid, const char* password) {
     Serial.println();
 
     if (::WiFi.status() == WL_CONNECTED) {
-        Serial.printf("[HAL] Connected! SSID: %s, IP: %s\n",
+        Serial.printf("[HAL][WiFi] Connected! SSID: %s, IP: %s\n",
                       ::WiFi.SSID().c_str(),
                       ::WiFi.localIP().toString().c_str());
         currentStatus = Status::CONNECTED;
         return true;
     } else {
-        Serial.printf("[HAL] Connection failed, status: %d\n", ::WiFi.status());
+        Serial.printf("[HAL][WiFi] Connection failed, status: %d\n", ::WiFi.status());
+        printWiFiStatus(::WiFi.status());
         currentStatus = Status::FAILED;
         return false;
     }
@@ -60,15 +69,13 @@ bool WiFi::connect(const char* ssid, const char* password) {
 String WiFi::generateApName(const char* baseName) {
     
     uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);   // Always valid
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);  
     char deviceId[13];
     sprintf(deviceId, "%02X%02X%02X%02X%02X%02X",
             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     String suffix = String(deviceId).substring(6);
     String fullApName = String(baseName ? baseName : "AIROWL") + "_" + suffix;
-
-    // Serial.printf("[HAL][WiFi] Generated AP Name: %s\n", fullApName.c_str());
     return fullApName;
 }
 
@@ -105,13 +112,32 @@ bool WiFi::disconnect() {
 }
 
 WiFi::Status WiFi::getStatus() {
-    switch (::WiFi.status()) {
-        case WL_CONNECTED: return Status::CONNECTED;
-        case WL_DISCONNECTED: return Status::DISCONNECTED;
-        case WL_IDLE_STATUS: return Status::IDLE;
-        case WL_CONNECT_FAILED: return Status::FAILED;
-        default: return Status::DISCONNECTED;
+    wl_status_t wifiStatus = ::WiFi.status();
+
+    switch (wifiStatus) {
+        case WL_CONNECTED:
+            if (currentStatus != Status::CONNECTED) {
+                currentStatus = Status::CONNECTED;
+            }
+            break;
+        case WL_DISCONNECTED:
+            if (currentStatus == Status::CONNECTED || currentStatus == Status::CONNECTING) {
+                currentStatus = Status::DISCONNECTED;
+            }
+            break;
+        case WL_CONNECT_FAILED:
+            currentStatus = Status::FAILED;
+            break;
+        case WL_IDLE_STATUS:
+            if (currentStatus != Status::CONNECTING && currentStatus != Status::CONNECTED) {
+                currentStatus = Status::IDLE;
+            }
+            break;
+        default:
+            break;
     }
+
+    return currentStatus;
 }
 
 void WiFi::printWiFiStatus(uint8_t status) {
@@ -126,6 +152,11 @@ void WiFi::printWiFiStatus(uint8_t status) {
 }
 
 bool WiFi::getConnectionInfo(ConnectionInfo* info) {
+    if (!info) {
+        Serial.println("[HAL][WiFi] Error: Null pointer provided to getConnectionInfo");
+        return false;
+    }
+
     if (::WiFi.status() != WL_CONNECTED) {
         return false;
     }
@@ -152,7 +183,11 @@ bool WiFi::setHostname(const char* hostname) {
 }
 
 bool WiFi::getMACAddress(uint8_t* mac) {
-    return ::WiFi.macAddress(mac); 
+    if (!mac) {
+        Serial.println("[HAL][WiFi] Error: Null pointer provided to getMACAddress");
+        return false;
+    }
+    return ::WiFi.macAddress(mac);
 }
 
 

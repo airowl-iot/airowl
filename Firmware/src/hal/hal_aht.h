@@ -1,4 +1,4 @@
-// hal_aht.h - AHT Temperature/Humidity Sensor HAL for Airowl 3.0
+// hal_aht.h - AHT + ENS160 Sensor HAL for Airowl 3.0
 #pragma once
 
 #include <Arduino.h>
@@ -8,27 +8,29 @@ namespace HAL {
 class AHT {
 public:
     /**
-     * @brief AHT sensor data structure
+     * @brief AHT + ENS160 sensor data structure
      */
     struct Data {
-        float temperature; // Temperature in Celsius
-        float humidity;    // Relative humidity in percent
-        uint32_t timestamp; // Timestamp of reading
+        float temperature;   // Temperature in Celsius
+        float humidity;      // Relative humidity in percent
+        uint16_t aqi;        // Air Quality Index (ENS160)
+        uint16_t tvoc;       // Total Volatile Organic Compounds (ppb)
+        uint16_t eco2;       // Equivalent CO2 (ppm)
     };
     
     /**
      * @brief Error codes for AHT operations
      */
     enum class Error {
-        NONE,           // No error
-        NOT_INITIALIZED,// Sensor not initialized
-        COMM_ERROR,     // Communication error
-        TIMEOUT,        // Read timeout
-        INVALID_DATA    // Invalid data received
+        NONE,            // No error
+        NOT_INITIALIZED, // Sensor not initialized
+        COMM_ERROR,      // Communication error
+        TIMEOUT,         // Read timeout
+        INVALID_DATA     // Invalid data received
     };
     
     /**
-     * @brief Initialize the AHT sensor
+     * @brief Initialize the AHT + ENS160 sensors
      * @return true if initialization was successful, false otherwise
      */
     static bool init();
@@ -47,7 +49,7 @@ public:
     static bool isDataAvailable();
     
     /**
-     * @brief Check if sensor is initialized
+     * @brief Check if sensors are initialized
      * @return true if initialized, false otherwise
      */
     static bool isInitialized();

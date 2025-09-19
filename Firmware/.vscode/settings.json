@@ -1,9 +1,26 @@
 {
     "files.associations": {
+        "ui_airowl.h": "c",
+        "array": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "format": "cpp",
+        "initializer_list": "cpp",
+        "span": "cpp",
         "ui.h": "c",
         "*.tpp": "cpp",
-        "chrono": "c",
-        "functional": "c"
+        "ui_helpers.h": "c",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "map": "cpp",
+        "memory": "cpp",
+        "bitset": "cpp",
+        "algorithm": "cpp"
     },
-    "cmake.sourceDirectory": "E:/Oizom/airowl_tft_display_updated_arduino_gfx_library - Copy/airowl/Firmware/lib/lvgl"
+    "cmake.sourceDirectory": "E:/Airowl_NA/lib/lvgl"
 }

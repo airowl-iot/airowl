@@ -32,13 +32,19 @@ public:
     };
     
     /**
-     * @brief Initialize the PM700 sensor
+     * @brief Initialize the PM700 sensor (checks if enabled in config)
      * @return true if initialization was successful, false otherwise
      */
     static bool init();
+
+    /**
+     * @brief Force initialize the PM700 sensor (bypasses config check)
+     * @return true if initialization was successful, false otherwise
+     */
+    static bool forceInit();
     
     /**
-     * @brief Read sensor data (non-blocking)
+     * @brief Read sensor data 
      * @param data Pointer to data structure to fill
      * @return Error code
      */
@@ -62,11 +68,6 @@ public:
      */
     static Error getLastError();
     
-    /**
-     * @brief Get sensor type string
-     * @return Sensor type identifier
-     */
-    static const char* getSensorType();
 };
 
 } // namespace HAL

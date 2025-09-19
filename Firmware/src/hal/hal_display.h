@@ -1,8 +1,6 @@
 // hal_display.h - Display HAL for Airowl 3.0
 #pragma once
 
-#ifdef CONFIG_ENABLE_LVGL
-
 #include <Arduino.h>
 
 namespace HAL {
@@ -29,5 +27,3 @@ public:
 };
 
 } // namespace HAL
-
-#endif

@@ -1,14 +1,12 @@
-// hal_display.cpp - Display HAL implementation for Airowl 3.0
-#ifdef CONFIG_ENABLE_LVGL
-#include "hal_display.h"
-#include "config.h"
-
+#include <lvgl.h>
+#include "airowl_config.h"
 #include <Arduino.h>
 #include <Wire.h>
-#include <lvgl.h>
 #include <Arduino_GFX_Library.h>
 #include <Adafruit_CST8XX.h>
 #include <esp_task_wdt.h>
+
+#include "hal_display.h"
 
 #define DISP_BUF_SIZE (TFT_WIDTH * TFT_HEIGHT / 8) 
 static lv_color_t buf[DISP_BUF_SIZE];
@@ -30,7 +28,6 @@ static void my_disp_flush(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t
 static void my_touchpad_read(lv_indev_drv_t* indev_driver, lv_indev_data_t* data) {
     if (cst8xx.touched()) {
         auto p = cst8xx.getPoint(0);
-        // Map touch to screen coordinates
         int mapped_x = map(TFT_HEIGHT - p.y, 0, TFT_HEIGHT, 0, TFT_WIDTH);
         int mapped_y = map(p.x, 0, TFT_WIDTH, 0, TFT_HEIGHT);
         data->point.x = constrain(mapped_x, 0, TFT_WIDTH - 1);
@@ -42,7 +39,7 @@ static void my_touchpad_read(lv_indev_drv_t* indev_driver, lv_indev_data_t* data
 }
 
 static void lv_task(void* parameter) {
-    const TickType_t delay = pdMS_TO_TICKS(16); // 60 Hz
+    const TickType_t delay = pdMS_TO_TICKS(16); 
     while (true) {
         lv_timer_handler();
         vTaskDelay(delay);
@@ -99,6 +96,7 @@ bool Display::init() {
     indev_drv.read_cb = my_touchpad_read;
     lv_indev_t *indev = lv_indev_drv_register(&indev_drv);
     (void)indev;
+
     Serial.println("[HAL] Display driver registered");
     initializedDisplay = true;
     return true;
@@ -113,7 +111,6 @@ bool Display::restartTask() {
     if (lvglTaskHandle != nullptr) {
         vTaskDelete(lvglTaskHandle);
         lvglTaskHandle = nullptr;
-        Serial.println("[OTA] Deleted LVGL task to free heap");
     }
 
     BaseType_t result = xTaskCreatePinnedToCore(
@@ -122,15 +119,3 @@ bool Display::restartTask() {
 }
 
 } //namespace HAL
-
-#else // CONFIG_ENABLE_LVGL not defined
-
-namespace HAL {
-
-bool Display::init() { return false; }
-bool Display::lvHandler() { return false; }
-bool Display::restartTask() { return false; }
-
-} // namespace HAL
-
-#endif // CONFIG_ENABLE_LVGL
