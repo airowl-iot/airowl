@@ -45,8 +45,6 @@ void ui_Tempgraph_screen_init(void)
     lv_chart_set_point_count(ui_tempchart, 12);
     lv_chart_set_range(ui_tempchart, LV_CHART_AXIS_PRIMARY_Y, 500, 1800);
     lv_chart_set_div_line_count(ui_tempchart, 0, 0);
-    lv_chart_set_zoom_x(ui_pmChart, 250);
-    lv_chart_set_zoom_y(ui_pmChart, 250);
     lv_chart_set_axis_tick(ui_tempchart, LV_CHART_AXIS_PRIMARY_X, 0, 5, 5, 2, false, 50);
     lv_chart_set_axis_tick(ui_tempchart, LV_CHART_AXIS_PRIMARY_Y, 5, 5, 11, 2, true, 50);
     lv_chart_set_axis_tick(ui_tempchart, LV_CHART_AXIS_SECONDARY_Y, 10, 5, 5, 2, false, 25);
