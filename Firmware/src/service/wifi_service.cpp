@@ -11,13 +11,25 @@ namespace {
     SVC::WiFiService::EventCallback eventCallback = nullptr;
     TaskHandle_t wifiTaskHandle = nullptr;
 
-    const uint32_t RECONNECT_INTERVAL_MS = 5000;
-    const uint32_t MAX_RECONNECT_ATTEMPTS = 3;
+    const uint32_t RECONNECT_INTERVAL_MS = 10000;  
+    const uint32_t MAX_RECONNECT_ATTEMPTS = 5;    
+    const uint32_t FAST_RECONNECT_INTERVAL_MS = 3000;  
     uint32_t reconnectAttempts = 0;
     unsigned long lastReconnectAttempt = 0;
+    bool hasStoredCredentials = false;
+
+    SemaphoreHandle_t stateMutex = nullptr;
 
     String currentSSID;
     String currentPassword;
+
+    void getCredentialsCopy(String& ssid, String& password) {
+        if (stateMutex && xSemaphoreTake(stateMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+            ssid = currentSSID;
+            password = currentPassword;
+            xSemaphoreGive(stateMutex);
+        }
+    }
 
     void updateState(SVC::WiFiService::State newState, void* data = nullptr) {
         if (currentState != newState) {
@@ -60,6 +72,14 @@ namespace SVC {
 bool WiFiService::init(const char* hostname) {
     if (initialized) return true;
 
+    if (stateMutex == nullptr) {
+        stateMutex = xSemaphoreCreateMutex();
+        if (stateMutex == nullptr) {
+            Serial.println("[SVC][WiFiService] ERROR: Failed to create state mutex");
+            return false;
+        }
+    }
+
     if (!HAL::WiFi::init()) {
         Serial.println("[SVC][WiFiService] Failed to initialize WiFi HAL");
         return false;
@@ -85,9 +105,16 @@ bool WiFiService::connect(const char* ssid, const char* password) {
     }
 
     if (ssid && password) {
-        currentSSID = ssid;
-        currentPassword = password;
-        Serial.printf("[SVC][WiFiService] Connecting to WiFi SSID: %s\n", currentSSID.c_str());
+        if (xSemaphoreTake(stateMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            currentSSID = ssid;
+            currentPassword = password;
+            hasStoredCredentials = true;
+            xSemaphoreGive(stateMutex);
+            Serial.printf("[SVC][WiFiService] Connecting to WiFi SSID: %s\n", currentSSID.c_str());
+        } else {
+            Serial.println("[SVC][WiFiService] Failed to acquire mutex for credentials");
+            return false;
+        }
     }
 
     if (!currentSSID.isEmpty() && !currentPassword.isEmpty()) {
@@ -98,7 +125,8 @@ bool WiFiService::connect(const char* ssid, const char* password) {
         bool result = HAL::WiFi::connect(currentSSID.c_str(), currentPassword.c_str());
         if (result) {
             updateState(State::CONNECTED);
-            Serial.println("[SVC][WiFiService] Successfully connected to WiFi");
+            reconnectAttempts = 0;  
+            Serial.printf("[SVC][WiFiService] Successfully connected to WiFi: %s\n", ::WiFi.SSID().c_str());
         } else {
             updateState(State::FAILED);
             Serial.println("[SVC][WiFiService] Failed to connect to WiFi");
@@ -106,7 +134,46 @@ bool WiFiService::connect(const char* ssid, const char* password) {
         return result;
     }
 
-    Serial.println("[SVC][WiFiService] No credentials provided, starting provisioning");
+    Serial.println("[SVC][WiFiService] No credentials provided, checking for saved credentials...");
+
+    ::WiFi.begin();
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    if (::WiFi.status() == WL_CONNECTED || ::WiFi.SSID().length() > 0) {
+        Serial.println("[SVC][WiFiService] Found saved credentials, attempting auto-connect...");
+        updateState(State::CONNECTING);
+
+        unsigned long startTime = millis();
+        while (::WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+
+        if (::WiFi.status() == WL_CONNECTED) {
+
+            if (xSemaphoreTake(stateMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+                currentSSID = ::WiFi.SSID();
+                String psk = ::WiFi.psk();
+
+                if (psk.length() > 0) {
+                    currentPassword = psk;
+                } else {
+                    Serial.println("[SVC][WiFiService] Warning: WiFi.psk() returned empty, keeping existing password");
+                }
+
+                hasStoredCredentials = true;
+                xSemaphoreGive(stateMutex);
+
+                updateState(State::CONNECTED);
+                Serial.printf("[SVC][WiFiService] Auto-connected to saved network: %s\n", currentSSID.c_str());
+                return true;
+            } else {
+                Serial.println("[SVC][WiFiService] Failed to acquire mutex for credential update");
+                return false;
+            }
+        }
+    }
+
+    Serial.println("[SVC][WiFiService] No saved credentials found, starting provisioning");
     return startProvisioning();
 }
 
@@ -125,13 +192,28 @@ bool WiFiService::startProvisioning(const char* apName, uint32_t timeout_ms) {
     updateState(State::PROVISIONING);
 
     if (HAL::WiFi::startConfigPortal(baseApName.c_str(), timeout_ms)) {
-        currentSSID = ::WiFi.SSID();
-        currentPassword = ::WiFi.psk();
+        if (xSemaphoreTake(stateMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            currentSSID = ::WiFi.SSID();
+            String psk = ::WiFi.psk();
 
-        updateState(State::CONNECTED);
-        reconnectAttempts = 0;
-        Serial.println("[SVC][WiFiService] Provisioning successful, WiFi connected");
-        return true;
+            if (psk.length() > 0) {
+                currentPassword = psk;
+            } else {
+                Serial.println("[SVC][WiFiService] Warning: WiFi.psk() returned empty after provisioning");
+            }
+
+            hasStoredCredentials = true;
+            xSemaphoreGive(stateMutex);
+
+            updateState(State::CONNECTED);
+            reconnectAttempts = 0;
+            Serial.printf("[SVC][WiFiService] Provisioning successful! Connected to: %s\n", currentSSID.c_str());
+            return true;
+        } else {
+            Serial.println("[SVC][WiFiService] Failed to acquire mutex after provisioning");
+            updateState(State::FAILED);
+            return false;
+        }
     } else {
         updateState(State::FAILED);
         Serial.println("[SVC][WiFiService] Provisioning failed or timed out");
@@ -180,29 +262,57 @@ void WiFiService::task(void* parameter) {
                     updateState(State::DISCONNECTED);
                     reconnectAttempts = 0;
                     lastReconnectAttempt = millis();
-                    Serial.println("[SVC] WiFi connection lost, will attempt reconnection");
+
+                    String ssid, password;
+                    getCredentialsCopy(ssid, password);
+                    Serial.printf("[SVC] WiFi connection lost (SSID: %s), will attempt reconnection\n",
+                                  ssid.c_str());
                 }
                 break;
             case State::DISCONNECTED:
-                if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS) {
-                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                        reconnectAttempts++;
-                        lastReconnectAttempt = millis();
-                        Serial.printf("[SVC] Attempting reconnection (attempt %d of %d)\n",
-                                      reconnectAttempts, MAX_RECONNECT_ATTEMPTS);
-                        connect(currentSSID.c_str(), currentPassword.c_str());
-                    } else {
-                        Serial.println("[SVC] Max reconnection attempts reached, starting provisioning");
-                        startProvisioning();
-                        reconnectAttempts = 0;
+                if (hasStoredCredentials) {
+                    uint32_t interval = (reconnectAttempts < 2) ? FAST_RECONNECT_INTERVAL_MS : RECONNECT_INTERVAL_MS;
+
+                    if (millis() - lastReconnectAttempt >= interval) {
+                        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                            reconnectAttempts++;
+                            lastReconnectAttempt = millis();
+
+                            String ssid, password;
+                            getCredentialsCopy(ssid, password);
+
+                            Serial.printf("[SVC] Attempting reconnection (attempt %d of %d) to: %s\n",
+                                          reconnectAttempts, MAX_RECONNECT_ATTEMPTS, ssid.c_str());
+
+                            HAL::WiFi::disconnect();
+                            vTaskDelay(pdMS_TO_TICKS(500));
+                            updateState(State::CONNECTING);
+
+                            HAL::WiFi::connect(ssid.c_str(), password.c_str());
+                        } else {
+                            Serial.println("[SVC] Max reconnection attempts reached, entering failed state");
+                            updateState(State::FAILED);
+                        }
+                    }
+                } else {
+
+                    if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS * 3) {
+                        Serial.println("[SVC] No stored credentials available");
+                        lastReconnectAttempt = millis(); 
                     }
                 }
                 break;
             case State::FAILED:
                 if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS * 2) {
-                    updateState(State::DISCONNECTED);
-                    lastReconnectAttempt = millis();
-                    Serial.println("[SVC] Resetting after failure, will try reconnection");
+                    if (hasStoredCredentials) {
+                        updateState(State::DISCONNECTED);
+                        lastReconnectAttempt = millis();
+                        reconnectAttempts = 0;
+                        Serial.println("[SVC] Resetting after failure, will retry connection");
+                    } else {
+                        Serial.println("[SVC] No credentials available - user must call startProvisioning()");
+                        lastReconnectAttempt = millis(); 
+                    }
                 }
                 break;
             default: break;
@@ -215,16 +325,18 @@ void WiFiService::task(void* parameter) {
 bool WiFiService::startTask() {
     if (wifiTaskHandle != nullptr) return true;
 
-    BaseType_t result = xTaskCreatePinnedToCore(task, "WiFiService", 4096, NULL, 1, &wifiTaskHandle, 0);
+    // Increased stack from 4KB to 8KB to prevent stack overflow during WiFiManager operations
+    BaseType_t result = xTaskCreatePinnedToCore(task, "WiFiService", 8192, NULL, 1, &wifiTaskHandle, 0);
     return (result == pdPASS);
-
-
 }
 
 bool WiFiService::restartTask() {
     if (wifiTaskHandle != nullptr) {
-        vTaskDelete(wifiTaskHandle);
-        wifiTaskHandle = nullptr;
+        TaskHandle_t tempHandle = wifiTaskHandle;
+        wifiTaskHandle = nullptr;  
+        vTaskDelete(tempHandle);
+        vTaskDelay(pdMS_TO_TICKS(100)); 
+        Serial.println("[SVC][WiFiService] Task deleted, restarting...");
     }
     return startTask();
 }

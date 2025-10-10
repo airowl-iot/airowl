@@ -10,21 +10,20 @@
 extern "C" {
 #endif
 
-// SCREEN: ui_Tempgraph
+// SCREEN: ui_tempgraph
 extern void ui_Tempgraph_screen_init(void);
 extern void ui_Tempgraph_screen_destroy(void);
-extern lv_obj_t * ui_Tempgraph;
-extern lv_obj_t * ui_tempchart;
-extern lv_obj_t * ui_graphparameter;
-extern lv_obj_t * ui_Container13;
-extern lv_obj_t * ui_tempavg;
-extern void ui_event_return(lv_event_t * e);
-extern lv_obj_t * ui_return;
-extern lv_obj_t * ui_returnlabel;
-extern lv_obj_t * ui_graphparameter5;
-extern lv_obj_t * ui_graphparameter6;
-extern lv_obj_t * ui_tempmax;
-extern lv_obj_t * ui_Image1;
+extern lv_obj_t * ui_tempgraph;
+extern lv_obj_t * ui_tempChart;
+extern lv_obj_t * ui_tempglabel;
+extern lv_obj_t * ui_tempgContainer ;
+extern lv_obj_t * ui_tempgunit4;
+extern void ui_event_return14(lv_event_t * e);
+extern lv_obj_t * ui_tempgreturn;
+extern lv_obj_t * ui_tempgreturn2;
+extern lv_obj_t *  ui_tempgmaxlabel;
+extern lv_obj_t *  ui_tempgmaxvalue;
+
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

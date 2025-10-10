@@ -3,10 +3,11 @@
 
 #include <Arduino.h>
 #include "config_manager.h"
-#include "hal/hal_pms.h"
 #include "hal/hal_pm700.h"
 #include "hal/hal_aht.h"
 #include "event_manager.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 namespace APP {
 
@@ -20,8 +21,7 @@ public:
 
     // Lifecycle
     static bool init();
-    static bool init(const SensorConfig& pmsCfg,
-                     const SensorConfig& pm700Cfg,
+    static bool init(const SensorConfig& pm700Cfg,
                      const SensorConfig& ahtCfg);
     static bool start();
     static void stop();
@@ -29,12 +29,10 @@ public:
 
     // Config updates
     static void updateConfigFromManager();
-    static void updateConfig(const SensorConfig& pmsCfg,
-                             const SensorConfig& pm700Cfg,
+    static void updateConfig(const SensorConfig& pm700Cfg,
                              const SensorConfig& ahtCfg);
 
     // Accessors
-    static const SensorConfig& getPMSConfig();
     static const SensorConfig& getPM700Config();
     static const SensorConfig& getAHTConfig();
 
@@ -49,7 +47,6 @@ private:
     static SensorConfig convertConfig(const ::SensorConfig& cfg);
 
     // Sensor handlers
-    static void readPMSSensor();
     static void readPM700Sensor();
     static void readAHTSensor();
 
@@ -67,20 +64,18 @@ private:
     static TaskHandle_t sensorTaskHandle;
 
     // Configs
-    static SensorConfig pmsConfig;
     static SensorConfig pm700Config;
     static SensorConfig ahtConfig;
 
     // Timestamps
-    static unsigned long lastPMSRead, lastPM700Read, lastAHTRead;
-    static unsigned long lastPMSPublish, lastPM700Publish, lastAHTPublish;
+    static unsigned long lastPM700Read, lastAHTRead;
+    static unsigned long lastPM700Publish, lastAHTPublish;
 
     // Data + flags
-    static HAL::PMS::Data lastPMSData;
     static HAL::PM700::Data lastPM700Data;
     static HAL::AHT::Data lastAHTData;
    
-    static bool newPMSData, newPM700Data, newAHTData;
+    static bool newPM700Data, newAHTData;
 
     // Global sensor values
     static float AQI;
@@ -100,6 +95,9 @@ private:
     static int pmBufferCount;
     static int ahtBufferIndex;
     static int ahtBufferCount;
+
+    // Mutex for buffer protection
+    static SemaphoreHandle_t bufferMutex;
 
     static unsigned long lastMqttPublish;
     static const unsigned long MQTT_PUBLISH_INTERVAL = 120000; 

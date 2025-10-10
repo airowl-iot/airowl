@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <esp_task_wdt.h>
 #include <stdexcept>
+#include <memory>
 
 namespace {
     bool initialized = false;
@@ -12,22 +13,21 @@ namespace {
     SVC::MQTTService::MessageCallback messageCallback = nullptr;
     SVC::MQTTService::StateCallback stateCallback = nullptr;
     TaskHandle_t mqttTaskHandle = nullptr;
-    
 
     WiFiClient wifiClient;
     PubSubClient mqttClient(wifiClient);
-    
+
     String mqttServer;
     uint16_t mqttPort = 1883;
     String mqttUsername;
     String mqttPassword;
     String mqttClientId;
 
-    const uint32_t RECONNECT_INTERVAL_MS = 5000;  
-    const uint32_t MAX_RECONNECT_ATTEMPTS = 10;   
+    const uint32_t RECONNECT_INTERVAL_MS = 5000;
+    const uint32_t MAX_RECONNECT_ATTEMPTS = 10;
     uint32_t reconnectAttempts = 0;
     unsigned long lastReconnectAttempt = 0;
-    
+
     struct PendingMessage {
         String topic;
         String payload;
@@ -36,13 +36,15 @@ namespace {
         unsigned long timestamp;
         uint8_t attempts;
     };
-    
+
     const size_t MAX_PENDING_MESSAGES = 20;
     const uint8_t MAX_RETRY_ATTEMPTS = 3;
-    const unsigned long RETRY_INTERVAL_MS = 3000; 
-    
+    const unsigned long RETRY_INTERVAL_MS = 3000;
+
     PendingMessage pendingMessages[MAX_PENDING_MESSAGES];
     size_t pendingMessageCount = 0;
+
+    SemaphoreHandle_t pendingMessageMutex = nullptr;
 
     void updateState(SVC::MQTTService::State newState) {
         if (currentState != newState) {
@@ -91,32 +93,43 @@ namespace {
         }
     }
 
-    bool addToPendingMessages(const char* topic, const char* payload, 
+    bool addToPendingMessages(const char* topic, const char* payload,
                              SVC::MQTTService::QoS qos, bool retain) {
         if (qos == SVC::MQTTService::QoS::AT_MOST_ONCE) {
             return false;
         }
 
-        if (pendingMessageCount >= MAX_PENDING_MESSAGES) {
+
+        if (xSemaphoreTake(pendingMessageMutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+            Serial.println("[MQTT] Failed to acquire mutex for adding pending message");
             return false;
         }
 
-        PendingMessage& msg = pendingMessages[pendingMessageCount++];
-        msg.topic = topic;
-        msg.payload = payload;
-        msg.qos = qos;
-        msg.retain = retain;
-        msg.timestamp = millis();
-        msg.attempts = 1; 
-        
-        return true;
+        bool added = false;
+        if (pendingMessageCount < MAX_PENDING_MESSAGES) {
+            PendingMessage& msg = pendingMessages[pendingMessageCount++];
+            msg.topic = topic;
+            msg.payload = payload;
+            msg.qos = qos;
+            msg.retain = retain;
+            msg.timestamp = millis();
+            msg.attempts = 1;
+            added = true;
+        }
+
+        xSemaphoreGive(pendingMessageMutex);
+        return added;
     }
 
     void processPendingMessages() {
         if (pendingMessageCount == 0 || currentState != SVC::MQTTService::State::CONNECTED) {
             return;
         }
-        
+
+        if (xSemaphoreTake(pendingMessageMutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+            return; 
+        }
+
         unsigned long now = millis();
 
         for (size_t i = 0; i < pendingMessageCount; i++) {
@@ -124,15 +137,15 @@ namespace {
 
             if (now - msg.timestamp >= RETRY_INTERVAL_MS) {
                 bool success = mqttClient.publish(
-                    msg.topic.c_str(), 
-                    msg.payload.c_str(), 
+                    msg.topic.c_str(),
+                    msg.payload.c_str(),
                     msg.retain
                 );
-                
+
                 if (success || msg.attempts >= MAX_RETRY_ATTEMPTS) {
                     if (i < pendingMessageCount - 1) {
                         pendingMessages[i] = pendingMessages[pendingMessageCount - 1];
-                        i--; 
+                        i--;
                     }
                     pendingMessageCount--;
                 } else {
@@ -141,6 +154,8 @@ namespace {
                 }
             }
         }
+
+        xSemaphoreGive(pendingMessageMutex);
     }
 }
 
@@ -148,10 +163,18 @@ namespace SVC {
 
 bool MQTTService::init(const char* clientId) {
     if (initialized) return true;
-    
+
+    if (pendingMessageMutex == nullptr) {
+        pendingMessageMutex = xSemaphoreCreateMutex();
+        if (pendingMessageMutex == nullptr) {
+            Serial.println("[MQTT] ERROR: Failed to create pending message mutex");
+            return false;
+        }
+    }
+
     mqttClientId = clientId;
     mqttClient.setCallback(mqttCallback);
-    
+
     initialized = true;
     updateState(State::DISCONNECTED);
     return true;
@@ -173,105 +196,60 @@ bool MQTTService::connect(const char* server, uint16_t port,
         return false;
     }
     
-    try {
-        wl_status_t wifiStatus = WL_DISCONNECTED;
-        try {
-            wifiStatus = WiFi.status();
-        }
-        catch (...) {
-            Serial.println("[MQTT] ERROR: Exception checking WiFi status");
-            updateState(State::FAILED);
-            return false;
-        }
-        
-        if (wifiStatus != WL_CONNECTED) {
-            updateState(State::FAILED);
-            return false;
-        }
-        
-        Serial.printf("[MQTT] Attempting to connect to broker...\n");
-        Serial.printf("[MQTT] Server: %s:%d\n", server, port);
-        Serial.printf("[MQTT] Username: %s\n", username ? username : "(none)");
-        Serial.printf("[MQTT] Client ID: %s\n", mqttClientId.c_str());
-        
-        mqttServer = server;
-        mqttPort = port;
-        mqttUsername = username ? username : "";
-        mqttPassword = password ? password : "";
-
-        try {
-            wifiClient.stop();
-            delay(10);
-
-            mqttClient.setClient(wifiClient);
-            mqttClient.setServer(mqttServer.c_str(), mqttPort);
-        }
-        catch (...) {
-            Serial.println("[MQTT] ERROR: Exception setting server configuration");
-            updateState(State::FAILED);
-            return false;
-        }
-        
-        updateState(State::CONNECTING);
-        Serial.println("[MQTT] State: CONNECTING");
-
-        bool success = false;
-        try {
-            if (!wifiClient.connected() && wifiClient.available() == 0) {
-                if (mqttUsername.length() > 0) {
-                    Serial.println("[MQTT] Connecting with authentication...");
-                    success = mqttClient.connect(
-                        mqttClientId.c_str(),
-                        mqttUsername.c_str(),
-                        mqttPassword.c_str()
-                    );
-                } else {
-                    Serial.println("[MQTT] Connecting without authentication...");
-                    success = mqttClient.connect(mqttClientId.c_str());
-                }
-            } else {
-                Serial.println("[MQTT] WiFiClient in unexpected state, aborting connection");
-                wifiClient.stop();
-                updateState(State::FAILED);
-                return false;
-            }
-        }
-        catch (...) {
-            Serial.println("[MQTT] ERROR: Exception during connection attempt");
-            wifiClient.stop();
-            updateState(State::FAILED);
-            return false;
-        }
-        
-        if (success) {
-            updateState(State::CONNECTED);
-            reconnectAttempts = 0;
-            Serial.println("[MQTT] ✓ Successfully connected to broker!");
-        } else {
-            updateState(State::FAILED);
-            int errorCode = -99;
-            try {
-                errorCode = mqttClient.state();
-            }
-            catch (...) {
-                Serial.println("[MQTT] ERROR: Exception getting error code");
-            }
-            Serial.printf("[MQTT] ✗ Connection failed! Error code: %d\n", errorCode);
-            Serial.println("[MQTT] Error codes: -4=timeout, -3=lost, -2=failed, -1=disconnected, 1=bad protocol, 2=bad client id, 3=unavailable, 4=bad credentials, 5=unauthorized");
-        }
-        
-        return success;
-    }
-    catch (const std::exception& e) {
-        Serial.printf("[MQTT] Exception in connect: %s\n", e.what());
+    wl_status_t wifiStatus = WiFi.status();
+    if (wifiStatus != WL_CONNECTED) {
+        Serial.printf("[MQTT] WiFi not connected, status: %d\n", wifiStatus);
         updateState(State::FAILED);
         return false;
     }
-    catch (...) {
-        Serial.println("[MQTT] Unknown exception in connect");
-        updateState(State::FAILED);
-        return false;
+        
+    Serial.printf("[MQTT] Attempting to connect to broker...\n");
+    Serial.printf("[MQTT] Server: %s:%d\n", server, port);
+    Serial.printf("[MQTT] Username: %s\n", username ? username : "(none)");
+    Serial.printf("[MQTT] Client ID: %s\n", mqttClientId.c_str());
+
+    mqttServer = server;
+    mqttPort = port;
+    mqttUsername = username ? username : "";
+    mqttPassword = password ? password : "";
+
+    if (wifiClient.connected()) {
+        Serial.println("[MQTT] Closing existing WiFiClient connection");
+        wifiClient.stop();
+        vTaskDelay(pdMS_TO_TICKS(100)); 
     }
+
+    mqttClient.setClient(wifiClient);
+    mqttClient.setServer(mqttServer.c_str(), mqttPort);
+
+    updateState(State::CONNECTING);
+    Serial.println("[MQTT] State: CONNECTING");
+
+    bool success = false;
+    if (mqttUsername.length() > 0) {
+        Serial.println("[MQTT] Connecting with authentication...");
+        success = mqttClient.connect(
+            mqttClientId.c_str(),
+            mqttUsername.c_str(),
+            mqttPassword.c_str()
+        );
+    } else {
+        Serial.println("[MQTT] Connecting without authentication...");
+        success = mqttClient.connect(mqttClientId.c_str());
+    }
+        
+    if (success) {
+        updateState(State::CONNECTED);
+        reconnectAttempts = 0;
+        Serial.println("[MQTT] ✓ Successfully connected to broker!");
+    } else {
+        updateState(State::FAILED);
+        int errorCode = mqttClient.state();
+        Serial.printf("[MQTT] ✗ Connection failed! Error code: %d\n", errorCode);
+        Serial.println("[MQTT] Error codes: -4=timeout, -3=lost, -2=failed, -1=disconnected, 1=bad protocol, 2=bad client id, 3=unavailable, 4=bad credentials, 5=unauthorized");
+    }
+
+    return success;
 }
 
 bool MQTTService::disconnect() {
@@ -302,24 +280,34 @@ bool MQTTService::unsubscribe(const char* topic) {
     return mqttClient.unsubscribe(topic);
 }
 
-bool MQTTService::publish(const char* topic, const uint8_t* payload, 
+bool MQTTService::publish(const char* topic, const uint8_t* payload,
                           unsigned int length, QoS qos, bool retain) {
     if (!initialized || currentState != State::CONNECTED) {
         return false;
     }
-    
+
     bool success = mqttClient.publish(topic, payload, length, retain);
-    
+
     if (!success && qos != QoS::AT_MOST_ONCE) {
-        char* tempPayload = new char[length + 1];
-        memcpy(tempPayload, payload, length);
-        tempPayload[length] = '\0';
-        addToPendingMessages(topic, tempPayload, qos, retain);
-        
-        delete[] tempPayload;
-        return true; 
+        const size_t STACK_BUFFER_SIZE = 256;
+        if (length < STACK_BUFFER_SIZE) {
+            char stackBuffer[STACK_BUFFER_SIZE];
+            memcpy(stackBuffer, payload, length);
+            stackBuffer[length] = '\0';
+            addToPendingMessages(topic, stackBuffer, qos, retain);
+        } else {
+            std::unique_ptr<char[]> tempPayload(new char[length + 1]);
+            memcpy(tempPayload.get(), payload, length);
+            tempPayload[length] = '\0';
+            bool added = addToPendingMessages(topic, tempPayload.get(), qos, retain);
+            if (!added) {
+                Serial.println("[MQTT] Failed to add to pending messages");
+                return false;
+            }
+        }
+        return true;
     }
-    
+
     return success;
 }
 
@@ -392,37 +380,47 @@ bool MQTTService::publishSensorData(const char* deviceId, float pm1, float pm25,
         Serial.println("[MQTT] ERROR: Service not initialized");
         return false;
     }
-    
+
     if (currentState != State::CONNECTED) {
         Serial.printf("[MQTT] ERROR: Not connected to broker. Current state: %d\n", (int)currentState);
         return false;
     }
-    
-    String payload = "{";
-    payload += "\"deviceId\":\"" + String(deviceId) + "\",";
-    payload += "\"p3\":" + String(pm1, 2) + ",";     // PM1.0
-    payload += "\"p1\":" + String(pm25, 2) + ",";    // PM2.5
-    payload += "\"p2\":" + String(pm10, 2) + ",";    // PM10
-    payload += "\"p5\":" + String(pm4, 2) + ",";     // PM4.0
-    payload += "\"temp\":" + String(temperature, 2) + ",";           // temp
-    payload += "\"hum\":" + String(humidity, 2) + ",";          // humd
-    payload += "\"v2\":" + String(tvoc, 2);          // TVOC
-    payload += "}";
-    
+
+    const size_t BUFFER_SIZE = 512;
+    char payload[BUFFER_SIZE];
+
+    int written = snprintf(payload, BUFFER_SIZE,
+        "{\"deviceId\":\"%s\","
+        "\"p3\":%.2f,"      // PM1.0
+        "\"p1\":%.2f,"      // PM2.5
+        "\"p2\":%.2f,"      // PM10
+        "\"p5\":%.2f,"      // PM4.0
+        "\"temp\":%.2f,"    // temperature
+        "\"hum\":%.2f,"     // humidity
+        "\"v2\":%.2f}",     // TVOC
+        deviceId ? deviceId : "unknown",
+        pm1, pm25, pm10, pm4, temperature, humidity, tvoc
+    );
+
+    if (written < 0 || written >= BUFFER_SIZE) {
+        Serial.printf("[MQTT] ERROR: JSON payload too large (%d bytes)\n", written);
+        return false;
+    }
+
     const char* topic = "airowl";
-    
+
     Serial.printf("[MQTT] Publishing to topic: %s\n", topic);
-    Serial.printf("[MQTT] Payload: %s\n", payload.c_str());
-    Serial.printf("[MQTT] Payload size: %d bytes\n", payload.length());
-    
-    bool result = publish(topic, payload.c_str(), QoS::AT_LEAST_ONCE, false);
-    
+    Serial.printf("[MQTT] Payload: %s\n", payload);
+    Serial.printf("[MQTT] Payload size: %d bytes\n", written);
+
+    bool result = publish(topic, payload, QoS::AT_LEAST_ONCE, false);
+
     if (result) {
         Serial.println("[MQTT] ✓ Sensor data published successfully");
     } else {
         Serial.println("[MQTT] ✗ Failed to publish sensor data");
     }
-    
+
     return result;
 }
 
@@ -440,84 +438,51 @@ void MQTTService::task(void* parameter) {
     Serial.println("[MQTT] Task started with comprehensive crash protection");
     
     while (true) {
-        try {
-            esp_task_wdt_reset();
-            
-            wl_status_t wifiStatus = WL_DISCONNECTED;
-            try {
-                wifiStatus = WiFi.status();
-            }
-            catch (...) {
-                Serial.println("[MQTT] Exception checking WiFi status in task");
-                wifiStatus = WL_DISCONNECTED;
-            }
+        esp_task_wdt_reset();
 
-            switch (currentState) {
-                case State::CONNECTED:
-                    try {
-                        if (!mqttClient.loop()) {
-                            Serial.println("[MQTT] Connection lost during loop()");
-                            updateState(State::DISCONNECTED);
-                            reconnectAttempts = 0;
-                            lastReconnectAttempt = millis();
-                        } else {
-                            try {
-                                processPendingMessages();
-                            }
-                            catch (...) {
-                                Serial.println("[MQTT] Exception processing pending messages");
-                            }
-                        }
-                    }
-                    catch (...) {
-                        Serial.println("[MQTT] Exception in MQTT loop, disconnecting");
-                        updateState(State::DISCONNECTED);
-                    }
-                    break;
-                    
-                case State::DISCONNECTED:
-                    if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS) {
-                        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && wifiStatus == WL_CONNECTED) {
-                            reconnectAttempts++;
-                            lastReconnectAttempt = millis();
-                            Serial.printf("[MQTT] Reconnection attempt %d/%d...\n", reconnectAttempts, MAX_RECONNECT_ATTEMPTS);
-                            
-                            try {
-                                connect(mqttServer.c_str(), mqttPort, 
-                                       mqttUsername.length() > 0 ? mqttUsername.c_str() : nullptr,
-                                       mqttPassword.length() > 0 ? mqttPassword.c_str() : nullptr);
-                            }
-                            catch (...) {
-                                Serial.println("[MQTT] Exception during reconnection attempt");
-                                updateState(State::FAILED);
-                            }
-                        } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                            Serial.println("[MQTT] Max reconnection attempts reached. Giving up.");
-                        } else if (wifiStatus != WL_CONNECTED) {
-                        }
-                    }
-                    break;
-                    
-                case State::FAILED:
-                    if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS * 2) {
-                        Serial.println("[MQTT] Transitioning from FAILED to DISCONNECTED state");
-                        updateState(State::DISCONNECTED);
+        wl_status_t wifiStatus = WiFi.status();
+
+        switch (currentState) {
+            case State::CONNECTED:
+                if (!mqttClient.loop()) {
+                    Serial.println("[MQTT] Connection lost during loop()");
+                    updateState(State::DISCONNECTED);
+                    reconnectAttempts = 0;
+                    lastReconnectAttempt = millis();
+                } else {
+                    processPendingMessages();
+                }
+                break;
+
+            case State::DISCONNECTED:
+                if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS) {
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && wifiStatus == WL_CONNECTED) {
+                        reconnectAttempts++;
                         lastReconnectAttempt = millis();
+                        Serial.printf("[MQTT] Reconnection attempt %d/%d...\n", reconnectAttempts, MAX_RECONNECT_ATTEMPTS);
+
+                        connect(mqttServer.c_str(), mqttPort,
+                               mqttUsername.length() > 0 ? mqttUsername.c_str() : nullptr,
+                               mqttPassword.length() > 0 ? mqttPassword.c_str() : nullptr);
+                    } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                        Serial.println("[MQTT] Max reconnection attempts reached. Giving up.");
                     }
-                    break;
-                    
-                default:
-                    break;
-            }
+                }
+                break;
+
+            case State::FAILED:
+                if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS * 2) {
+                    Serial.println("[MQTT] Transitioning from FAILED to DISCONNECTED state");
+                    updateState(State::DISCONNECTED);
+                    lastReconnectAttempt = millis();
+                }
+                break;
+
+            default:
+                break;
         }
-        catch (const std::exception& e) {
-            Serial.printf("[MQTT] Exception in task loop: %s\n", e.what());
-        }
-        catch (...) {
-            Serial.println("[MQTT] Unknown exception in task loop");
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(100)); 
+
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -541,10 +506,13 @@ bool MQTTService::startTask() {
 
 bool MQTTService::restartTask() {
     if (mqttTaskHandle != nullptr) {
-        vTaskDelete(mqttTaskHandle);
-        mqttTaskHandle = nullptr;
+        TaskHandle_t tempHandle = mqttTaskHandle;
+        mqttTaskHandle = nullptr; 
+        vTaskDelete(tempHandle);
+        vTaskDelay(pdMS_TO_TICKS(100));  
+        Serial.println("[MQTT] Task deleted, restarting...");
     }
-    
+
     return startTask();
 }
 

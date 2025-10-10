@@ -15,23 +15,17 @@ float SensorManager::AQI = 0.0f;
 float SensorManager::temperature = 0.0f;
 float SensorManager::humidity = 0.0f;
 
-SensorManager::SensorConfig SensorManager::pmsConfig;
 SensorManager::SensorConfig SensorManager::pm700Config;
 SensorManager::SensorConfig SensorManager::ahtConfig;
 
-unsigned long SensorManager::lastPMSRead = 0;
 unsigned long SensorManager::lastPM700Read = 0;
 unsigned long SensorManager::lastAHTRead = 0;
-unsigned long SensorManager::lastPMSPublish = 0;
 unsigned long SensorManager::lastPM700Publish = 0;
 unsigned long SensorManager::lastAHTPublish = 0;
 
-
-HAL::PMS::Data SensorManager::lastPMSData;
 HAL::PM700::Data SensorManager::lastPM700Data;
 HAL::AHT::Data SensorManager::lastAHTData;
 
-bool SensorManager::newPMSData = false;
 bool SensorManager::newPM700Data = false;
 bool SensorManager::newAHTData = false;
 
@@ -63,7 +57,6 @@ bool SensorManager::init() {
     if (!loadConfigsFromManager()) return false;
 
     bool any = false;
-    if (pmsConfig.enabled) any |= HAL::PMS::init();
     if (pm700Config.enabled) any |= HAL::PM700::init();
     if (ahtConfig.enabled) any |= HAL::AHT::init();
 
@@ -71,17 +64,14 @@ bool SensorManager::init() {
     return initialized;
 }
 
-bool SensorManager::init(const SensorConfig& pmsCfg,
-                         const SensorConfig& pm700Cfg,
+bool SensorManager::init(const SensorConfig& pm700Cfg,
                          const SensorConfig& ahtCfg) {
     if (initialized) return true;
-    pmsConfig = pmsCfg;
     pm700Config = pm700Cfg;
     ahtConfig = ahtCfg;
    
 
-    initialized = (pmsCfg.enabled && HAL::PMS::init()) ||
-                  (pm700Cfg.enabled && HAL::PM700::init()) ||
+    initialized = (pm700Cfg.enabled && HAL::PM700::init()) ||
                   (ahtCfg.enabled && HAL::AHT::init()) ;
     return initialized;
 }
@@ -102,35 +92,16 @@ void SensorManager::updateConfigFromManager() {
     loadConfigsFromManager();
 }
 
-void SensorManager::updateConfig(const SensorConfig& pmsCfg,
-                                 const SensorConfig& pm700Cfg,
+void SensorManager::updateConfig(const SensorConfig& pm700Cfg,
                                  const SensorConfig& ahtCfg) {
-    pmsConfig = pmsCfg;
     pm700Config = pm700Cfg;
     ahtConfig = ahtCfg;
 }
 
-const SensorManager::SensorConfig& SensorManager::getPMSConfig() { return pmsConfig; }
 const SensorManager::SensorConfig& SensorManager::getPM700Config() { return pm700Config; }
 const SensorManager::SensorConfig& SensorManager::getAHTConfig() { return ahtConfig; }
 
 // -------- Sensor read handlers --------
-void SensorManager::readPMSSensor() {
-    if (!pmsConfig.enabled || !running) return;
-    auto now = millis();
-    if (now - lastPMSRead < pmsConfig.readInterval) return;
-
-    lastPMSRead = now;
-    HAL::PMS::Error result = HAL::PMS::read(&lastPMSData);
-    if (result == HAL::PMS::Error::NONE &&
-        HAL::PMS::isDataAvailable()) {
-        newPMSData = true;
-        float vals[] = { (float)lastPMSData.pm1, (float)lastPMSData.pm25,
-                         (float)lastPMSData.pm4, (float)lastPMSData.pm10 };
-    } else if (result != HAL::PMS::Error::NONE) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-    }
-}
 
 void SensorManager::readPM700Sensor() {
     if (!pm700Config.enabled || !running) return;
@@ -159,8 +130,8 @@ void SensorManager::readPM700Sensor() {
             4
         );
         CORE::EventBus::getInstance().publish(event);
-        Serial.printf("[SensorManager] Published PM700 data: PM2.5=%.1f, PM10=%.1f\n",
-                      lastPM700Data.pm25, lastPM700Data.pm10);
+        // Serial.printf("[SensorManager] Published PM700 data: PM2.5=%.1f, PM10=%.1f\n",
+        //               lastPM700Data.pm25, lastPM700Data.pm10);
     } else if (result != HAL::PM700::Error::NONE) {
         vTaskDelay(pdMS_TO_TICKS(500));
     }
@@ -199,8 +170,8 @@ void SensorManager::readAHTSensor() {
             4
         );
         CORE::EventBus::getInstance().publish(event);
-        Serial.printf("[SensorManager] Published AHT data: Temp=%.1f°C, Humidity=%.1f%%\n",
-                      lastAHTData.temperature, lastAHTData.humidity);
+        // Serial.printf("[SensorManager] Published AHT data: Temp=%.1f°C, Humidity=%.1f%%\n",
+        //               lastAHTData.temperature, lastAHTData.humidity);
     } else if (result != HAL::AHT::Error::NONE) {
         vTaskDelay(pdMS_TO_TICKS(500));
     }
@@ -315,7 +286,7 @@ void SensorManager::publishMqttAverages() {
 void SensorManager::task(void*) {
     for (;;) {
         if (running) {
-            readPMSSensor();
+           
             readPM700Sensor();
             readAHTSensor();
 
@@ -333,8 +304,11 @@ bool SensorManager::startTask() {
 
 bool SensorManager::restartTask() {
     if (sensorTaskHandle) {
-        vTaskDelete(sensorTaskHandle);
-        sensorTaskHandle = nullptr;
+        TaskHandle_t tempHandle = sensorTaskHandle;
+        sensorTaskHandle = nullptr; 
+        vTaskDelete(tempHandle);
+        vTaskDelay(pdMS_TO_TICKS(100));  
+        Serial.println("[SensorManager] Task deleted, restarting...");
     }
     return startTask();
 }
@@ -345,8 +319,7 @@ bool SensorManager::loadConfigsFromManager() {
 
     for (const auto& s : cfg->getAllSensors()) {
         String t = s.type; t.toUpperCase();
-        if (t.startsWith("PMS")) pmsConfig = convertConfig(s);
-        else if (t.startsWith("PM700")) pm700Config = convertConfig(s);
+        if (t.startsWith("PM700")) pm700Config = convertConfig(s);
         else if (t.startsWith("AHT")) ahtConfig = convertConfig(s);
     }
     return true;

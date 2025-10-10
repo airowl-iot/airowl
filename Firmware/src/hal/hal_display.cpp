@@ -8,17 +8,25 @@
 
 #include "hal_display.h"
 
-#define DISP_BUF_SIZE (TFT_WIDTH * TFT_HEIGHT / 8) 
+#define DISP_BUF_SIZE (TFT_WIDTH * TFT_HEIGHT / 10) 
 static lv_color_t buf[DISP_BUF_SIZE];
 
 static Arduino_DataBus* bus = nullptr;
 static Arduino_GFX* gfx = nullptr;
 static Adafruit_CST8XX cst8xx;
 static lv_disp_draw_buf_t draw_buf;
-TaskHandle_t lvglTaskHandle = nullptr;
+static lv_disp_drv_t disp_drv;
+static lv_indev_drv_t indev_drv;
 static bool initializedDisplay = false;
 
 static void my_disp_flush(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
+    if (gfx == nullptr) {
+        Serial.println("[Display] ERROR: my_disp_flush called with null gfx pointer!");
+        lv_disp_flush_ready(disp);
+        return;
+    }
+
+    esp_task_wdt_reset();  // Feed watchdog before long SPI operation
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)color_p,
                             area->x2 - area->x1 + 1,
                             area->y2 - area->y1 + 1);
@@ -38,14 +46,6 @@ static void my_touchpad_read(lv_indev_drv_t* indev_driver, lv_indev_data_t* data
     }
 }
 
-static void lv_task(void* parameter) {
-    const TickType_t delay = pdMS_TO_TICKS(16); 
-    while (true) {
-        lv_timer_handler();
-        vTaskDelay(delay);
-    }
-}
-
 namespace HAL {
 
 bool Display::init() {
@@ -54,9 +54,27 @@ bool Display::init() {
     }
 
     bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI);
+    if (bus == nullptr) {
+        Serial.println("[Display] CRITICAL: Failed to allocate memory for display bus!");
+        return false;
+    }
+
     gfx = new Arduino_ST7789(bus, TFT_RST, 2, true, TFT_WIDTH, TFT_HEIGHT);
-    
-    if(!gfx->begin()) return false;
+    if (gfx == nullptr) {
+        Serial.println("[Display] CRITICAL: Failed to allocate memory for display driver!");
+        delete bus;
+        bus = nullptr;
+        return false;
+    }
+
+    if (!gfx->begin()) {
+        Serial.println("[Display] ERROR: Display initialization failed (gfx->begin() returned false)");
+        delete gfx;
+        gfx = nullptr;
+        delete bus;
+        bus = nullptr;
+        return false;
+    }
     gfx->setRotation(2);
     gfx->fillScreen(WHITE);
 
@@ -79,7 +97,6 @@ bool Display::init() {
 
     lv_disp_draw_buf_init(&draw_buf, buf, NULL, DISP_BUF_SIZE);
 
-    static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = TFT_WIDTH;
     disp_drv.ver_res = TFT_HEIGHT;
@@ -90,7 +107,6 @@ bool Display::init() {
         lv_disp_set_default(disp);
     }
 
-    static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     indev_drv.read_cb = my_touchpad_read;
@@ -107,15 +123,27 @@ bool Display::lvHandler(){
     return true;
 }
 
-bool Display::restartTask() {
-    if (lvglTaskHandle != nullptr) {
-        vTaskDelete(lvglTaskHandle);
-        lvglTaskHandle = nullptr;
+void Display::deinit() {
+    if (!initializedDisplay) {
+        return;
     }
 
-    BaseType_t result = xTaskCreatePinnedToCore(
-        lv_task, "LVGL", 12000, nullptr, 3, &lvglTaskHandle, 0);
-    return (result == pdPASS);
+    Serial.println("[HAL] Deinitializing display...");
+    Serial.println("[HAL] LVGL deinitialized");
+    digitalWrite(TFT_BL, LOW);
+
+    if (gfx != nullptr) {
+        delete gfx;
+        gfx = nullptr;
+    }
+
+    if (bus != nullptr) {
+        delete bus;
+        bus = nullptr;
+    }
+
+    initializedDisplay = false;
+    Serial.println("[HAL] Display deinitialized");
 }
 
 } //namespace HAL

@@ -20,11 +20,12 @@ namespace APP{
         {"intro", ui_Intro},
         {"qrcode", ui_qrcode},
         {"owl", ui_owl},
-        {"tempgraph", ui_Tempgraph},
+        {"tempgraph", ui_tempgraph},
         {"pm25graph", ui_PM25graph},
         {"humdgraph", ui_Humdgraph},
         {"pm10graph", ui_PM10graph},
         {"tvocgraph", ui_TVOCgraph},
+        {"co2graph", ui_eCO2graph},
         {"ota", ui_ota}
     };
    
@@ -45,24 +46,6 @@ namespace APP{
     static float lastPM25 = 0.0, lastPM10 = 0.0;
     static float lastTemp = 0.0, lastHumidity = 0.0;
     static float lastTVOC = 0.0, lastEco2 = 0.0;
-
-    // Buffering for MQTT averaging (now handled in SensorManager)
-    const int SENSOR_BUFFER_SIZE = 60;
-    static int pmBufferIndex = 0;
-    static int pmBufferCount = 0;
-    static int ahtBufferIndex = 0;
-    static int ahtBufferCount = 0; 
-    static float pm25Buffer[SENSOR_BUFFER_SIZE] = {0};
-    static float pm10Buffer[SENSOR_BUFFER_SIZE] = {0};
-    static float tempBuffer[SENSOR_BUFFER_SIZE] = {0};
-    static float humdBuffer[SENSOR_BUFFER_SIZE] = {0};
-    static float tvocBuffer[SENSOR_BUFFER_SIZE] = {0};
-    static float eco2Buffer[SENSOR_BUFFER_SIZE] = {0};
-
-    
-    static unsigned long lastPMStore = 0;
-    static unsigned long lastAHTStore = 0;
-    const unsigned long SENSOR_STORE_INTERVAL = 1000; 
 
     static void ui_event_WifiIcon(lv_event_t * e) { 
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
@@ -223,14 +206,14 @@ namespace APP{
 
 void UIController::setupTempChart() {
         
-        if (ui_tempchart != nullptr) {
-            lv_chart_set_type(ui_tempchart, LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(ui_tempchart, CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_tempchart, LV_CHART_AXIS_PRIMARY_Y, 0, 50); 
+        if (ui_tempChart != nullptr) {
+            lv_chart_set_type(ui_tempChart, LV_CHART_TYPE_LINE);
+            lv_chart_set_point_count(ui_tempChart, CHART_DATA_LENGTH);
+            lv_chart_set_range(ui_tempChart, LV_CHART_AXIS_PRIMARY_Y, 0, 50); 
 
             ui_Tempchart_series_1 = lv_chart_add_series(
-                ui_tempchart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-            lv_chart_set_ext_y_array(ui_tempchart, ui_Tempchart_series_1,
+                ui_tempChart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+            lv_chart_set_ext_y_array(ui_tempChart, ui_Tempchart_series_1,
                                    ui_Tempchart_series_1_array);
 
             for (int i = 0; i < CHART_DATA_LENGTH; i++) {
@@ -244,7 +227,7 @@ void UIController::setupTempChart() {
     
     void UIController::updateTempChart(float temp_value) {
         
-        if (ui_Tempchart_series_1 != nullptr && ui_tempchart != nullptr) {
+        if (ui_Tempchart_series_1 != nullptr && ui_tempChart != nullptr) {
             for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
                 ui_Tempchart_series_1_array[i] = ui_Tempchart_series_1_array[i + 1];
             }
@@ -252,13 +235,13 @@ void UIController::setupTempChart() {
             
             if (temp_value > temp_max_value) {
                 temp_max_value = temp_value;
-                if (ui_tempmax != nullptr) {
+                if (ui_tempgmaxvalue != nullptr) {
                     char maxBuffer[8];
                     dtostrf(temp_max_value, 4, 1, maxBuffer);
-                    lv_label_set_text(ui_tempmax, maxBuffer);
+                    lv_label_set_text(ui_tempgmaxvalue, maxBuffer);
                 }
             }
-            lv_chart_refresh(ui_tempchart);
+            lv_chart_refresh(ui_tempChart);
         }
         
 }
@@ -365,8 +348,8 @@ void UIController::setupeCo2Chart() {
             for (int i = 0; i < CHART_DATA_LENGTH; i++) {
                 ui_eCo2chart_series_1_array[i] = 0;
             }
-            
-            Serial.println("[UIController] Tvoc Chart initialized");
+
+            Serial.println("[UIController] eCO2 Chart initialized");
         }
         
     }
@@ -474,7 +457,6 @@ bool UIController::init() {
             auto otaEvent = std::static_pointer_cast<const CORE::OTAProgressEvent>(event);
             Serial.printf("[UIController] OTA Progress: %zu/%zu bytes\n",
                           otaEvent->getWritten(), otaEvent->getTotal());
-            // Update OTA progress on screen if needed
         }
     );
 
@@ -486,7 +468,6 @@ bool UIController::init() {
     SVC::OTA::onProgress([](SVC::OTA::State state, int progress, const char* message) {
     Serial.printf("[UIController][OTA] State=%d, Progress=%d, Msg=%s\n", (int)state, progress, message);
 
-    // Switch to OTA screen if downloading or updating
     if (state == SVC::OTA::State::DOWNLOADING || state == SVC::OTA::State::UPDATING) {
         APP::UIController::showOTAScreen();
     }
@@ -502,8 +483,11 @@ bool UIController::init() {
 
 bool UIController::restartTask() {
     if (uiTaskHandle != nullptr) {
-        vTaskDelete(uiTaskHandle);
-        uiTaskHandle = nullptr;
+        TaskHandle_t tempHandle = uiTaskHandle;
+        uiTaskHandle = nullptr;  
+        vTaskDelete(tempHandle);
+        vTaskDelay(pdMS_TO_TICKS(100)); 
+        Serial.println("[UIController] Task deleted, restarting...");
     }
     return startTask();
 }
@@ -538,8 +522,8 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                       running, values.size());
         return;
     }
-    Serial.printf("[UIController] updateSensorDisplay called - type:%d, values:%zu\n",
-                  (int)sensorType, values.size());
+    // Serial.printf("[UIController] updateSensorDisplay called - type:%d, values:%zu\n",
+    //               (int)sensorType, values.size());
     
     switch (sensorType) {
         case CORE::SensorReadingEvent::SensorType::PM700:
@@ -556,20 +540,6 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                 updatePM10Chart(values[1]);
                 lastPM25 = values[0];
                 lastPM10 = values[1];
-
-                if (millis() - lastPMStore >= SENSOR_STORE_INTERVAL) {
-                    pm25Buffer[pmBufferIndex] = values[0];
-                    pm10Buffer[pmBufferIndex] = values[1];
-                    
-                    pmBufferIndex = (pmBufferIndex + 1) % SENSOR_BUFFER_SIZE;
-                    if (pmBufferCount < SENSOR_BUFFER_SIZE) {
-                        pmBufferCount++;
-                    }
-                    
-                    lastPMStore = millis();
-                    Serial.printf("[UIController] Stored PM700 sensor reading #%d (buffer: %d/%d) for MQTT averaging - 0.3μm: %.1f pcs/L\n", 
-                                 pmBufferIndex, pmBufferCount, SENSOR_BUFFER_SIZE, values[2]);
-                }
 
                 updateSensorColors(values.data());
                 
@@ -604,22 +574,8 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                 lastTVOC =  values[2];
                 lastEco2 =  values[3];
 
-                if (millis() - lastAHTStore >= SENSOR_STORE_INTERVAL) {
-                tempBuffer[ahtBufferIndex] = values[0];
-                humdBuffer[ahtBufferIndex] = values[1];
-                tvocBuffer[ahtBufferIndex] = values[2];
-                eco2Buffer[ahtBufferIndex] = values[3];
-
-                 
-                ahtBufferIndex = (ahtBufferIndex+ 1) % SENSOR_BUFFER_SIZE;
-                if (ahtBufferCount < SENSOR_BUFFER_SIZE) {
-                    ahtBufferCount++;
-                }
-                
-                lastAHTStore = millis();
-                 Serial.printf("[UIController] Updated display - T:%.1f°C, H:%.1f%%, TVOC:%d ppb, eCO2:%d ppm\n",
-                values[0], values[1], (int)values[2], (int)values[3]);
-        }
+                Serial.printf("[UIController] Updated display - T:%.1f°C, H:%.1f%%, TVOC:%d ppb, eCO2:%d ppm\n",
+                              values[0], values[1], (int)values[2], (int)values[3]);
             }
             break;
         default:
@@ -677,7 +633,7 @@ void UIController::updateQRCode() {
     }
         lv_label_set_text(ui_devicename, apName.c_str());
         lv_label_set_text(ui_qrcodename, apName.c_str());
-        lv_label_set_text(ui_firmwareversion, "4.0.0");  
+        // lv_label_set_text(ui_firmwareversion, "4.0.0");  
         
 }
 
@@ -764,13 +720,13 @@ void UIController::updateTimeDisplay() {
 }
 
 void UIController::handleSensorReadingEvent(const std::shared_ptr<const CORE::Event>& event) {
-    Serial.println("[UIController] SensorReadingEvent received");
+    // Serial.println("[UIController] SensorReadingEvent received");
     auto sensorEvent = std::static_pointer_cast<const CORE::SensorReadingEvent>(event);
     auto readings = sensorEvent->getReadings();
-    Serial.printf("[UIController] Sensor type: %d, Reading count: %zu\n",
-                  (int)sensorEvent->getSensor(), readings.size());
+    // Serial.printf("[UIController] Sensor type: %d, Reading count: %zu\n",
+    //               (int)sensorEvent->getSensor(), readings.size());
     if (!readings.empty()) {
-        Serial.printf("[UIController] First value: %.2f\n", readings[0]);
+        // Serial.printf("[UIController] First value: %.2f\n", readings[0]);
     }
     updateSensorDisplay(sensorEvent->getSensor(), sensorEvent->getReadings());
 }
@@ -795,11 +751,13 @@ void UIController::task(void* parameter) {
         esp_task_wdt_reset();
 
         if (running) {
+            esp_task_wdt_reset(); 
             HAL::Display::lvHandler();
+            esp_task_wdt_reset(); 
 
             if (millis() - lastDebugLog >= 5000) {
-                Serial.printf("[UIController] Task running - PM2.5:%.1f, Temp:%.1f°C\n",
-                             lastPM25, lastTemp);
+                // Serial.printf("[UIController] Task running - PM2.5:%.1f, Temp:%.1f°C\n",
+                //              lastPM25, lastTemp);
                 lastDebugLog = millis();
             }
 
@@ -823,11 +781,11 @@ bool UIController::startTask() {
     BaseType_t result = xTaskCreatePinnedToCore(
         task,
         "UIController",
-        4096,
+        8192,  
         NULL,
-        2, 
+        2,
         &uiTaskHandle,
-        1  
+        1
     );
     
     return (result == pdPASS);

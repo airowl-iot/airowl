@@ -6,7 +6,15 @@ ConfigManager::ConfigManager() : initialized(false) {}
 
 ConfigManager* ConfigManager::getInstance() {
     if (instance == nullptr) {
-        instance = new ConfigManager();
+        try {
+            instance = new ConfigManager();
+        } catch (const std::bad_alloc& e) {
+            Serial.println("[CONFIG] CRITICAL: Failed to allocate memory for ConfigManager!");
+            Serial.printf("[CONFIG] Exception: %s\n", e.what());
+            Serial.println("[CONFIG] System will restart in 3 seconds...");
+            vTaskDelay(pdMS_TO_TICKS(3000));
+            esp_restart();
+        }
     }
     return instance;
 }
@@ -48,30 +56,37 @@ bool ConfigManager::loadConfigFromFile() {
 }
 
 bool ConfigManager::parseJsonConfig(const String& jsonString) {
-    DynamicJsonDocument doc(4096);
-
-    DeserializationError error = deserializeJson(doc, jsonString);
-    if (error) {
-        Serial.println("[CONFIG] Failed to parse JSON: " + String(error.c_str()));
+    DynamicJsonDocument* doc = new DynamicJsonDocument(4096);
+    if (!doc) {
+        Serial.println("[CONFIG] Failed to allocate memory for JSON document");
         return false;
     }
 
-    config.device_profile = doc["device_profile"].as<String>();
+    DeserializationError error = deserializeJson(*doc, jsonString);
+    if (error) {
+        Serial.println("[CONFIG] Failed to parse JSON: " + String(error.c_str()));
+        delete doc;
+        return false;
+    }
 
-    if (doc.containsKey("hardware")) {
-        JsonObject hardware = doc["hardware"];
+    config.device_profile = (*doc)["device_profile"].as<String>();
+
+    if (doc->containsKey("hardware")) {
+        JsonObject hardware = (*doc)["hardware"];
         parseHardwareConfig(hardware);
     }
 
-    if (doc.containsKey("sensors")) {
-        JsonArray sensors = doc["sensors"];
+    if (doc->containsKey("sensors")) {
+        JsonArray sensors = (*doc)["sensors"];
         parseSensorsConfig(sensors);
     }
-    
-    if (doc.containsKey("services")) {
-        JsonObject services = doc["services"];
+
+    if (doc->containsKey("services")) {
+        JsonObject services = (*doc)["services"];
         parseServicesConfig(services);
     }
+
+    delete doc; 
     return true;
 }
 
@@ -212,17 +227,22 @@ bool ConfigManager::updateServiceEnabled(const String& name, bool enabled) {
 
 // ---------------- Save ----------------
 bool ConfigManager::saveConfigToFile() {
-    DynamicJsonDocument doc(4096);
+    // Use heap allocation to avoid stack overflow (4KB is too large for stack)
+    DynamicJsonDocument* doc = new DynamicJsonDocument(4096);
+    if (!doc) {
+        Serial.println("[CONFIG] Failed to allocate memory for JSON document");
+        return false;
+    }
 
-    doc["device_profile"] = config.device_profile;
+    (*doc)["device_profile"] = config.device_profile;
 
-    JsonObject hardware = doc.createNestedObject("hardware");
+    JsonObject hardware = doc->createNestedObject("hardware");
     hardware["firmwareVersion"] = config.hardware.firmwareVersion;
     hardware["display"] = config.hardware.display;
     hardware["touch_controller"] = config.hardware.touch_controller;
     for (auto& kv : config.hardware.additional_params) hardware[kv.first] = kv.second;
 
-    JsonArray sensors = doc.createNestedArray("sensors");
+    JsonArray sensors = doc->createNestedArray("sensors");
     for (auto& s : config.sensors) {
         JsonObject obj = sensors.createNestedObject();
         obj["type"] = s.type;
@@ -232,7 +252,7 @@ bool ConfigManager::saveConfigToFile() {
         for (auto& kv : s.additional_params) obj[kv.first] = kv.second;
     }
 
-    JsonObject services = doc.createNestedObject("services");
+    JsonObject services = doc->createNestedObject("services");
     for (auto& svc : config.services) {
         JsonObject obj = services.createNestedObject(svc.first);
         obj["enabled"] = svc.second.enabled;
@@ -242,11 +262,14 @@ bool ConfigManager::saveConfigToFile() {
     File configFile = SPIFFS.open(CONFIG_FILE_PATH, "w");
     if (!configFile) {
         Serial.println("[CONFIG] Failed to open config file for writing");
+        delete doc;
         return false;
     }
 
-    size_t bytes = serializeJsonPretty(doc, configFile);
+    size_t bytes = serializeJsonPretty(*doc, configFile);
     configFile.close();
+
+    delete doc;
 
     Serial.printf("[CONFIG] Configuration saved successfully (%d bytes)\n", (int)bytes);
     return bytes > 0;

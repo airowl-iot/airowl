@@ -34,7 +34,16 @@ void EventBus::publish(const std::shared_ptr<const Event>& event) {
     }
     for (auto& sub : copy) {
         if (sub.type == event->getType()) {
-            sub.callback(event);
+            // CRITICAL: Wrap callback in try-catch to prevent single bad callback from crashing system
+            try {
+                sub.callback(event);
+            } catch (const std::exception& e) {
+                Serial.printf("[EventBus] ERROR: Exception in callback for event type %d: %s\n",
+                             static_cast<int>(event->getType()), e.what());
+            } catch (...) {
+                Serial.printf("[EventBus] ERROR: Unknown exception in callback for event type %d\n",
+                             static_cast<int>(event->getType()));
+            }
         }
     }
 }

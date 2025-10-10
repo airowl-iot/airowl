@@ -98,7 +98,7 @@ void ui_event_TempButton(lv_event_t * e)
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if(event_code == LV_EVENT_CLICKED) {
-        _ui_screen_change(&ui_Tempgraph, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_Tempgraph_screen_init);
+        _ui_screen_change(&ui_tempgraph , LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_Tempgraph_screen_init);
     }
 }
 
@@ -146,7 +146,7 @@ void ui_dashboard_screen_init(void)
     ui_time = lv_label_create(ui_headerContainer);
     lv_obj_set_width(ui_time, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_time, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_time, 28);
+    lv_obj_set_x(ui_time, -2);
     lv_obj_set_y(ui_time, 1);
     lv_obj_set_align(ui_time, LV_ALIGN_CENTER);
     lv_label_set_text(ui_time, "12:25:45");
@@ -157,7 +157,7 @@ void ui_dashboard_screen_init(void)
     ui_date = lv_label_create(ui_headerContainer);
     lv_obj_set_width(ui_date, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_date, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_date, -69);
+    lv_obj_set_x(ui_date, -87);
     lv_obj_set_y(ui_date, 1);
     lv_obj_set_align(ui_date, LV_ALIGN_CENTER);
     lv_label_set_text(ui_date, "XX-XX");
@@ -169,7 +169,7 @@ void ui_dashboard_screen_init(void)
     lv_img_set_src(ui_wifi, &ui_img_wifi_off_png);
     lv_obj_set_width(ui_wifi, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_wifi, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_wifi, 94);
+    lv_obj_set_x(ui_wifi, 90);
     lv_obj_set_y(ui_wifi, 2);
     lv_obj_set_align(ui_wifi, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_wifi, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
@@ -410,7 +410,7 @@ void ui_dashboard_screen_init(void)
     lv_obj_set_x(ui_eCO2label, -23);
     lv_obj_set_y(ui_eCO2label, -27);
     lv_obj_set_align(ui_eCO2label, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_eCO2label, "eCO2");
+    lv_label_set_text(ui_eCO2label, "CO2");
     lv_obj_set_style_text_color(ui_eCO2label, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_eCO2label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_eCO2label, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -429,8 +429,8 @@ void ui_dashboard_screen_init(void)
     ui_eCO2value = lv_label_create(ui_eCO2Container);
     lv_obj_set_width(ui_eCO2value, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_eCO2value, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_eCO2value, -14);
-    lv_obj_set_y(ui_eCO2value, 15);
+    lv_obj_set_x(ui_eCO2value, -9);
+    lv_obj_set_y(ui_eCO2value, 16);
     lv_obj_set_align(ui_eCO2value, LV_ALIGN_CENTER);
     lv_label_set_text(ui_eCO2value, "0");
     lv_obj_set_style_text_color(ui_eCO2value, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);

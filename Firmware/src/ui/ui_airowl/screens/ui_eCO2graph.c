@@ -103,10 +103,10 @@ void ui_eCO2graph_screen_init(void)
     lv_obj_set_x(ui_eco2max1, 49);
     lv_obj_set_y(ui_eco2max1, 2);
     lv_obj_set_align(ui_eco2max1, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_eco2max1, "max");
+    lv_label_set_text(ui_eco2max1, "max : ");
     lv_obj_set_style_text_color(ui_eco2max1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_eco2max1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_eco2max1, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_eco2max1, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_eco2max2 = lv_label_create(ui_Container11);
     lv_obj_set_width(ui_eco2max2, LV_SIZE_CONTENT);   /// 1
@@ -140,7 +140,7 @@ void ui_eCO2graph_screen_init(void)
     lv_obj_set_style_text_opa(ui_returnlabel5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_returnlabel5, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_add_event_cb(ui_return5, ui_event_return3, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_return5, ui_event_return5, LV_EVENT_ALL, NULL);
 
 }
 

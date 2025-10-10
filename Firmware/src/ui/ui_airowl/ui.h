@@ -35,7 +35,6 @@ extern "C" {
 #include "screens/ui_eCO2graph.h"
 #include "screens/ui_ota.h"
 
-
 ///////////////////// VARIABLES ////////////////////
 
 extern void blink_Animation(lv_obj_t * TargetObject, int delay);

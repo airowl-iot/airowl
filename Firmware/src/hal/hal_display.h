@@ -18,12 +18,12 @@ public:
      * @return true if display is initialized, false otherwise
      */
     static bool lvHandler();
-    
+
     /**
-     * @brief Restart the display task (after OTA, crash, etc.)
-     * @return true if restart was successful, false otherwise
+     * @brief Deinitialize the display and free resources
      */
-    static bool restartTask();
+    static void deinit();
+
 };
 
 } // namespace HAL

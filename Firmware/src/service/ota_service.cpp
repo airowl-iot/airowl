@@ -13,10 +13,9 @@
 #include <string.h>
 #include "manager/config_manager.h"
 #include "manager/sensor_manager.h"
-#include "../manager/event_manager.h"
+#include "manager/event_manager.h"
 
 #include "manager/ui_manager.h"
-extern TaskHandle_t lvglTaskHandle;
 
 namespace {
     bool initialized = false;
@@ -131,14 +130,14 @@ namespace {
         String url = initialUrl;
         const int MAX_REDIRECTS = 3;
         int redirects = 0;
-        bool secure = url.startsWith("https://");
+
+        WiFiClient clientPlain;
+        WiFiClientSecure clientSecure;
+        clientSecure.setInsecure();
 
         while (redirects <= MAX_REDIRECTS) {
             HTTPClient http;
-            WiFiClient* clientPtr = nullptr;
-            WiFiClient clientPlain;
-            WiFiClientSecure clientSecure;
-            clientSecure.setInsecure();
+            bool secure = url.startsWith("https://");
 
             if (secure) {
                 if (!http.begin(clientSecure, url)) {
@@ -146,43 +145,122 @@ namespace {
                     http.end();
                     return false;
                 }
-                clientPtr = &clientSecure;
             } else {
                 if (!http.begin(clientPlain, url)) {
                     Serial.printf("[OTA] http.begin() failed for %s\n", url.c_str());
                     http.end();
                     return false;
                 }
-                clientPtr = &clientPlain;
             }
 
             updateState(SVC::OTA::State::DOWNLOADING, 0, "Starting HTTP GET");
             int httpCode = http.GET();
+
             if (httpCode == HTTP_CODE_OK) {
                 int contentLength = http.getSize();
                 WiFiClient* stream = http.getStreamPtr();
-                if (!stream) { http.end(); return false; }
-
-                if (!Update.begin(contentLength > 0 ? contentLength : UPDATE_SIZE_UNKNOWN)) {
-                    Serial.println("[OTA] Update.begin() failed");
-                    http.end(); return false;
+                if (!stream) {
+                    Serial.println("[OTA] ERROR: Failed to get stream pointer");
+                    http.end();
+                    return false;
                 }
 
-                size_t written = Update.writeStream(*stream);
-                Serial.printf("[OTA] Written %u bytes\n", (unsigned)written);
+                if (contentLength == 0) {
+                    Serial.println("[OTA] ERROR: Content length is zero");
+                    http.end();
+                    return false;
+                }
+
+                Serial.printf("[OTA] Content length: %d bytes\n", contentLength);
+
+                if (!Update.begin(contentLength > 0 ? contentLength : UPDATE_SIZE_UNKNOWN)) {
+                    Serial.printf("[OTA] Update.begin() failed. Error: %d\n", Update.getError());
+                    http.end();
+                    return false;
+                }
+
+                size_t written = 0;
+                size_t totalWritten = 0;
+                uint8_t buffer[1024];
+                unsigned long downloadStartTime = millis();
+                unsigned long lastProgressTime = millis();
+                const unsigned long DOWNLOAD_TIMEOUT_MS = 300000;  // 5 minutes total timeout
+                const unsigned long STALL_TIMEOUT_MS = 30000;      // 30 seconds stall timeout
+
+                while (true) {
+                    esp_task_wdt_reset();  
+
+                    if (millis() - downloadStartTime > DOWNLOAD_TIMEOUT_MS) {
+                        Serial.println("[OTA] ERROR: Download timeout (5 minutes exceeded)");
+                        Update.abort();
+                        http.end();
+                        return false;
+                    }
+
+                    if (millis() - lastProgressTime > STALL_TIMEOUT_MS) {
+                        Serial.println("[OTA] ERROR: Download stalled (30 seconds with no data)");
+                        Update.abort();
+                        http.end();
+                        return false;
+                    }
+
+                    size_t bytesAvailable = stream->available();
+                    if (bytesAvailable > 0) {
+                        size_t bytesToRead = min(bytesAvailable, sizeof(buffer));
+                        size_t bytesRead = stream->readBytes(buffer, bytesToRead);
+
+                        if (bytesRead > 0) {
+                            written = Update.write(buffer, bytesRead);
+                            if (written != bytesRead) {
+                                Serial.printf("[OTA] Write error: expected %d, wrote %d\n", bytesRead, written);
+                                Update.abort();
+                                http.end();
+                                return false;
+                            }
+                            totalWritten += written;
+                            lastProgressTime = millis();  
+
+                            if (contentLength > 0) {
+                                int progress = (totalWritten * 100) / contentLength;
+                                updateState(SVC::OTA::State::DOWNLOADING, progress, "Downloading firmware");
+                            }
+                        }
+                    }
+
+                    if (contentLength > 0) {
+                        if (totalWritten >= contentLength) break;
+                    } else {
+                     
+                        if (!stream->connected() && stream->available() == 0) break;
+                    }
+
+                    vTaskDelay(pdMS_TO_TICKS(1)); 
+                }
+
+                Serial.printf("[OTA] Downloaded %u bytes in %lu ms\n",
+                             (unsigned)totalWritten,
+                             millis() - downloadStartTime);
 
                 if (!Update.end() || !Update.isFinished()) {
                     Serial.printf("[OTA] Update failed. Error: %d\n", Update.getError());
-                    http.end(); return false;
+                    http.end();
+                    return false;
                 }
 
                 Serial.println("[OTA] ✓ Update finished. Rebooting...");
                 http.end();
                 return true;
-            } else if (httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND || httpCode == HTTP_CODE_TEMPORARY_REDIRECT) {
+
+            } else if (httpCode == HTTP_CODE_MOVED_PERMANENTLY ||
+                       httpCode == HTTP_CODE_FOUND ||
+                       httpCode == HTTP_CODE_TEMPORARY_REDIRECT) {
                 url = http.getLocation();
-                if (url.length() == 0) return false;
-                secure = url.startsWith("https://");
+                if (url.length() == 0) {
+                    Serial.println("[OTA] ERROR: Empty redirect location");
+                    http.end();
+                    return false;
+                }
+                Serial.printf("[OTA] Redirecting to: %s\n", url.c_str());
                 redirects++;
                 http.end();
                 continue;
@@ -192,7 +270,7 @@ namespace {
                 return false;
             }
         }
-        Serial.println("[OTA] Too many redirects, aborting.");
+        Serial.println("[OTA] ERROR: Too many redirects, aborting.");
         return false;
     }
 
@@ -263,15 +341,21 @@ bool OTA::beginUpdate() {
 OTA::State OTA::getState() { return currentState; }
 
 const char* OTA::getCurrentVersion() {
-    static String versionStr;
+    
+    static char versionBuffer[64] = {0};
+
     auto* cfg = ConfigManager::getInstance();
     if (cfg && cfg->isInitialized()) {
-        versionStr = cfg->getFirmwareVersion();
-        if (!versionStr.isEmpty()) {
-            return versionStr.c_str();
+        String version = cfg->getFirmwareVersion();
+        if (!version.isEmpty()) {
+            strncpy(versionBuffer, version.c_str(), sizeof(versionBuffer) - 1);
+            versionBuffer[sizeof(versionBuffer) - 1] = '\0';
+            return versionBuffer;
         }
     }
-    return "unknown"; 
+
+    strncpy(versionBuffer, "unknown", sizeof(versionBuffer) - 1);
+    return versionBuffer;
 }
 
 void OTA::onProgress(ProgressCallback callback) { progressCallback = callback; }
@@ -280,12 +364,7 @@ void OTA::suspendOtherTasks() {
     if (tasksAreSuspended) return;
     suspendedTaskCount = 0;
     memset(suspendedTasks, 0, sizeof(suspendedTasks));
-
-    if (lvglTaskHandle && suspendedTaskCount < maxSuspendedTasks) {
-        vTaskSuspend(lvglTaskHandle);
-        suspendedTasks[suspendedTaskCount++] = lvglTaskHandle;
-    }
-
+    
     TaskHandle_t sensorTask = APP::SensorManager::getTaskHandle();
     if (sensorTask && suspendedTaskCount < maxSuspendedTasks) {
         vTaskSuspend(sensorTask);
@@ -326,8 +405,13 @@ bool OTA::startTask() {
 }
 
 bool OTA::restartTask() {
-    if (otaTaskHandle) vTaskDelete(otaTaskHandle);
-    otaTaskHandle = nullptr;
+    if (otaTaskHandle) {
+        TaskHandle_t tempHandle = otaTaskHandle;
+        otaTaskHandle = nullptr;  
+        vTaskDelete(tempHandle);
+        vTaskDelay(pdMS_TO_TICKS(100)); 
+        Serial.println("[OTA] Task deleted, restarting...");
+    }
     return startTask();
 }
 

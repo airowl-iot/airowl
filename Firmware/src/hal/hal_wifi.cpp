@@ -9,7 +9,33 @@
 namespace {
     HAL::WiFi::Status currentStatus = HAL::WiFi::Status::IDLE;
     ::WiFiManager wm;
+    bool wifiEventsRegistered = false;
 
+    void onWiFiEvent(WiFiEvent_t event) {
+        switch(event) {
+            case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+                Serial.printf("[HAL][WiFi] Event: Connected! IP: %s\n", ::WiFi.localIP().toString().c_str());
+                currentStatus = HAL::WiFi::Status::CONNECTED;
+                break;
+            case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+                Serial.println("[HAL][WiFi] Event: Disconnected");
+                if (currentStatus == HAL::WiFi::Status::CONNECTED) {
+                    currentStatus = HAL::WiFi::Status::DISCONNECTED;
+                }
+                break;
+            case ARDUINO_EVENT_WIFI_STA_START:
+                Serial.println("[HAL][WiFi] Event: Station started");
+                break;
+            case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+                Serial.println("[HAL][WiFi] Event: Connected to AP");
+                break;
+            case ARDUINO_EVENT_WIFI_STA_LOST_IP:
+                Serial.println("[HAL][WiFi] Event: Lost IP");
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 namespace HAL {
@@ -18,9 +44,21 @@ bool WiFi::init() {
     ::WiFi.disconnect(true, false);
     vTaskDelay(pdMS_TO_TICKS(100));
 
+    if (!wifiEventsRegistered) {
+        ::WiFi.onEvent(onWiFiEvent);
+        wifiEventsRegistered = true;
+        Serial.println("[HAL][WiFi] WiFi event handlers registered");
+    }
+
     ::WiFi.persistent(true);
     ::WiFi.setSleep(false);
-    ::WiFi.mode(WIFI_STA);
+
+    if (!::WiFi.mode(WIFI_STA)) {
+        Serial.println("[HAL][WiFi] ERROR: Failed to set WiFi mode to STA");
+        return false;
+    }
+    Serial.println("[HAL][WiFi] WiFi mode set to STA successfully");
+
     ::WiFi.setAutoReconnect(true);
 
     currentStatus = Status::IDLE;
@@ -36,7 +74,7 @@ bool WiFi::connect(const char* ssid, const char* password) {
     }
 
     if (!password) {
-        password = "";  
+        password = "";
     }
     ::WiFi.disconnect(true, true);
     vTaskDelay(pdMS_TO_TICKS(200));
@@ -46,20 +84,33 @@ bool WiFi::connect(const char* ssid, const char* password) {
     currentStatus = Status::CONNECTING;
 
     unsigned long startTime = millis();
-    while (::WiFi.status() != WL_CONNECTED && millis() - startTime < 15000) {
+    uint8_t retryCount = 0;
+    const uint8_t maxRetries = 3;
+
+    while (::WiFi.status() != WL_CONNECTED && millis() - startTime < 30000) {
         vTaskDelay(pdMS_TO_TICKS(500));
         Serial.print(".");
+
+        if (::WiFi.status() == WL_CONNECT_FAILED && retryCount < maxRetries) {
+            retryCount++;
+            Serial.printf("\n[HAL][WiFi] Connection attempt failed, retry %d/%d\n", retryCount, maxRetries);
+            ::WiFi.disconnect(false, false);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            ::WiFi.begin(ssid, password);
+            startTime = millis(); 
+        }
     }
     Serial.println();
 
     if (::WiFi.status() == WL_CONNECTED) {
-        Serial.printf("[HAL][WiFi] Connected! SSID: %s, IP: %s\n",
+        Serial.printf("[HAL][WiFi] Connected! SSID: %s, IP: %s, RSSI: %d dBm\n",
                       ::WiFi.SSID().c_str(),
-                      ::WiFi.localIP().toString().c_str());
+                      ::WiFi.localIP().toString().c_str(),
+                      ::WiFi.RSSI());
         currentStatus = Status::CONNECTED;
         return true;
     } else {
-        Serial.printf("[HAL][WiFi] Connection failed, status: %d\n", ::WiFi.status());
+        Serial.printf("[HAL][WiFi] Connection failed after %d retries, status: %d - ", retryCount, ::WiFi.status());
         printWiFiStatus(::WiFi.status());
         currentStatus = Status::FAILED;
         return false;
@@ -82,21 +133,23 @@ String WiFi::generateApName(const char* baseName) {
 bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
 
     String fullApName = generateApName(apName ? apName : "AIROWL");
-    Serial.printf("[HAL][WiFi] Starting Config Portal as: %s\n", fullApName.c_str());
-    
+    Serial.printf("[HAL][WiFi] Starting Config Portal as: %s (Password: 12345678)\n", fullApName.c_str());
+
     WiFiManagerNS::init(&wm, nullptr);
     std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
     wm.setMenu(menu);
     wm.setTitle("AIROWL Configuration");
+    wm.setClass("invert");  
     wm.setConfigPortalBlocking(true);
     wm.setConfigPortalTimeout(timeout_ms / 1000);
-    wm.setConnectTimeout(60);
+    wm.setConnectTimeout(30);
+    wm.setConnectRetries(3);  
     wm.setDebugOutput(true);
 
     bool connected = wm.startConfigPortal(fullApName.c_str(), "12345678");
-   
+
     if (connected) {
-        Serial.println("[HAL][WiFi] User configured WiFi, saving credentials...");
+        Serial.printf("[HAL][WiFi] User configured WiFi successfully! SSID: %s\n", ::WiFi.SSID().c_str());
         currentStatus = Status::CONNECTED;
     } else {
         Serial.println("[HAL][WiFi] Config portal timeout or failed");

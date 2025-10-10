@@ -111,10 +111,10 @@ void ui_PM25graph_screen_init(void)
     lv_obj_set_x(ui_maxlabel2, 39);
     lv_obj_set_y(ui_maxlabel2, 3);
     lv_obj_set_align(ui_maxlabel2, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_maxlabel2, "max");
+    lv_label_set_text(ui_maxlabel2, "max : ");
     lv_obj_set_style_text_color(ui_maxlabel2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_maxlabel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_maxlabel2, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_maxlabel2, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_pm25maxvalue = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_pm25maxvalue, LV_SIZE_CONTENT);   /// 1

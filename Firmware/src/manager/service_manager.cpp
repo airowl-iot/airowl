@@ -25,9 +25,9 @@ bool ServiceManager::init() {
         return false;
     }
 
-    // Subscribe to WiFi state changes
+    // Subscribe to WiFi state changes and store subscription ID for cleanup
     CORE::EventBus& eventBus = CORE::EventBus::getInstance();
-    eventBus.subscribe(
+    wifiEventSubscriptionId = eventBus.subscribe(
         CORE::Event::Type::WIFI_STATE_CHANGED,
         [this](const std::shared_ptr<const CORE::Event>& event) {
             auto wifiEvent = std::static_pointer_cast<const CORE::WiFiStateChangedEvent>(event);
@@ -37,6 +37,7 @@ bool ServiceManager::init() {
             }
         }
     );
+    Serial.printf("[SERVICE] Subscribed to WiFi events (ID: %u)\n", wifiEventSubscriptionId);
 
     if (isServiceEnabled(ServiceType::WIFI)) {
         if (!HAL::WiFi::init()) {
@@ -123,6 +124,15 @@ bool ServiceManager::start() {
 
 void ServiceManager::stop() {
     if (!running) return;
+
+    // CRITICAL: Unsubscribe from events to prevent dangling this pointer
+    if (wifiEventSubscriptionId != 0) {
+        CORE::EventBus& eventBus = CORE::EventBus::getInstance();
+        eventBus.unsubscribe(wifiEventSubscriptionId);
+        Serial.printf("[SERVICE] Unsubscribed from WiFi events (ID: %u)\n", wifiEventSubscriptionId);
+        wifiEventSubscriptionId = 0;
+    }
+
     for (const auto& [type, config] : services) {
         if (config.enabled) stopService(type);
     }

@@ -73,7 +73,7 @@ AHT::Error AHT::read(Data* data) {
     if (!ens160.available()) {
         Serial.println("[ENS160][HAL] Not available, attempting to restore...");
         ens160.setMode(ENS160_OPMODE_STD);
-        delay(10);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     Serial.printf("[AHT][HAL] Temp=%.2f °C, Humidity=%.2f %%RH\n",
@@ -93,10 +93,10 @@ AHT::Error AHT::read(Data* data) {
         if (data->aqi == 0 && data->tvoc == 0 && data->eco2 == 0) {
             Serial.println("[ENS160][HAL] Sensor returned zeros, attempting recovery...");
             if (ens160.setMode(ENS160_OPMODE_STD)) {
-                delay(50);
+                vTaskDelay(pdMS_TO_TICKS(50));
                 ens160.set_envdata(tempEvent.temperature, humidityEvent.relative_humidity);
                 ens160.measure(true);
-                delay(50);
+                vTaskDelay(pdMS_TO_TICKS(50));
                 data->aqi  = ens160.getAQI();
                 data->tvoc = ens160.getTVOC();
                 data->eco2 = ens160.geteCO2();
@@ -118,7 +118,7 @@ AHT::Error AHT::read(Data* data) {
 bool AHT::isDataAvailable() {
     if (newDataAvailable) {
         newDataAvailable = false; 
-        Serial.println("[AHT][HAL] New data available");
+        // Serial.println("[AHT][HAL] New data available");
         return true;
     }
     return false;

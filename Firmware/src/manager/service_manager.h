@@ -55,6 +55,7 @@ private:
     bool initialized;
     bool running;
     std::map<ServiceType, ServiceConfig> services;
+    uint32_t wifiEventSubscriptionId = 0;  // Track subscription to unsubscribe on stop
 };
 
 } // namespace APP
