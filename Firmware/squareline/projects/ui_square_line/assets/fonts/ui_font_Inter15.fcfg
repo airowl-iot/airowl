@@ -1,0 +1,16 @@
+{
+  "codename": "Inter15",
+  "ttf_path": "/assets/fonts/Inter-VariableFont_opsz,wght.ttf",
+  "bin_path": "/assets/fonts\\ui_font_Inter15.bin",
+  "c_path": "/assets/fonts\\ui_font_Inter15.c",
+  "cfg_path": "/assets/fonts\\ui_font_Inter15.fcfg",
+  "size": 15,
+  "bpp": 1,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7f"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}

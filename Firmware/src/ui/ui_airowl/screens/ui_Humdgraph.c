@@ -34,10 +34,10 @@ void ui_Humdgraph_screen_init(void)
     lv_obj_set_style_bg_opa(ui_Humdgraph, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Chart2 = lv_chart_create(ui_Humdgraph);
-    lv_obj_set_width(ui_Chart2, 201);
-    lv_obj_set_height(ui_Chart2, 195);
-    lv_obj_set_x(ui_Chart2, 14);
-    lv_obj_set_y(ui_Chart2, 4);
+    lv_obj_set_width(ui_Chart2, 192);
+    lv_obj_set_height(ui_Chart2, 202);
+    lv_obj_set_x(ui_Chart2, 15);
+    lv_obj_set_y(ui_Chart2, -5);
     lv_obj_set_align(ui_Chart2, LV_ALIGN_CENTER);
     lv_chart_set_type(ui_Chart2, LV_CHART_TYPE_BAR);
     lv_chart_set_point_count(ui_Chart2, 12);
@@ -61,9 +61,9 @@ void ui_Humdgraph_screen_init(void)
     ui_Container2 = lv_obj_create(ui_Humdgraph);
     lv_obj_remove_style_all(ui_Container2);
     lv_obj_set_width(ui_Container2, 238);
-    lv_obj_set_height(ui_Container2, 59);
-    lv_obj_set_x(ui_Container2, 1);
-    lv_obj_set_y(ui_Container2, -129);
+    lv_obj_set_height(ui_Container2, 43);
+    lv_obj_set_x(ui_Container2, 3);
+    lv_obj_set_y(ui_Container2, -135);
     lv_obj_set_align(ui_Container2, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_Container2, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_border_color(ui_Container2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -73,19 +73,19 @@ void ui_Humdgraph_screen_init(void)
     ui_humlabel = lv_label_create(ui_Container2);
     lv_obj_set_width(ui_humlabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_humlabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_humlabel, -79);
+    lv_obj_set_x(ui_humlabel, -84);
     lv_obj_set_y(ui_humlabel, 2);
     lv_obj_set_align(ui_humlabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_humlabel, "Humd");
+    lv_label_set_text(ui_humlabel, "R.Humd");
     lv_obj_set_style_text_color(ui_humlabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_humlabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_humlabel, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_humlabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_humlabel, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_gpunit1 = lv_label_create(ui_Container2);
     lv_obj_set_width(ui_gpunit1, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_gpunit1, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_gpunit1, -18);
+    lv_obj_set_x(ui_gpunit1, -24);
     lv_obj_set_y(ui_gpunit1, 2);
     lv_obj_set_align(ui_gpunit1, LV_ALIGN_CENTER);
     lv_label_set_text(ui_gpunit1, "%RH");
@@ -96,10 +96,10 @@ void ui_Humdgraph_screen_init(void)
     ui_maxlabel1 = lv_label_create(ui_Container2);
     lv_obj_set_width(ui_maxlabel1, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_maxlabel1, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_maxlabel1, 39);
-    lv_obj_set_y(ui_maxlabel1, 3);
+    lv_obj_set_x(ui_maxlabel1, 47);
+    lv_obj_set_y(ui_maxlabel1, -1);
     lv_obj_set_align(ui_maxlabel1, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_maxlabel1, "max : ");
+    lv_label_set_text(ui_maxlabel1, "avg : ");
     lv_obj_set_style_text_color(ui_maxlabel1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_maxlabel1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_maxlabel1, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -107,8 +107,8 @@ void ui_Humdgraph_screen_init(void)
     ui_Humdmaxvalue1 = lv_label_create(ui_Container2);
     lv_obj_set_width(ui_Humdmaxvalue1, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Humdmaxvalue1, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Humdmaxvalue1, 74);
-    lv_obj_set_y(ui_Humdmaxvalue1, 3);
+    lv_obj_set_x(ui_Humdmaxvalue1, 91);
+    lv_obj_set_y(ui_Humdmaxvalue1, 1);
     lv_obj_set_align(ui_Humdmaxvalue1, LV_ALIGN_CENTER);
     lv_label_set_text(ui_Humdmaxvalue1, "-");
     lv_obj_set_style_text_color(ui_Humdmaxvalue1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -116,10 +116,10 @@ void ui_Humdgraph_screen_init(void)
     lv_obj_set_style_text_font(ui_Humdmaxvalue1, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_return1 = lv_btn_create(ui_Humdgraph);
-    lv_obj_set_width(ui_return1, 160);
+    lv_obj_set_width(ui_return1, 223);
     lv_obj_set_height(ui_return1, 39);
-    lv_obj_set_x(ui_return1, 0);
-    lv_obj_set_y(ui_return1, 127);
+    lv_obj_set_x(ui_return1, -1);
+    lv_obj_set_y(ui_return1, 128);
     lv_obj_set_align(ui_return1, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_return1, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_return1, LV_OBJ_FLAG_SCROLLABLE);      /// Flags

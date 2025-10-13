@@ -131,6 +131,7 @@ namespace {
         const int MAX_REDIRECTS = 3;
         int redirects = 0;
 
+        // Move WiFi clients outside the loop to prevent destruction while in use
         WiFiClient clientPlain;
         WiFiClientSecure clientSecure;
         clientSecure.setInsecure();
@@ -155,112 +156,30 @@ namespace {
 
             updateState(SVC::OTA::State::DOWNLOADING, 0, "Starting HTTP GET");
             int httpCode = http.GET();
-
             if (httpCode == HTTP_CODE_OK) {
                 int contentLength = http.getSize();
                 WiFiClient* stream = http.getStreamPtr();
-                if (!stream) {
-                    Serial.println("[OTA] ERROR: Failed to get stream pointer");
-                    http.end();
-                    return false;
-                }
-
-                if (contentLength == 0) {
-                    Serial.println("[OTA] ERROR: Content length is zero");
-                    http.end();
-                    return false;
-                }
-
-                Serial.printf("[OTA] Content length: %d bytes\n", contentLength);
+                if (!stream) { http.end(); return false; }
 
                 if (!Update.begin(contentLength > 0 ? contentLength : UPDATE_SIZE_UNKNOWN)) {
-                    Serial.printf("[OTA] Update.begin() failed. Error: %d\n", Update.getError());
-                    http.end();
-                    return false;
+                    Serial.println("[OTA] Update.begin() failed");
+                    http.end(); return false;
                 }
 
-                size_t written = 0;
-                size_t totalWritten = 0;
-                uint8_t buffer[1024];
-                unsigned long downloadStartTime = millis();
-                unsigned long lastProgressTime = millis();
-                const unsigned long DOWNLOAD_TIMEOUT_MS = 300000;  // 5 minutes total timeout
-                const unsigned long STALL_TIMEOUT_MS = 30000;      // 30 seconds stall timeout
-
-                while (true) {
-                    esp_task_wdt_reset();  
-
-                    if (millis() - downloadStartTime > DOWNLOAD_TIMEOUT_MS) {
-                        Serial.println("[OTA] ERROR: Download timeout (5 minutes exceeded)");
-                        Update.abort();
-                        http.end();
-                        return false;
-                    }
-
-                    if (millis() - lastProgressTime > STALL_TIMEOUT_MS) {
-                        Serial.println("[OTA] ERROR: Download stalled (30 seconds with no data)");
-                        Update.abort();
-                        http.end();
-                        return false;
-                    }
-
-                    size_t bytesAvailable = stream->available();
-                    if (bytesAvailable > 0) {
-                        size_t bytesToRead = min(bytesAvailable, sizeof(buffer));
-                        size_t bytesRead = stream->readBytes(buffer, bytesToRead);
-
-                        if (bytesRead > 0) {
-                            written = Update.write(buffer, bytesRead);
-                            if (written != bytesRead) {
-                                Serial.printf("[OTA] Write error: expected %d, wrote %d\n", bytesRead, written);
-                                Update.abort();
-                                http.end();
-                                return false;
-                            }
-                            totalWritten += written;
-                            lastProgressTime = millis();  
-
-                            if (contentLength > 0) {
-                                int progress = (totalWritten * 100) / contentLength;
-                                updateState(SVC::OTA::State::DOWNLOADING, progress, "Downloading firmware");
-                            }
-                        }
-                    }
-
-                    if (contentLength > 0) {
-                        if (totalWritten >= contentLength) break;
-                    } else {
-                     
-                        if (!stream->connected() && stream->available() == 0) break;
-                    }
-
-                    vTaskDelay(pdMS_TO_TICKS(1)); 
-                }
-
-                Serial.printf("[OTA] Downloaded %u bytes in %lu ms\n",
-                             (unsigned)totalWritten,
-                             millis() - downloadStartTime);
+                size_t written = Update.writeStream(*stream);
+                Serial.printf("[OTA] Written %u bytes\n", (unsigned)written);
 
                 if (!Update.end() || !Update.isFinished()) {
                     Serial.printf("[OTA] Update failed. Error: %d\n", Update.getError());
-                    http.end();
-                    return false;
+                    http.end(); return false;
                 }
 
                 Serial.println("[OTA] ✓ Update finished. Rebooting...");
                 http.end();
                 return true;
-
-            } else if (httpCode == HTTP_CODE_MOVED_PERMANENTLY ||
-                       httpCode == HTTP_CODE_FOUND ||
-                       httpCode == HTTP_CODE_TEMPORARY_REDIRECT) {
+            } else if (httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND || httpCode == HTTP_CODE_TEMPORARY_REDIRECT) {
                 url = http.getLocation();
-                if (url.length() == 0) {
-                    Serial.println("[OTA] ERROR: Empty redirect location");
-                    http.end();
-                    return false;
-                }
-                Serial.printf("[OTA] Redirecting to: %s\n", url.c_str());
+                if (url.length() == 0) return false;
                 redirects++;
                 http.end();
                 continue;
@@ -270,7 +189,7 @@ namespace {
                 return false;
             }
         }
-        Serial.println("[OTA] ERROR: Too many redirects, aborting.");
+        Serial.println("[OTA] Too many redirects, aborting.");
         return false;
     }
 
@@ -341,48 +260,51 @@ bool OTA::beginUpdate() {
 OTA::State OTA::getState() { return currentState; }
 
 const char* OTA::getCurrentVersion() {
-    
-    static char versionBuffer[64] = {0};
-
+    static String versionStr;
     auto* cfg = ConfigManager::getInstance();
     if (cfg && cfg->isInitialized()) {
-        String version = cfg->getFirmwareVersion();
-        if (!version.isEmpty()) {
-            strncpy(versionBuffer, version.c_str(), sizeof(versionBuffer) - 1);
-            versionBuffer[sizeof(versionBuffer) - 1] = '\0';
-            return versionBuffer;
+        versionStr = cfg->getFirmwareVersion();
+        if (!versionStr.isEmpty()) {
+            return versionStr.c_str();
         }
     }
-
-    strncpy(versionBuffer, "unknown", sizeof(versionBuffer) - 1);
-    return versionBuffer;
+    return "unknown"; 
 }
 
 void OTA::onProgress(ProgressCallback callback) { progressCallback = callback; }
 
 void OTA::suspendOtherTasks() {
     if (tasksAreSuspended) return;
+
+    Serial.println("[OTA] Suspending other tasks...");
     suspendedTaskCount = 0;
     memset(suspendedTasks, 0, sizeof(suspendedTasks));
-    
+
     TaskHandle_t sensorTask = APP::SensorManager::getTaskHandle();
     if (sensorTask && suspendedTaskCount < maxSuspendedTasks) {
         vTaskSuspend(sensorTask);
         suspendedTasks[suspendedTaskCount++] = sensorTask;
-    }
-
-
+    } 
     tasksAreSuspended = true;
 }
 
 void OTA::resumeOtherTasks() {
-    if (!tasksAreSuspended) return;
+    if (!tasksAreSuspended) {
+        Serial.println("[OTA] No tasks to resume");
+        return;
+    }
+
+    Serial.println("[OTA] Resuming suspended tasks...");
     for (int i = 0; i < suspendedTaskCount; ++i) {
-        if (suspendedTasks[i]) vTaskResume(suspendedTasks[i]);
+        if (suspendedTasks[i]) {
+            vTaskResume(suspendedTasks[i]);
+            Serial.printf("[OTA] Resumed task %d\n", i);
+        }
         suspendedTasks[i] = nullptr;
     }
     suspendedTaskCount = 0;
     tasksAreSuspended = false;
+    Serial.println("[OTA] All tasks resumed");
 }
 
 void OTA::onWiFiConnected() {
@@ -405,13 +327,8 @@ bool OTA::startTask() {
 }
 
 bool OTA::restartTask() {
-    if (otaTaskHandle) {
-        TaskHandle_t tempHandle = otaTaskHandle;
-        otaTaskHandle = nullptr;  
-        vTaskDelete(tempHandle);
-        vTaskDelay(pdMS_TO_TICKS(100)); 
-        Serial.println("[OTA] Task deleted, restarting...");
-    }
+    if (otaTaskHandle) vTaskDelete(otaTaskHandle);
+    otaTaskHandle = nullptr;
     return startTask();
 }
 

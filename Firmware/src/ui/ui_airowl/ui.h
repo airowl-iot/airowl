@@ -50,13 +50,20 @@ extern void eyeleft_Animation(lv_obj_t * TargetObject, int delay);
 
 extern lv_obj_t * ui____initial_actions0;
 
+// FONTS
+LV_FONT_DECLARE(ui_font_Inter12);
+LV_FONT_DECLARE(ui_font_Inter15);
+LV_FONT_DECLARE(ui_font_Inter16);
+LV_FONT_DECLARE(ui_font_Inter20);
+LV_FONT_DECLARE(ui_font_Inter40);
+
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_oizom_logo_png);    // assets/oizom_logo.png
 LV_IMG_DECLARE(ui_img_airowl_1_png);    // assets/airowl_1.png
 LV_IMG_DECLARE(ui_img_airowl_2_png);    // assets/airowl_2.png
 LV_IMG_DECLARE(ui_img_582762761);    // assets/celsius-degrees-symbol-of-temperature.png
-LV_IMG_DECLARE(ui_img_26368195); 
-LV_IMG_DECLARE(ui_img_26368195); 
+LV_IMG_DECLARE(ui_img_26368195);
+LV_IMG_DECLARE(ui_img_26368195);
 LV_IMG_DECLARE(ui_img_wifi_off_png);
 LV_IMG_DECLARE(ui_img_wifi_on_png);
 LV_IMG_DECLARE(ui_img_ota_icon_png);

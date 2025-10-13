@@ -3,7 +3,7 @@
 // LVGL version: 8.3.11
 // Project name: SquareLine_Project
 
-#include "../ui.h"
+#include "ui.h"
 
 lv_obj_t * ui_tempgraph = NULL;
 lv_obj_t * ui_tempChart = NULL;
@@ -34,10 +34,10 @@ void ui_Tempgraph_screen_init(void)
     lv_obj_set_style_bg_opa(ui_tempgraph, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_tempChart = lv_chart_create(ui_tempgraph);
-    lv_obj_set_width(ui_tempChart, 201);
-    lv_obj_set_height(ui_tempChart, 195);
-    lv_obj_set_x(ui_tempChart, 14);
-    lv_obj_set_y(ui_tempChart, 4);
+    lv_obj_set_width(ui_tempChart, 192);
+    lv_obj_set_height(ui_tempChart, 202);
+    lv_obj_set_x(ui_tempChart, 15);
+    lv_obj_set_y(ui_tempChart, -5);
     lv_obj_set_align(ui_tempChart, LV_ALIGN_CENTER);
     lv_chart_set_type(ui_tempChart, LV_CHART_TYPE_BAR);
     lv_chart_set_point_count(ui_tempChart, 12);
@@ -61,9 +61,9 @@ void ui_Tempgraph_screen_init(void)
     ui_tempgContainer = lv_obj_create(ui_tempgraph);
     lv_obj_remove_style_all(ui_tempgContainer);
     lv_obj_set_width(ui_tempgContainer, 238);
-    lv_obj_set_height(ui_tempgContainer, 59);
-    lv_obj_set_x(ui_tempgContainer, 1);
-    lv_obj_set_y(ui_tempgContainer, -129);
+    lv_obj_set_height(ui_tempgContainer, 43);
+    lv_obj_set_x(ui_tempgContainer, 3);
+    lv_obj_set_y(ui_tempgContainer, -135);
     lv_obj_set_align(ui_tempgContainer, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_tempgContainer, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_border_color(ui_tempgContainer, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -73,20 +73,20 @@ void ui_Tempgraph_screen_init(void)
     ui_tempglabel = lv_label_create(ui_tempgContainer);
     lv_obj_set_width(ui_tempglabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_tempglabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_tempglabel, -79);
+    lv_obj_set_x(ui_tempglabel, -84);
     lv_obj_set_y(ui_tempglabel, 2);
     lv_obj_set_align(ui_tempglabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_tempglabel, "TVOC");
+    lv_label_set_text(ui_tempglabel, "Temp");
     lv_obj_set_style_text_color(ui_tempglabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_tempglabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_tempglabel, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_tempglabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_tempglabel, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_tempgunit4 = lv_img_create(ui_tempgContainer);
     lv_img_set_src(ui_tempgunit4, &ui_img_582762761);
     lv_obj_set_width(ui_tempgunit4, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_tempgunit4, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_tempgunit4, -4);
+    lv_obj_set_x(ui_tempgunit4, -26);
     lv_obj_set_y(ui_tempgunit4, 2);
     lv_obj_set_align(ui_tempgunit4, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_tempgunit4, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
@@ -95,10 +95,10 @@ void ui_Tempgraph_screen_init(void)
     ui_tempgmaxlabel = lv_label_create(ui_tempgContainer);
     lv_obj_set_width(ui_tempgmaxlabel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_tempgmaxlabel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_tempgmaxlabel, 39);
-    lv_obj_set_y(ui_tempgmaxlabel, 3);
+    lv_obj_set_x(ui_tempgmaxlabel, 47);
+    lv_obj_set_y(ui_tempgmaxlabel, -1);
     lv_obj_set_align(ui_tempgmaxlabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_tempgmaxlabel, "max : ");
+    lv_label_set_text(ui_tempgmaxlabel, "avg : ");
     lv_obj_set_style_text_color(ui_tempgmaxlabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_tempgmaxlabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_tempgmaxlabel, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -106,8 +106,8 @@ void ui_Tempgraph_screen_init(void)
     ui_tempgmaxvalue = lv_label_create(ui_tempgContainer);
     lv_obj_set_width(ui_tempgmaxvalue , LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_tempgmaxvalue , LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_tempgmaxvalue , 74);
-    lv_obj_set_y(ui_tempgmaxvalue , 3);
+    lv_obj_set_x(ui_tempgmaxvalue , 91);
+    lv_obj_set_y(ui_tempgmaxvalue , 1);
     lv_obj_set_align(ui_tempgmaxvalue , LV_ALIGN_CENTER);
     lv_label_set_text(ui_tempgmaxvalue , "-");
     lv_obj_set_style_text_color(ui_tempgmaxvalue , lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -115,10 +115,10 @@ void ui_Tempgraph_screen_init(void)
     lv_obj_set_style_text_font(ui_tempgmaxvalue , &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_tempgreturn = lv_btn_create(ui_tempgraph);
-    lv_obj_set_width(ui_tempgreturn, 160);
+    lv_obj_set_width(ui_tempgreturn, 223);
     lv_obj_set_height(ui_tempgreturn, 39);
-    lv_obj_set_x(ui_tempgreturn, 0);
-    lv_obj_set_y(ui_tempgreturn, 127);
+    lv_obj_set_x(ui_tempgreturn, -1);
+    lv_obj_set_y(ui_tempgreturn, 128);
     lv_obj_set_align(ui_tempgreturn, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_tempgreturn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_tempgreturn, LV_OBJ_FLAG_SCROLLABLE);      /// Flags

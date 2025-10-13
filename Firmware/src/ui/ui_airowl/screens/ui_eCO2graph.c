@@ -3,7 +3,7 @@
 // LVGL version: 8.3.6
 // Project name: example_project
 
-#include "../ui.h"
+#include "ui.h"
 
 lv_obj_t * ui_eCO2graph;
 lv_obj_t * ui_eCO2chart;
@@ -38,10 +38,10 @@ void ui_eCO2graph_screen_init(void)
     lv_obj_set_style_bg_opa(ui_eCO2graph, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_eCO2chart = lv_chart_create(ui_eCO2graph);
-    lv_obj_set_width(ui_eCO2chart, 201);
-    lv_obj_set_height(ui_eCO2chart, 195);
-    lv_obj_set_x(ui_eCO2chart, 14);
-    lv_obj_set_y(ui_eCO2chart, 4);
+    lv_obj_set_width(ui_eCO2chart, 192);
+    lv_obj_set_height(ui_eCO2chart, 202);
+    lv_obj_set_x(ui_eCO2chart, 15);
+    lv_obj_set_y(ui_eCO2chart, -5);
     lv_obj_set_align(ui_eCO2chart, LV_ALIGN_CENTER);
     lv_chart_set_type(ui_eCO2chart, LV_CHART_TYPE_BAR);
     lv_chart_set_point_count(ui_eCO2chart, 12);
@@ -65,9 +65,9 @@ void ui_eCO2graph_screen_init(void)
     ui_Container11 = lv_obj_create(ui_eCO2graph);
     lv_obj_remove_style_all(ui_Container11);
     lv_obj_set_width(ui_Container11, 238);
-    lv_obj_set_height(ui_Container11, 59);
-    lv_obj_set_x(ui_Container11, 1);
-    lv_obj_set_y(ui_Container11, -129);
+    lv_obj_set_height(ui_Container11, 43);
+    lv_obj_set_x(ui_Container11, 3);
+    lv_obj_set_y(ui_Container11, -135);
     lv_obj_set_align(ui_Container11, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_Container11, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_border_color(ui_Container11, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -77,19 +77,19 @@ void ui_eCO2graph_screen_init(void)
     ui_graphparameter7 = lv_label_create(ui_Container11);
     lv_obj_set_width(ui_graphparameter7, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_graphparameter7, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_graphparameter7, -74);
+    lv_obj_set_x(ui_graphparameter7, -84);
     lv_obj_set_y(ui_graphparameter7, 2);
     lv_obj_set_align(ui_graphparameter7, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_graphparameter7, "CO2");
+    lv_label_set_text(ui_graphparameter7, "eCO2");
     lv_obj_set_style_text_color(ui_graphparameter7, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_graphparameter7, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_graphparameter7, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_graphparameter7, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_graphparameter7, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_gpunit5 = lv_label_create(ui_Container11);
     lv_obj_set_width(ui_gpunit5, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_gpunit5, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_gpunit5, -4);
+    lv_obj_set_x(ui_gpunit5, -29);
     lv_obj_set_y(ui_gpunit5, 2);
     lv_obj_set_align(ui_gpunit5, LV_ALIGN_CENTER);
     lv_label_set_text(ui_gpunit5, "ppm");
@@ -100,10 +100,10 @@ void ui_eCO2graph_screen_init(void)
     ui_eco2max1 = lv_label_create(ui_Container11);
     lv_obj_set_width(ui_eco2max1, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_eco2max1, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_eco2max1, 49);
-    lv_obj_set_y(ui_eco2max1, 2);
+    lv_obj_set_x(ui_eco2max1, 47);
+    lv_obj_set_y(ui_eco2max1, -1);
     lv_obj_set_align(ui_eco2max1, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_eco2max1, "max : ");
+    lv_label_set_text(ui_eco2max1, "avg : ");
     lv_obj_set_style_text_color(ui_eco2max1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_eco2max1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_eco2max1, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -111,7 +111,7 @@ void ui_eCO2graph_screen_init(void)
     ui_eco2max2 = lv_label_create(ui_Container11);
     lv_obj_set_width(ui_eco2max2, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_eco2max2, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_eco2max2, 85);
+    lv_obj_set_x(ui_eco2max2, 91);
     lv_obj_set_y(ui_eco2max2, 1);
     lv_obj_set_align(ui_eco2max2, LV_ALIGN_CENTER);
     lv_label_set_text(ui_eco2max2, "-");
@@ -120,7 +120,7 @@ void ui_eCO2graph_screen_init(void)
     lv_obj_set_style_text_font(ui_eco2max2, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_return5 = lv_btn_create(ui_eCO2graph);
-    lv_obj_set_width(ui_return5, 160);
+    lv_obj_set_width(ui_return5, 223);
     lv_obj_set_height(ui_return5, 39);
     lv_obj_set_x(ui_return5, 0);
     lv_obj_set_y(ui_return5, 127);

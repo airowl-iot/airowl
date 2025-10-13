@@ -1,0 +1,16 @@
+{
+  "codename": "Inter12",
+  "ttf_path": "/assets/fonts/Inter-VariableFont_opsz,wght.ttf",
+  "bin_path": "/assets/fonts\\ui_font_Inter12.bin",
+  "c_path": "/assets/fonts\\ui_font_Inter12.c",
+  "cfg_path": "/assets/fonts\\ui_font_Inter12.fcfg",
+  "size": 12,
+  "bpp": 1,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7f"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}
