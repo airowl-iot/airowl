@@ -355,6 +355,13 @@ bool MQTTService::publish(const char* topic, const char* message,
 }
 
 bool MQTTService::connectToOizom() {
+    // Check WiFi status first to avoid blocking
+    wl_status_t wifiStatus = WiFi.status();
+    if (wifiStatus != WL_CONNECTED) {
+        Serial.printf("[MQTT] Cannot connect - WiFi not connected (status: %d)\n", wifiStatus);
+        return false;
+    }
+
     if (mqttServer.length() == 0) {
         Serial.println("[MQTT] ERROR: No server configured. Please use connect() with proper parameters.");
         return false;
