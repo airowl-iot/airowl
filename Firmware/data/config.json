@@ -32,14 +32,14 @@
     },
     "mqtt": {
       "enabled": true,
-      "server": "mqtt.oizom.com",
-      "username": "oizom",
-      "password" : "12345678"
+      "server": "xxxx",
+      "username": "xxxx",
+      "password" : "xxxx"
     },
     "ota": {
       "enabled": true,
-      "versionURL" : "https://integration.oizom.com/airowl/latest",
-      "firmwareURL" :"http://integration.oizom.com/airowl/firmware.bin"
+      "versionURL" : "  ",
+      "firmwareURL" :" "
     }
   }
 
