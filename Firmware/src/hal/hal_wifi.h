@@ -49,13 +49,21 @@ public:
     static bool connect(const char* ssid, const char* password);
     
     /**
+     * @brief Auto-connect to saved WiFi or start config portal if no credentials
+     * @param apName Name for the configuration access point (if needed)
+     * @param timeout_ms Timeout for configuration portal in milliseconds
+     * @return true if connected (either via saved credentials or new config), false otherwise
+     */
+    static bool autoConnect(const char* apName = nullptr, uint32_t timeout_ms = 120000);
+
+    /**
      * @brief Start WiFi Manager for configuration
      * @param apName Name for the configuration access point
      * @param timeout_ms Timeout for configuration portal in milliseconds
      * @return true if connected after configuration, false otherwise
      */
     static bool startConfigPortal(const char* apName = nullptr, uint32_t timeout_ms = 120000);
-    
+
     /**
      * @brief Disconnect from WiFi network
      * @return true if disconnection was successful, false otherwise

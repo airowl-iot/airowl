@@ -355,7 +355,6 @@ bool MQTTService::publish(const char* topic, const char* message,
 }
 
 bool MQTTService::connectToOizom() {
-    // Check WiFi status first to avoid blocking
     wl_status_t wifiStatus = WiFi.status();
     if (wifiStatus != WL_CONNECTED) {
         Serial.printf("[MQTT] Cannot connect - WiFi not connected (status: %d)\n", wifiStatus);
@@ -462,6 +461,11 @@ void MQTTService::task(void* parameter) {
                 break;
 
             case State::DISCONNECTED:
+                if (wifiStatus != WL_CONNECTED && reconnectAttempts > 0) {
+                    Serial.println("[MQTT] WiFi disconnected - resetting reconnection counter");
+                    reconnectAttempts = 0;
+                }
+
                 if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS) {
                     if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && wifiStatus == WL_CONNECTED) {
                         reconnectAttempts++;
@@ -473,15 +477,23 @@ void MQTTService::task(void* parameter) {
                                mqttPassword.length() > 0 ? mqttPassword.c_str() : nullptr);
                     } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
                         Serial.println("[MQTT] Max reconnection attempts reached. Giving up.");
+                    } else if (wifiStatus != WL_CONNECTED) {
+                        static unsigned long lastWiFiLog = 0;
+                        if (millis() - lastWiFiLog >= 60000) {
+                            Serial.println("[MQTT] Waiting for WiFi connection before attempting MQTT reconnect");
+                            lastWiFiLog = millis();
+                        }
                     }
                 }
                 break;
 
             case State::FAILED:
                 if (millis() - lastReconnectAttempt >= RECONNECT_INTERVAL_MS * 2) {
-                    Serial.println("[MQTT] Transitioning from FAILED to DISCONNECTED state");
-                    updateState(State::DISCONNECTED);
-                    lastReconnectAttempt = millis();
+                    if (wifiStatus == WL_CONNECTED) {
+                        Serial.println("[MQTT] Transitioning from FAILED to DISCONNECTED state");
+                        updateState(State::DISCONNECTED);
+                        lastReconnectAttempt = millis();
+                    }
                 }
                 break;
 

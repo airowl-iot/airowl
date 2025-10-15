@@ -55,6 +55,7 @@ LV_FONT_DECLARE(ui_font_Inter12);
 LV_FONT_DECLARE(ui_font_Inter15);
 LV_FONT_DECLARE(ui_font_Inter16);
 LV_FONT_DECLARE(ui_font_Inter20);
+LV_FONT_DECLARE(ui_font_Inter38);
 LV_FONT_DECLARE(ui_font_Inter40);
 
 // IMAGES AND IMAGE SETS

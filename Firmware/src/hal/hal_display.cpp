@@ -26,7 +26,7 @@ static void my_disp_flush(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t
         return;
     }
 
-    esp_task_wdt_reset();  // Feed watchdog before long SPI operation
+    esp_task_wdt_reset(); 
     gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t*)color_p,
                             area->x2 - area->x1 + 1,
                             area->y2 - area->y1 + 1);

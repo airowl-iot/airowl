@@ -41,9 +41,6 @@ namespace {
 namespace HAL {
 
 bool WiFi::init() {
-    ::WiFi.disconnect(true, false);
-    vTaskDelay(pdMS_TO_TICKS(100));
-
     if (!wifiEventsRegistered) {
         ::WiFi.onEvent(onWiFiEvent);
         wifiEventsRegistered = true;
@@ -76,7 +73,7 @@ bool WiFi::connect(const char* ssid, const char* password) {
     if (!password) {
         password = "";
     }
-    ::WiFi.disconnect(true, true);
+    ::WiFi.disconnect(false, false);
     vTaskDelay(pdMS_TO_TICKS(200));
 
     Serial.printf("[HAL][WiFi] Connecting to SSID: %s\n", ssid);
@@ -118,9 +115,9 @@ bool WiFi::connect(const char* ssid, const char* password) {
 }
 
 String WiFi::generateApName(const char* baseName) {
-    
+
     uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);  
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
     char deviceId[13];
     sprintf(deviceId, "%02X%02X%02X%02X%02X%02X",
             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
@@ -128,6 +125,36 @@ String WiFi::generateApName(const char* baseName) {
     String suffix = String(deviceId).substring(6);
     String fullApName = String(baseName ? baseName : "AIROWL") + "_" + suffix;
     return fullApName;
+}
+
+bool WiFi::autoConnect(const char* apName, uint32_t timeout_ms) {
+
+    String fullApName = generateApName(apName ? apName : "AIROWL");
+    Serial.printf("[HAL][WiFi] Starting autoConnect as: %s (Password: 12345678)\n", fullApName.c_str());
+
+    WiFiManagerNS::init(&wm, nullptr);
+    std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
+    wm.setMenu(menu);
+    wm.setTitle("AIROWL Configuration");
+    wm.setClass("invert");
+    wm.setConfigPortalBlocking(true);
+    wm.setConfigPortalTimeout(timeout_ms / 1000);
+    wm.setConnectTimeout(30);
+    wm.setConnectRetries(3);
+    wm.setDebugOutput(true);
+
+    bool connected = wm.autoConnect(fullApName.c_str(), "12345678");
+
+    if (connected) {
+        ::WiFi.persistent(true);
+        Serial.printf("[HAL][WiFi] Connected successfully! SSID: %s\n", ::WiFi.SSID().c_str());
+        Serial.println("[HAL][WiFi] WiFi credentials saved in NVS");
+        currentStatus = Status::CONNECTED;
+    } else {
+        Serial.println("[HAL][WiFi] autoConnect failed or timed out");
+        currentStatus = Status::FAILED;
+    }
+    return connected;
 }
 
 bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
@@ -139,17 +166,20 @@ bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
     std::vector<const char *> menu = {"wifi", "info", "custom", "param", "sep", "restart", "exit"};
     wm.setMenu(menu);
     wm.setTitle("AIROWL Configuration");
-    wm.setClass("invert");  
+    wm.setClass("invert");
     wm.setConfigPortalBlocking(true);
     wm.setConfigPortalTimeout(timeout_ms / 1000);
     wm.setConnectTimeout(30);
-    wm.setConnectRetries(3);  
+    wm.setConnectRetries(3);
     wm.setDebugOutput(true);
 
     bool connected = wm.startConfigPortal(fullApName.c_str(), "12345678");
 
     if (connected) {
+        ::WiFi.persistent(true);
+        Serial.println("[HAL][WiFi] Re-enabled WiFi persistence after config portal");
         Serial.printf("[HAL][WiFi] User configured WiFi successfully! SSID: %s\n", ::WiFi.SSID().c_str());
+        Serial.println("[HAL][WiFi] WiFi credentials saved in NVS by WiFiManager");
         currentStatus = Status::CONNECTED;
     } else {
         Serial.println("[HAL][WiFi] Config portal timeout or failed");
@@ -159,7 +189,7 @@ bool WiFi::startConfigPortal(const char* apName, uint32_t timeout_ms) {
 }
 
 bool WiFi::disconnect() {
-    ::WiFi.disconnect(true, true);
+    ::WiFi.disconnect(false, false);
     currentStatus = Status::DISCONNECTED;
     return true;
 }

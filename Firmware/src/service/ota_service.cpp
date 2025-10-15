@@ -131,7 +131,6 @@ namespace {
         const int MAX_REDIRECTS = 3;
         int redirects = 0;
 
-        // Move WiFi clients outside the loop to prevent destruction while in use
         WiFiClient clientPlain;
         WiFiClientSecure clientSecure;
         clientSecure.setInsecure();

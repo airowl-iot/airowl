@@ -8,6 +8,7 @@
 #include "manager/config_manager.h"
 #include "manager/service_manager.h"
 #include "manager/ui_manager.h"
+#include <nvs_flash.h>
 
 static void scanI2CBus(TwoWire &bus, const char *name, int sda, int scl) {
   Serial.printf("\n[SCAN] %s (SDA=%d, SCL=%d)\n", name, sda, scl);
@@ -32,6 +33,19 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println("\n===== AIROWL BOOT =====");
+
+  Serial.println("[BOOT] Initializing NVS flash...");
+  esp_err_t ret = nvs_flash_init();
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    Serial.println("[BOOT] NVS partition needs to be erased, erasing...");
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    ret = nvs_flash_init();
+  }
+  if (ret == ESP_OK) {
+    Serial.println("[BOOT] NVS initialized successfully");
+  } else {
+    Serial.printf("[BOOT] ERROR: NVS initialization failed with code: 0x%x\n", ret);
+  }
 
   Wire.begin(TOUCH_SDA, TOUCH_SCL);
   Wire.setClock(400000);

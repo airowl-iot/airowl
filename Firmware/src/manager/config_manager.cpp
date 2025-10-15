@@ -227,7 +227,6 @@ bool ConfigManager::updateServiceEnabled(const String& name, bool enabled) {
 
 // ---------------- Save ----------------
 bool ConfigManager::saveConfigToFile() {
-    // Use heap allocation to avoid stack overflow (4KB is too large for stack)
     DynamicJsonDocument* doc = new DynamicJsonDocument(4096);
     if (!doc) {
         Serial.println("[CONFIG] Failed to allocate memory for JSON document");

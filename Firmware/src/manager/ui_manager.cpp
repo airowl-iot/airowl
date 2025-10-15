@@ -43,7 +43,6 @@ namespace APP{
     uint32_t wifiStateSubscriptionId = 0;
     uint32_t otaProgressSubscriptionId = 0;
 
-    // Display tracking variables
     static float lastPM25 = 0.0, lastPM10 = 0.0;
     static float lastTemp = 0.0, lastHumidity = 0.0;
     static float lastTVOC = 0.0, lastEco2 = 0.0;
@@ -99,12 +98,12 @@ namespace APP{
     };
     
     const AQIBreakpoint pm25Bps[] = {
-        {0.0, 12.0, 0, 50},
-        {12.1, 35.4, 51, 100},
-        {35.5, 55.4, 101, 150},
-        {55.5, 150.4, 151, 200},
-        {150.5, 250.4, 201, 300},
-        {250.5, 500.4, 301, 500}
+        {0.0, 15.9, 0, 50},      // Good: 0-15.9 µg/m³
+        {16.0, 25.9, 51, 100},   // Moderate: 16-25.9 µg/m³
+        {26.0, 37.9, 101, 150},  // Unhealthy for Sensitive: 26-37.9 µg/m³
+        {38.0, 50.9, 151, 200},  // Unhealthy: 38-50.9 µg/m³
+        {51.0, 75.9, 201, 300},  // Very Unhealthy: 51-75.9 µg/m³
+        {76.0, 500.0, 301, 500}  // Hazardous: 76+ µg/m³
     };
     
     const AQIBreakpoint pm10Bps[] = {
@@ -178,7 +177,7 @@ namespace APP{
         if (ui_pmChart != nullptr) {
             lv_chart_set_type(ui_pmChart, LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(ui_pmChart, CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_pmChart, LV_CHART_AXIS_PRIMARY_Y, 0, 100); 
+            lv_chart_set_range(ui_pmChart, LV_CHART_AXIS_PRIMARY_Y, 0, 150); 
 
             ui_PM10chart_series_1 = lv_chart_add_series(
                 ui_pmChart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
@@ -472,7 +471,7 @@ bool UIController::init() {
             auto wifiEvent = std::static_pointer_cast<const CORE::WiFiStateChangedEvent>(event);
             Serial.printf("[UIController] WiFi state changed: %d, SSID: %s, RSSI: %d\n",
                           (int)wifiEvent->getState(), wifiEvent->getSSID().c_str(), wifiEvent->getRSSI());
-            UIController::updateWiFiStatus();  // Call static method
+            UIController::updateWiFiStatus(); 
         }
     );
 
@@ -548,7 +547,6 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
         return;
     }
 
-    // Skip sensor display updates during OTA
     if (otaInProgress) {
         return;
     }
@@ -617,24 +615,26 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
 void UIController::updateWiFiStatus() {
     if (!running) return;
 
-    if (HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED) {
-        if (ui_nose != nullptr) {
-            lv_img_set_src(ui_nose, &ui_img_airowl_2_png);
+    bool isConnected = (HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED);
+
+    if (ui_nose != nullptr) {
+        if (isConnected) {
+            lv_img_set_src(ui_nose, &ui_img_airowl_2_png);  
+        } else {
+            lv_img_set_src(ui_nose, &ui_img_airowl_1_png);  
         }
-        if (ui_wifi != nullptr) {
+    }
+
+    if (ui_wifi != nullptr) {
+        if (isConnected) {
             lv_img_set_src(ui_wifi, &ui_img_wifi_on_png);
             lv_obj_remove_event_cb(ui_wifi, ui_event_WifiIcon);
-        }
-        
-    } else {
-        if (ui_nose != nullptr) {
-            lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
-        }
-        if (ui_wifi != nullptr) {
+            lv_obj_clear_flag(ui_wifi, LV_OBJ_FLAG_CLICKABLE);
+        } else {
             lv_img_set_src(ui_wifi, &ui_img_wifi_off_png);
             lv_obj_add_event_cb(ui_wifi, ui_event_WifiIcon, LV_EVENT_CLICKED, nullptr);
+            lv_obj_add_flag(ui_wifi, LV_OBJ_FLAG_CLICKABLE);
         }
-        
     }
 }
 
@@ -702,12 +702,12 @@ void UIController::updateEyeColors(uint32_t color) {
 }
 
 uint32_t UIController::getAQIColor(int aqi) {
-    if (aqi <= 50) return 0x00FF00;      // Good - Green
-    else if (aqi <= 100) return 0xFFFF00; // Moderate - Yellow
-    else if (aqi <= 150) return 0xFF8000; // Unhealthy for Sensitive - Orange
-    else if (aqi <= 200) return 0xFFA07A; // Unhealthy - Light Coral
-    else if (aqi <= 300) return 0x800080; // Very Unhealthy - Purple
-    else return 0x800000;                 // Hazardous - Maroon
+    if (aqi <= 50) return 0x00E400;      // Good - Green (#00E400)
+    else if (aqi <= 100) return 0xFFFF00; // Moderate - Yellow (#FFFF00)
+    else if (aqi <= 150) return 0xFF7E00; // Unhealthy for Sensitive - Orange (#FF7E00)
+    else if (aqi <= 200) return 0xFF0000; // Unhealthy - Red (#FF0000)
+    else if (aqi <= 300) return 0x8F3F97; // Very Unhealthy - Purple (#8F3F97)
+    else return 0x7E0023;                 // Hazardous - Maroon (#7E0023)
 }
 
 int UIController::calculateAQI(const float* pmValues) {
@@ -783,12 +783,11 @@ void UIController::task(void* parameter) {
 
         if (running) {
             esp_task_wdt_reset();
-            HAL::Display::lvHandler();  // Always handle LVGL to keep display responsive
+            HAL::Display::lvHandler();  
             esp_task_wdt_reset();
 
-            // Skip all other UI updates if OTA is in progress
             if (otaInProgress) {
-                vTaskDelay(pdMS_TO_TICKS(50));  // Longer delay during OTA
+                vTaskDelay(pdMS_TO_TICKS(50));  
                 continue;
             }
 
@@ -818,7 +817,7 @@ bool UIController::startTask() {
     BaseType_t result = xTaskCreatePinnedToCore(
         task,
         "UIController",
-        8192,  // Increased from 4096 to prevent stack overflow with LVGL rendering
+        8192,  
         NULL,
         2,
         &uiTaskHandle,

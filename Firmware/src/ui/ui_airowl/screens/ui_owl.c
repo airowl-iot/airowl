@@ -25,8 +25,8 @@ void ui_owl_screen_init(void)
     lv_obj_remove_style_all(ui_lefteye);
     lv_obj_set_width(ui_lefteye, 100);
     lv_obj_set_height(ui_lefteye, 100);
-    lv_obj_set_x(ui_lefteye, -60);
-    lv_obj_set_y(ui_lefteye, -60);
+    lv_obj_set_x(ui_lefteye, -58);
+    lv_obj_set_y(ui_lefteye, -38);
     lv_obj_set_align(ui_lefteye, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_lefteye, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_radius(ui_lefteye, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -47,8 +47,8 @@ void ui_owl_screen_init(void)
     lv_obj_remove_style_all(ui_righteye);
     lv_obj_set_width(ui_righteye, 100);
     lv_obj_set_height(ui_righteye, 100);
-    lv_obj_set_x(ui_righteye, 60);
-    lv_obj_set_y(ui_righteye, -60);
+    lv_obj_set_x(ui_righteye, 58);
+    lv_obj_set_y(ui_righteye, -38);
     lv_obj_set_align(ui_righteye, LV_ALIGN_CENTER);
     lv_obj_clear_flag(ui_righteye, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_radius(ui_righteye, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -67,10 +67,10 @@ void ui_owl_screen_init(void)
 
     ui_nose = lv_img_create(ui_owl);
     lv_img_set_src(ui_nose, &ui_img_airowl_1_png);
-    lv_obj_set_width(ui_nose, 211);
+    lv_obj_set_width(ui_nose, 200);
     lv_obj_set_height(ui_nose, 150);
-    lv_obj_set_x(ui_nose, 0);
-    lv_obj_set_y(ui_nose, 40);
+    lv_obj_set_x(ui_nose, -3);
+    lv_obj_set_y(ui_nose, 38);
     lv_obj_set_align(ui_nose, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_nose, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
     lv_obj_clear_flag(ui_nose, LV_OBJ_FLAG_SCROLLABLE);      /// Flags

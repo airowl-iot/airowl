@@ -25,7 +25,6 @@ bool ServiceManager::init() {
         return false;
     }
 
-    // Subscribe to WiFi state changes and store subscription ID for cleanup
     CORE::EventBus& eventBus = CORE::EventBus::getInstance();
     wifiEventSubscriptionId = eventBus.subscribe(
         CORE::Event::Type::WIFI_STATE_CHANGED,
@@ -38,14 +37,6 @@ bool ServiceManager::init() {
         }
     );
     Serial.printf("[SERVICE] Subscribed to WiFi events (ID: %u)\n", wifiEventSubscriptionId);
-
-    if (isServiceEnabled(ServiceType::WIFI)) {
-        if (!HAL::WiFi::init()) {
-            Serial.println("[SERVICE] Failed to initialize WiFi HAL");
-            return false;
-        }
-        Serial.println("[SERVICE] WiFi HAL initialized");
-    }
 
     if (isServiceEnabled(ServiceType::MQTT)) {
         Serial.println("[SERVICE] MQTT service enabled, will initialize after WiFi connection");
@@ -125,7 +116,6 @@ bool ServiceManager::start() {
 void ServiceManager::stop() {
     if (!running) return;
 
-    // CRITICAL: Unsubscribe from events to prevent dangling this pointer
     if (wifiEventSubscriptionId != 0) {
         CORE::EventBus& eventBus = CORE::EventBus::getInstance();
         eventBus.unsubscribe(wifiEventSubscriptionId);
@@ -205,20 +195,15 @@ bool ServiceManager::startService(ServiceType type) {
                 String pass = cfg->params.at("password");
 
                 if (ssid.length() > 0) {
-                    Serial.printf("[SERVICE] Connecting to stored WiFi: %s\n", ssid.c_str());
+                    Serial.printf("[SERVICE] Connecting to WiFi from config.json: %s\n", ssid.c_str());
                     if (SVC::WiFiService::connect(ssid.c_str(), pass.c_str())) {
                         return true;
                     }
-                    Serial.println("[SERVICE] Failed to connect with stored credentials");
+                    Serial.println("[SERVICE] Failed to connect with config.json credentials");
                 }
             }
-            
-            Serial.println("[SERVICE] Starting WiFi provisioning mode");
-            uint32_t timeout = 120000;
-            if (cfg->params.count("provision_timeout")) {
-                timeout = cfg->params.at("provision_timeout").toInt();
-            }
-            return SVC::WiFiService::startProvisioning(nullptr, timeout);
+            Serial.println("[SERVICE] Attempting auto-connect with saved credentials or starting portal...");
+            return SVC::WiFiService::connect();
         }
 
         case ServiceType::MQTT: {

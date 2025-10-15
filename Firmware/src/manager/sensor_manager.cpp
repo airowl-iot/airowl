@@ -274,7 +274,6 @@ void SensorManager::publishMqttAverages() {
         }
     } else {
         Serial.println("[SensorManager] MQTT not connected, skipping publish");
-        // Only attempt MQTT reconnect if WiFi is connected
         if (SVC::MQTTService::getState() == SVC::MQTTService::State::DISCONNECTED &&
             HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED) {
             Serial.println("[SensorManager] Attempting to reconnect to MQTT...");
