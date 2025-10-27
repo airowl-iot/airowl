@@ -76,7 +76,7 @@ void ui_Humdgraph_screen_init(void)
     lv_obj_set_x(ui_humlabel, -84);
     lv_obj_set_y(ui_humlabel, 2);
     lv_obj_set_align(ui_humlabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_humlabel, "R.Humd");
+    lv_label_set_text(ui_humlabel, "Humd");
     lv_obj_set_style_text_color(ui_humlabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_humlabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_humlabel, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);

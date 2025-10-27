@@ -287,6 +287,7 @@ void SensorManager::publishMqttAverages() {
 void SensorManager::task(void*) {
     for (;;) {
         if (running) {
+            esp_task_wdt_reset();
            
             readPM700Sensor();
             readAHTSensor();
@@ -299,12 +300,27 @@ void SensorManager::task(void*) {
 
 bool SensorManager::startTask() {
     if (sensorTaskHandle) return true;
-    return xTaskCreatePinnedToCore(task, "SensorManager", 4096,
+    bool created =  xTaskCreatePinnedToCore(task, "SensorManager", 4096,
                                    nullptr, 1, &sensorTaskHandle, 0) == pdPASS;
+    if (created) {
+       esp_err_t err = esp_task_wdt_add(sensorTaskHandle);
+        if (err == ESP_OK) {
+            Serial.println("[SensorManager] WDT added for sensor task");
+        } else if (err == ESP_ERR_INVALID_STATE) {
+            Serial.println("[SensorManager] WDT not initialized globally yet");
+        } else {
+            Serial.printf("[SensorManager] Failed to add WDT: 0x%x\n", err);
+        }
+    }
+
+    return created;
 }
 
 bool SensorManager::restartTask() {
     if (sensorTaskHandle) {
+        esp_task_wdt_delete(sensorTaskHandle);
+        Serial.println("[SensorManager] WDT removed for sensor task");
+
         TaskHandle_t tempHandle = sensorTaskHandle;
         sensorTaskHandle = nullptr; 
         vTaskDelete(tempHandle);

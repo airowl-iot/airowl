@@ -232,7 +232,12 @@ HAL::WiFi::ConnectionInfo WiFiService::getConnectionInfo() {
 void WiFiService::onEvent(EventCallback callback) { eventCallback = callback; }
 
 void WiFiService::task(void* parameter) {
+    // esp_task_wdt_add(NULL);
+    // Serial.println("[WiFiService] Task started with WDT protection");
+
+
     while (true) {
+        // esp_task_wdt_reset();
 
         HAL::WiFi::Status halStatus = HAL::WiFi::getStatus();
 
@@ -248,6 +253,7 @@ void WiFiService::task(void* parameter) {
             updateState(State::FAILED);
             Serial.println("[SVC] WiFi connection failed");
         }
+        // esp_task_wdt_reset();
 
         switch (currentState) {
             case State::CONNECTED:
@@ -311,7 +317,7 @@ void WiFiService::task(void* parameter) {
                 break;
             default: break;
         }
-
+        // esp_task_wdt_reset();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -320,11 +326,18 @@ bool WiFiService::startTask() {
     if (wifiTaskHandle != nullptr) return true;
 
     BaseType_t result = xTaskCreatePinnedToCore(task, "WiFiService", 8192, NULL, 1, &wifiTaskHandle, 0);
-    return (result == pdPASS);
+    if (result == pdPASS) {
+        return true;
+    }
+    Serial.println("[WiFiService] ERROR: Failed to create WiFi task");
+    return false;  // add this line
 }
 
 bool WiFiService::restartTask() {
     if (wifiTaskHandle != nullptr) {
+        // esp_task_wdt_delete(wifiTaskHandle);
+        Serial.println("[WiFiService] WDT removed for WiFi task");
+
         TaskHandle_t tempHandle = wifiTaskHandle;
         wifiTaskHandle = nullptr;  
         vTaskDelete(tempHandle);

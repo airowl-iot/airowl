@@ -10,6 +10,8 @@
 #include "manager/ui_manager.h"
 #include <nvs_flash.h>
 
+#define WDT_TIMEOUT_SECONDS 180
+
 static void scanI2CBus(TwoWire &bus, const char *name, int sda, int scl) {
   Serial.printf("\n[SCAN] %s (SDA=%d, SCL=%d)\n", name, sda, scl);
   int nDevices = 0;
@@ -46,6 +48,15 @@ void setup() {
   } else {
     Serial.printf("[BOOT] ERROR: NVS initialization failed with code: 0x%x\n", ret);
   }
+
+  esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = WDT_TIMEOUT_SECONDS * 1000,
+    .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
+    .trigger_panic = true
+  };
+  esp_task_wdt_reconfigure(&wdt_config);  
+  esp_task_wdt_add(NULL);
+
 
   Wire.begin(TOUCH_SDA, TOUCH_SCL);
   Wire.setClock(400000);
@@ -94,5 +105,6 @@ void setup() {
 }
 
 void loop() {
+  esp_task_wdt_reset();
   vTaskDelay(pdMS_TO_TICKS(10));
 }
