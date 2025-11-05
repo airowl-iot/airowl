@@ -419,9 +419,9 @@ void ServiceManager::onWiFiConnected() {
             }
         }
 
-        Serial.println("[SERVICE] Checking for OTA updates...");
+        Serial.println("[SERVICE] Scheduling delayed OTA update check...");
         SVC::OTA::onWiFiConnected();
-        Serial.println("[SERVICE] OTA update check completed");
+        Serial.println("[SERVICE] OTA update check scheduled (will execute after delay)");
     }
 
     if (isServiceEnabled(ServiceType::MQTT)) {

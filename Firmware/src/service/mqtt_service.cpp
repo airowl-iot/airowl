@@ -381,7 +381,7 @@ bool MQTTService::connectToOizom() {
     return result;
 }
 
-bool MQTTService::publishSensorData(const char* deviceId, float pm1, float pm25, float pm4, float pm10, float temperature, float humidity, float tvoc){
+bool MQTTService::publishSensorData(const char* deviceId, float pm25, float pm10, float temperature, float humidity, float eco2, float tvoc){
     if (!initialized) {
         Serial.println("[MQTT] ERROR: Service not initialized");
         return false;
@@ -397,15 +397,14 @@ bool MQTTService::publishSensorData(const char* deviceId, float pm1, float pm25,
 
     int written = snprintf(payload, BUFFER_SIZE,
         "{\"deviceId\":\"%s\","
-        "\"p3\":%.2f,"      // PM1.0
         "\"p1\":%.2f,"      // PM2.5
         "\"p2\":%.2f,"      // PM10
-        "\"p5\":%.2f,"      // PM4.0
         "\"temp\":%.2f,"    // temperature
         "\"hum\":%.2f,"     // humidity
+        "\"g1\":%.2f,"     // eco2
         "\"v2\":%.2f}",     // TVOC
         deviceId ? deviceId : "unknown",
-        pm1, pm25, pm10, pm4, temperature, humidity, tvoc
+         pm25, pm10, temperature, humidity, eco2, tvoc
     );
 
     if (written < 0 || written >= BUFFER_SIZE) {

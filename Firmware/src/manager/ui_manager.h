@@ -44,7 +44,9 @@ public:
     static void task(void* parameter);
     static bool startTask();
     static bool restartTask();
-    static void showOTAScreen();  
+    static void showOTAScreen();
+    static String FirmwareVersionLabel();
+    static TaskHandle_t getTaskHandle();  
 
 private:
     static void handleSensorReadingEvent(const std::shared_ptr<const CORE::Event>& event);

@@ -31,6 +31,11 @@ namespace {
     String versionURL;
     String firmwareURL;
 
+    // OTA delay mechanism
+    static unsigned long wifiConnectedTime = 0;
+    static bool otaCheckPending = false;
+    static const unsigned long OTA_CHECK_DELAY_MS = 27000; 
+
     String fetchLatestVersion() {
         if (versionURL.isEmpty()) {
             auto* cfg = ConfigManager::getInstance();
@@ -82,22 +87,31 @@ namespace {
 
     bool isUpdateAvailable() {
         String latest = fetchLatestVersion();
-        if (latest.isEmpty()) return false;
-
-        String current;
-        auto* cfg = ConfigManager::getInstance();
-        if (cfg && cfg->isInitialized()) {
-            current = cfg->getFirmwareVersion();
+        if (latest.isEmpty()) {
+            Serial.println("[OTA] Failed to fetch latest version from server");
+            return false;
         }
 
+        String current = APP::UIController::FirmwareVersionLabel();
         if (current.isEmpty()) {
-            Serial.println("[OTA] ERROR: firmwareVersion not configured");
+            Serial.println("[OTA] ERROR: UI firmware version label is empty or not set");
             return false;
         }
 
         current.trim();
-        Serial.printf("[OTA] Current Firmware: %s, Latest Firmware: %s\n", current.c_str(), latest.c_str());
-        return (latest != current);
+        latest.trim();
+
+        Serial.printf("[OTA] Version Comparison - Current (UI Label): '%s', Latest (Server): '%s'\n",
+                      current.c_str(), latest.c_str());
+
+        bool updateAvailable = (latest != current);
+        if (updateAvailable) {
+            Serial.printf("[OTA] ✓ Update available: %s -> %s\n", current.c_str(), latest.c_str());
+        } else {
+            Serial.printf("[OTA] No update needed. Already on version: %s\n", current.c_str());
+        }
+
+        return updateAvailable;
     }
 
     void updateState(SVC::OTA::State newState, int progress = -1, const char* message = nullptr) {
@@ -246,13 +260,22 @@ bool OTA::beginUpdate() {
     if (!ok) {
         updateState(State::FAILED, 0, "OTA failed");
         otaInProgress = false;
+        Serial.println("[OTA] ✗ Update failed!");
         return false;
     }
 
     updateState(State::SUCCESS, 100, "Update complete, rebooting");
-    otaInProgress = false;
-    vTaskDelay(pdMS_TO_TICKS(200));
+    Serial.println("[OTA] ✓ Update successful!");
+    Serial.println("[OTA] Rebooting ESP32 in 2 seconds...");
+    Serial.flush();
+
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    Serial.println("[OTA] Restarting NOW...");
+    Serial.flush();
+
     ESP.restart();
+
     return true;
 }
 
@@ -260,14 +283,12 @@ OTA::State OTA::getState() { return currentState; }
 
 const char* OTA::getCurrentVersion() {
     static String versionStr;
-    auto* cfg = ConfigManager::getInstance();
-    if (cfg && cfg->isInitialized()) {
-        versionStr = cfg->getFirmwareVersion();
-        if (!versionStr.isEmpty()) {
-            return versionStr.c_str();
-        }
+    versionStr = APP::UIController::FirmwareVersionLabel();
+    if (!versionStr.isEmpty()) {
+        return versionStr.c_str();
     }
-    return "unknown"; 
+    Serial.println("[OTA] WARNING: UI firmware version label is empty");
+    return "unknown";
 }
 
 void OTA::onProgress(ProgressCallback callback) { progressCallback = callback; }
@@ -275,7 +296,7 @@ void OTA::onProgress(ProgressCallback callback) { progressCallback = callback; }
 void OTA::suspendOtherTasks() {
     if (tasksAreSuspended) return;
 
-    Serial.println("[OTA] Suspending other tasks...");
+    Serial.println("[OTA] Suspending non-essential tasks...");
     suspendedTaskCount = 0;
     memset(suspendedTasks, 0, sizeof(suspendedTasks));
 
@@ -283,8 +304,11 @@ void OTA::suspendOtherTasks() {
     if (sensorTask && suspendedTaskCount < maxSuspendedTasks) {
         vTaskSuspend(sensorTask);
         suspendedTasks[suspendedTaskCount++] = sensorTask;
-    } 
+        Serial.println("[OTA] Sensor task suspended");
+    }
+
     tasksAreSuspended = true;
+    Serial.printf("[OTA] Total tasks suspended: %d (UI task kept alive for display)\n", suspendedTaskCount);
 }
 
 void OTA::resumeOtherTasks() {
@@ -307,18 +331,58 @@ void OTA::resumeOtherTasks() {
 }
 
 void OTA::onWiFiConnected() {
-    if (isUpdateAvailable()) {
-        APP::UIController::showOTAScreen();
-        vTaskDelay(pdMS_TO_TICKS(100));
-        suspendOtherTasks();
-        bool ok = beginUpdate(); 
-        if (!ok) resumeOtherTasks();
-    }
+    Serial.printf("[OTA] WiFi connected. Scheduling OTA check in %lu seconds...\n", OTA_CHECK_DELAY_MS / 1000);
+    wifiConnectedTime = millis();
+    otaCheckPending = true;
 }
 
 void OTA::loop() { /* empty */ }
 
-void OTA::task(void* parameter) { while(true) vTaskDelay(pdMS_TO_TICKS(5000)); }
+void OTA::task(void* parameter) {
+    Serial.println("[OTA] Task started");
+
+    while(true) {
+        if (otaCheckPending) {
+            unsigned long elapsed = millis() - wifiConnectedTime;
+
+            if (elapsed >= OTA_CHECK_DELAY_MS) {
+                Serial.printf("[OTA] Delay complete (%lu seconds). Checking for updates...\n", elapsed / 1000);
+                otaCheckPending = false;
+
+                if (isUpdateAvailable()) {
+                    Serial.println("[OTA] ✓ Update available! Starting OTA process...");
+
+                    Serial.println("[OTA] Switching to OTA screen...");
+                    APP::UIController::showOTAScreen();
+                    vTaskDelay(pdMS_TO_TICKS(500)); 
+
+                    Serial.println("[OTA] Suspending non-essential tasks...");
+                    suspendOtherTasks();
+                    vTaskDelay(pdMS_TO_TICKS(100));
+
+                    Serial.println("[OTA] Starting firmware download...");
+                    bool ok = beginUpdate();
+
+                    if (!ok) {
+                        Serial.println("[OTA] ✗ Update failed, resuming tasks...");
+                        resumeOtherTasks();
+                    }
+                } else {
+                    Serial.println("[OTA] No update available");
+                }
+            } else {
+                static unsigned long lastCountdown = 0;
+                if (millis() - lastCountdown >= 5000) {
+                    unsigned long remaining = (OTA_CHECK_DELAY_MS - elapsed) / 1000;
+                    Serial.printf("[OTA] Waiting %lu more seconds before checking for updates...\n", remaining);
+                    lastCountdown = millis();
+                }
+            }
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
 
 bool OTA::startTask() {
     if (otaTaskHandle) return true;

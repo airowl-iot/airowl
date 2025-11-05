@@ -1,4 +1,4 @@
-// ota_service.h - Anedya OTA Service for Airowl 3.0
+// ota_service.h - OTA Service for Airowl 3.0
 #pragma once
 
 #include <functional>

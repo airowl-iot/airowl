@@ -261,8 +261,7 @@ void SensorManager::publishMqttAverages() {
                       "Temp: %.2f, Humd: %.2f, TVOC: %.2f, eCO2: %.2f\n",
                       avgPM25, avgPM10, avgTemp, avgHumd, avgTvoc, avgECo2);
 
-        if (SVC::MQTTService::publishSensorData(deviceId.c_str(), avgPM1, avgPM25, avgPM4, avgPM10,
-                                               avgTemp, avgHumd, avgTvoc)) {
+        if (SVC::MQTTService::publishSensorData(deviceId.c_str(), avgPM25, avgPM10, avgTemp, avgHumd, avgECo2, avgTvoc)) {
             Serial.println("[SensorManager] ✓ 2-minute averaged sensor data published to MQTT successfully");
             pmBufferCount = 0;
             pmBufferIndex = 0;

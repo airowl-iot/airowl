@@ -40,7 +40,6 @@ public:
     // Config updates
     void updateFromConfigManager();
 
-    // WiFi event handler
     void onWiFiConnected();
 
 private:
@@ -55,7 +54,7 @@ private:
     bool initialized;
     bool running;
     std::map<ServiceType, ServiceConfig> services;
-    uint32_t wifiEventSubscriptionId = 0;  // Track subscription to unsubscribe on stop
+    uint32_t wifiEventSubscriptionId = 0; 
 };
 
 } // namespace APP

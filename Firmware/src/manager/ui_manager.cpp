@@ -8,6 +8,7 @@
 #include <esp_sntp.h>
 #include "../service/ota_service.h"
 #include "ui/ui_airowl/ui.h"
+#include "manager/config_manager.h"
 
 namespace APP{
 
@@ -309,7 +310,7 @@ void UIController::setupTvocChart() {
         if (ui_TVOCchart  != nullptr) {
             lv_chart_set_type(ui_TVOCchart , LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(ui_TVOCchart , CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_TVOCchart , LV_CHART_AXIS_PRIMARY_Y, 0, 200); 
+            lv_chart_set_range(ui_TVOCchart , LV_CHART_AXIS_PRIMARY_Y, 0, 1000); 
 
             ui_Tvocchart_series_1 = lv_chart_add_series(
                 ui_TVOCchart , lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
@@ -395,17 +396,22 @@ void UIController::setupeCo2Chart() {
  
 
 void UIController::showOTAScreen() {
-
     Serial.println("[UIController] OTA mode activated - freezing UI updates");
+
+    // Set flag FIRST to prevent any further UI updates
     otaInProgress = true;
 
+    // Delete all LVGL animations to stop scheduled screen transitions
+    lv_anim_del_all();
+    Serial.println("[UIController] Cleared all LVGL animations");
+
     if (ui_ota != nullptr) {
+        // Load OTA screen immediately without animation
         lv_scr_load(ui_ota);
-        Serial.println("[UIController] Switched to OTA screen");
+        Serial.println("[UIController] Switched to OTA screen (locked)");
     } else {
         Serial.println("[UIController] ERROR: ui_ota is NULL!");
     }
-
 }
 
 bool UIController::init() {
@@ -811,20 +817,50 @@ void UIController::task(void* parameter) {
 
 bool UIController::startTask() {
     if (uiTaskHandle != nullptr) {
-        return true; 
+        return true;
     }
-    
+
     BaseType_t result = xTaskCreatePinnedToCore(
         task,
         "UIController",
-        8192,  
+        8192,
         NULL,
         2,
         &uiTaskHandle,
         1
     );
-    
+
     return (result == pdPASS);
+}
+
+String UIController::FirmwareVersionLabel() {
+    if (ui_firmwareversion == nullptr) {
+        Serial.println("[UIController] ERROR: ui_firmwareversion label is NULL");
+        return "";
+    }
+
+    const char* labelText = lv_label_get_text(ui_firmwareversion);
+    if (labelText == nullptr) {
+        Serial.println("[UIController] ERROR: ui_firmwareversion label text is NULL");
+        return "";
+    }
+
+    String version = String(labelText);
+
+    // Remove "Version-" or "Version- " prefix if present
+    if (version.startsWith("Version-")) {
+        version = version.substring(8);
+    } else if (version.startsWith("Version- ")) {
+        version = version.substring(9);
+    }
+
+    version.trim();
+    Serial.printf("[UIController] Current firmware version from UI label: '%s'\n", version.c_str());
+    return version;
+}
+
+TaskHandle_t UIController::getTaskHandle() {
+    return uiTaskHandle;
 }
 
 } // namespace APP
