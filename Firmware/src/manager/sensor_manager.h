@@ -6,8 +6,6 @@
 #include "hal/hal_pm700.h"
 #include "hal/hal_aht.h"
 #include "event_manager.h"
-#include <freertos/FreeRTOS.h>
-#include <freertos/semphr.h>
 
 namespace APP {
 

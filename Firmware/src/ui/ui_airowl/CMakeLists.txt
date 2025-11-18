@@ -1,5 +1,6 @@
 SET(SOURCES ui_Intro.c
     ui_qrcode.c
+    ui_matter.c
     ui_owl.c
     ui_dashboard.c
     ui_Tempgraph.c
@@ -11,7 +12,7 @@ SET(SOURCES ui_Intro.c
     ui_comp_hook.c
     ui_helpers.c
     ui_events.c
-    ui_img_oizom_logo_png.c
+    ui_img_airowl_logo_png.c
     ui_img_airowl_1_png.c
     ui_img_582762761.c)
 

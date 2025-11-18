@@ -255,10 +255,7 @@ void ui_event_owl(lv_event_t * e)
         eyeright_Animation(ui_rightpupil, 14200);
         eyeright_Animation(ui_leftpupil, 14200);
 
-        // Automatic transition to dashboard if not clicked
-        _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_FADE_ON, 500, 20000, &ui_dashboard_screen_init);
     }
-    
     if (event_code == LV_EVENT_CLICKED){ 
             _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
     }

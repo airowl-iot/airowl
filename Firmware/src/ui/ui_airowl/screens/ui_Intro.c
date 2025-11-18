@@ -37,7 +37,7 @@ void ui_Intro_screen_init(void)
     lv_obj_set_style_bg_opa(ui_Intro, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_logo = lv_img_create(ui_Intro);
-    lv_img_set_src(ui_logo, &ui_img_oizom_logo_png);
+    lv_img_set_src(ui_logo, &ui_img_airowl_logo_png);
     lv_obj_set_width(ui_logo, LV_SIZE_CONTENT);   /// 250
     lv_obj_set_height(ui_logo, LV_SIZE_CONTENT);    /// 250
     lv_obj_set_align(ui_logo, LV_ALIGN_CENTER);

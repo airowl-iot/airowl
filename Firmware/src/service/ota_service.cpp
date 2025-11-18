@@ -85,6 +85,12 @@ namespace {
         return v;
     }
 
+    int versionToInt(const String& v) {
+    int major = 0, minor = 0, patch = 0;
+    sscanf(v.c_str(), "%d.%d.%d", &major, &minor, &patch);
+    return major * 10000 + minor * 100 + patch;
+    }
+
     bool isUpdateAvailable() {
         String latest = fetchLatestVersion();
         if (latest.isEmpty()) {
@@ -101,18 +107,21 @@ namespace {
         current.trim();
         latest.trim();
 
-        Serial.printf("[OTA] Version Comparison - Current (UI Label): '%s', Latest (Server): '%s'\n",
+        int currentVer = versionToInt(current);
+        int latestVer  = versionToInt(latest);
+
+         Serial.printf("[OTA] Version Compare → current=%d, latest=%d\n",
+                  currentVer, latestVer);
+
+    if (latestVer > currentVer) {
+        Serial.printf("[OTA] Update available: %s → %s\n",
                       current.c_str(), latest.c_str());
-
-        bool updateAvailable = (latest != current);
-        if (updateAvailable) {
-            Serial.printf("[OTA] ✓ Update available: %s -> %s\n", current.c_str(), latest.c_str());
-        } else {
-            Serial.printf("[OTA] No update needed. Already on version: %s\n", current.c_str());
-        }
-
-        return updateAvailable;
+        return true;
     }
+
+    Serial.println("[OTA] No update needed (current version is newer)");
+    return false;
+}
 
     void updateState(SVC::OTA::State newState, int progress = -1, const char* message = nullptr) {
         const char* stateNames[] = {
