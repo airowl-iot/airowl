@@ -40,7 +40,9 @@
       "enabled": true,
       "versionURL" : "  ",
       "firmwareURL" :" "
+    },
+    "matter": {
+      "enabled": true
     }
   }
-
 }
