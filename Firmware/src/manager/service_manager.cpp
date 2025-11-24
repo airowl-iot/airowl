@@ -3,6 +3,7 @@
 #include "service/wifi_service.h"
 #include "service/mqtt_service.h"
 #include "service/ota_service.h"
+#include "service/matter_service.h"
 #include <WiFi.h>
 
 namespace APP {
@@ -49,6 +50,10 @@ bool ServiceManager::init() {
         
         Serial.println("[SERVICE] OTA service enabled (HAL not yet implemented)");
     }
+    if (isServiceEnabled(ServiceType::MATTER)) {
+
+         Serial.println("[SERVICE] Matter service enabled, will initialize after WiFi connection");
+    }
 
     initialized = true;
     Serial.println("[SERVICE] ServiceManager initialized");
@@ -89,6 +94,10 @@ bool ServiceManager::start() {
             }
             if (type == ServiceType::OTA) {
                 Serial.println("[SERVICE] OTA service will start after WiFi connection");
+                continue;
+            }
+            if (type == ServiceType::MATTER) {
+                Serial.println("[SERVICE] MATTER service will start after WiFi connection");
                 continue;
             }
 
@@ -143,6 +152,7 @@ ServiceManager::ServiceType ServiceManager::stringToServiceType(const String& ty
     if (type == "wifi") return ServiceType::WIFI;
     if (type == "mqtt") return ServiceType::MQTT;
     if (type == "ota") return ServiceType::OTA;
+    if (type == "matter") return ServiceType::MATTER;
     return ServiceType::UNKNOWN;
 }
 
@@ -151,6 +161,7 @@ String ServiceManager::serviceTypeToString(ServiceType type) {
         case ServiceType::WIFI: return "wifi";
         case ServiceType::MQTT: return "mqtt";
         case ServiceType::OTA: return "ota";
+        case ServiceType::MATTER: return "matter";
         default: return "unknown";
     }
 }
@@ -328,6 +339,28 @@ bool ServiceManager::startService(ServiceType type) {
             return true;
         }
 
+        case ServiceType::MATTER: {
+            if (WiFi.status() != WL_CONNECTED) {
+                Serial.println("[SERVICE] Matter requires WiFi connection, deferring initialization");
+                return false;
+            }
+
+            Serial.println("[SERVICE] Initializing Matter service...");
+
+            if (!SVC::Matter::init()) {
+                Serial.println("[SERVICE] Failed to initialize Matter service");
+                return false;
+            }
+
+            if (!SVC::Matter::startTask()) {
+                Serial.println("[SERVICE] Failed to start Matter task");
+                return false;
+            }
+
+            Serial.println("[SERVICE] Matter service started successfully");
+            return true;
+        }
+
         default:
             Serial.printf("[SERVICE] Unknown service type: %d\n", (int)type);
             return false;
@@ -360,6 +393,11 @@ bool ServiceManager::stopService(ServiceType type) {
 
         case ServiceType::OTA: {
             Serial.println("[SERVICE] OTA stop not yet implemented");
+            return false;
+        }
+
+        case ServiceType::MATTER: {
+            Serial.println("[SERVICE] MATTER stop not yet implemented");
             return false;
         }
 
@@ -432,6 +470,16 @@ void ServiceManager::onWiFiConnected() {
             Serial.println("[SERVICE] Failed to start MQTT service after WiFi connection");
         }
     }
+
+    if (isServiceEnabled(ServiceType::MATTER)) {
+        Serial.println("[SERVICE] Matter service is enabled, attempting to start...");
+        if (startService(ServiceType::MATTER)) {
+            Serial.println("[SERVICE] Matter service started successfully after WiFi connection");
+        } else {
+            Serial.println("[SERVICE] Failed to start Matter service after WiFi connection");
+        }
+    }
+
 }
 
 } // namespace APP

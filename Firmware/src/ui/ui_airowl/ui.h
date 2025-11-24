@@ -25,6 +25,7 @@ extern "C" {
 #include "screens/ui_dashboard.h"
 #include "screens/ui_Intro.h"
 #include "screens/ui_qrcode.h"
+#include "screens/ui_matter.h"
 #include "screens/ui_owl.h"
 #include "screens/ui_dashboard.h"
 #include "screens/ui_Tempgraph.h"
@@ -59,10 +60,10 @@ LV_FONT_DECLARE(ui_font_Inter38);
 LV_FONT_DECLARE(ui_font_Inter40);
 
 // IMAGES AND IMAGE SETS
-LV_IMG_DECLARE(ui_img_airowl_logo_png);   
-LV_IMG_DECLARE(ui_img_airowl_1_png);  
-LV_IMG_DECLARE(ui_img_airowl_2_png);    
-LV_IMG_DECLARE(ui_img_582762761);   
+LV_IMG_DECLARE(ui_img_airowl_logo_png);    // assets/oizom_logo.png
+LV_IMG_DECLARE(ui_img_airowl_1_png);    // assets/airowl_1.png
+LV_IMG_DECLARE(ui_img_airowl_2_png);    // assets/airowl_2.png
+LV_IMG_DECLARE(ui_img_582762761);    // assets/celsius-degrees-symbol-of-temperature.png
 LV_IMG_DECLARE(ui_img_26368195);
 LV_IMG_DECLARE(ui_img_26368195);
 LV_IMG_DECLARE(ui_img_wifi_off_png);

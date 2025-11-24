@@ -19,7 +19,10 @@ namespace CORE {
             OTA_COMPLETE,
             SENSOR_READING,
             MODE_CHANGED,
-            MQTT_STATE_CHANGED
+            MQTT_STATE_CHANGED,
+            MATTER_COMMISSIONED,
+            MATTER_STATE_CHANGED,
+            MATTER_ATTRIBUTE_UPDATED
         };
 
         explicit Event(Type type) : type_(type), timestamp_(millis()) {}
@@ -85,6 +88,38 @@ namespace CORE {
 
     private:
         bool success_;
+    };
+
+    class MatterCommissionedEvent : public Event {
+    public:
+        MatterCommissionedEvent() : Event(Type::MATTER_COMMISSIONED) {}
+    };
+
+    class MatterStateChangedEvent : public Event {
+    public:
+        MatterStateChangedEvent(const String& msg)
+            : Event(Type::MATTER_STATE_CHANGED), message(msg) {}
+
+        String getMessage() const { return message; }
+
+    private:
+        String message;
+    };
+
+    class MatterAttributeUpdatedEvent : public Event {
+    public:
+        MatterAttributeUpdatedEvent(float t, float h, float aqi)
+            : Event(Type::MATTER_ATTRIBUTE_UPDATED),
+            temperature(t), humidity(h), aqiValue(aqi) {}
+
+        float getTemperature() const { return temperature; }
+        float getHumidity() const { return humidity; }
+        float getAQI() const { return aqiValue; }
+
+    private:
+        float temperature;
+        float humidity;
+        float aqiValue;
     };
 
     class MQTTStateChangedEvent : public Event {

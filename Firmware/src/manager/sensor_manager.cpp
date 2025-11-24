@@ -162,6 +162,7 @@ void SensorManager::readAHTSensor() {
 
         temperature = lastAHTData.temperature;
         humidity = lastAHTData.humidity;
+        AQI = (float)lastAHTData.aqi;
 
         auto event = std::make_shared<CORE::SensorReadingEvent>(
             CORE::SensorReadingEvent::SensorType::AHT,
@@ -209,6 +210,52 @@ void SensorManager::calculatePMAverages(float& avgPM25, float& avgPM10) {
 
     Serial.printf("[SensorManager] Calculated 2-min averages from %d readings - "
                   "PM2.5: %.2f, PM10: %.2f\n", pmBufferCount, avgPM25, avgPM10);
+}
+
+float SensorManager::getPM25() {
+    // Instantaneous PM2.5 from the PM700 device
+    return lastPM700Data.pm25;
+}
+
+float SensorManager::getPM25Avg() {
+    // Averaged PM2.5 using the same 2-minute MQTT buffer
+    if (pmBufferCount == 0) {
+        return lastPM700Data.pm25;
+    }
+
+    float sum = 0;
+    for (int i = 0; i < pmBufferCount; i++) {
+        sum += pm25Buffer[i];
+    }
+    return sum / pmBufferCount;
+}
+
+float SensorManager::getPM10() {
+    // Instantaneous PM10 from the PM700 device
+    return lastPM700Data.pm10;
+}
+
+float SensorManager::getPM10Avg() {
+    // Averaged PM10 using the same 2-minute MQTT buffer
+    if (pmBufferCount == 0) {
+        return lastPM700Data.pm10;
+    }
+
+    float sum = 0;
+    for (int i = 0; i < pmBufferCount; i++) {
+        sum += pm10Buffer[i];
+    }
+    return sum / pmBufferCount;
+}
+
+float SensorManager::getTVOC() {
+    // Instantaneous TVOC from the ENS160 sensor (in ppb)
+    return (float)lastAHTData.tvoc;
+}
+
+float SensorManager::getCO2() {
+    // Instantaneous eCO2 from the ENS160 sensor (in ppm)
+    return (float)lastAHTData.eco2;
 }
 
 void SensorManager::calculateAHTAverages(float& avgTemp, float& avgHumd,
@@ -273,26 +320,30 @@ void SensorManager::publishMqttAverages() {
         }
     } else {
         Serial.println("[SensorManager] MQTT not connected, skipping publish");
-        if (SVC::MQTTService::getState() == SVC::MQTTService::State::DISCONNECTED &&
-            HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED) {
-            Serial.println("[SensorManager] Attempting to reconnect to MQTT...");
-            SVC::MQTTService::connectToOizom();
-        }
     }
 
     lastMqttPublish = millis();
 }
 
 void SensorManager::task(void*) {
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
     for (;;) {
         if (running) {
             esp_task_wdt_reset();
-           
+
             readPM700Sensor();
+
+            esp_task_wdt_reset();
+
             readAHTSensor();
+
+            esp_task_wdt_reset();
 
             publishMqttAverages();
         }
+
+        esp_task_wdt_reset();
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

@@ -15,6 +15,7 @@ public:
         WIFI,
         MQTT,
         OTA,
+        MATTER,
         UNKNOWN
     };
 
@@ -25,7 +26,6 @@ public:
 
     static ServiceManager& getInstance();
 
-    // Lifecycle
     bool init();
     bool start();
     void stop();

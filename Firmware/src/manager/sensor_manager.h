@@ -34,6 +34,20 @@ public:
     static const SensorConfig& getPM700Config();
     static const SensorConfig& getAHTConfig();
 
+    static float getTemperature() { return temperature; }
+    static float getHumidity() { return humidity; }
+    static float getAQI() { return AQI; }
+
+    // Particulate Matter accessors
+    static float getPM25();     // instantaneous PM2.5
+    static float getPM25Avg();  // averaged 2-minute PM2.5
+    static float getPM10();     // instantaneous PM10
+    static float getPM10Avg();  // averaged 2-minute PM10
+
+    // Gas concentration accessors
+    static float getTVOC();     // instantaneous TVOC in ppb
+    static float getCO2();      // instantaneous eCO2 in ppm
+
     // Task control
     static bool startTask();
     static bool restartTask();

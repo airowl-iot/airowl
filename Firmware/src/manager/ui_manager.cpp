@@ -20,6 +20,7 @@ namespace APP{
         {"dashboard", ui_dashboard},
         {"intro", ui_Intro},
         {"qrcode", ui_qrcode},
+        {"matter", ui_matter},
         {"owl", ui_owl},
         {"tempgraph", ui_tempgraph},
         {"pm25graph", ui_PM25graph},
@@ -434,6 +435,7 @@ bool UIController::init() {
     
     ui_Intro_screen_init();
     ui_qrcode_screen_init();
+    ui_matter_screen_init();
     ui_owl_screen_init();
     ui_dashboard_screen_init();
     ui_Tempgraph_screen_init();

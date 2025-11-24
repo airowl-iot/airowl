@@ -5,7 +5,6 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
-// #include "matter_wrapper.h"
 
 ///////////////////// VARIABLES ////////////////////
 void blink_Animation(lv_obj_t * TargetObject, int delay);
@@ -17,12 +16,6 @@ void eyeL_Animation(lv_obj_t * TargetObject, int delay);
 void eyeright_Animation(lv_obj_t * TargetObject, int delay);
 void eyeleft_Animation(lv_obj_t * TargetObject, int delay);
 
-// // SCREEN: ui_matter_qrcode
-// lv_obj_t *ui_matter_qrcode;
-// lv_obj_t *ui_matter_label_top;
-// lv_obj_t *ui_matter_qrcode_obj;
-// lv_obj_t *ui_matter_label_bottom;
-// const char *ui_matter_qrcodedata = "MT:Y.K9042C00KA0648G00";
 
 // EVENTS
 lv_obj_t * ui____initial_actions0;
@@ -221,6 +214,27 @@ lv_anim_start(&PropertyAnimation_0);
 
 }
 
+static lv_timer_t * owl_blink_timer = NULL;
+
+static void owl_periodic_blink(lv_timer_t * timer)
+{
+    blink_Animation(ui_righteye, 200);
+    blink_Animation(ui_lefteye, 200);
+    open_Animation(ui_lefteye, 1200);
+    open_Animation(ui_righteye, 1200);
+    blinkx_Animation(ui_rightpupil, 200);
+    blinkx_Animation(ui_leftpupil, 200);
+    openx_Animation(ui_rightpupil, 1200);
+    openx_Animation(ui_leftpupil, 1200);
+    eyeright_Animation(ui_rightpupil, 10200);
+    eyeright_Animation(ui_leftpupil, 10200);
+    eyeleft_Animation(ui_rightpupil, 12200);
+    eyeleft_Animation(ui_leftpupil, 12200);
+    eyeright_Animation(ui_rightpupil, 14200);
+    eyeright_Animation(ui_leftpupil, 14200);
+}
+
+
 void ui_event_owl(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -255,11 +269,27 @@ void ui_event_owl(lv_event_t * e)
         eyeright_Animation(ui_rightpupil, 14200);
         eyeright_Animation(ui_leftpupil, 14200);
 
+        if (owl_blink_timer == NULL) {
+            owl_blink_timer = lv_timer_create(owl_periodic_blink, 40000, NULL);
+        }
     }
-    if (event_code == LV_EVENT_CLICKED){ 
-            _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
+    
+    if (event_code == LV_EVENT_SCREEN_UNLOADED) {
+        if (owl_blink_timer) {
+            lv_timer_del(owl_blink_timer);
+            owl_blink_timer = NULL;
+        }
+    }
+    
+    if (event_code == LV_EVENT_CLICKED) {
+        if (owl_blink_timer) {
+            lv_timer_del(owl_blink_timer);
+            owl_blink_timer = NULL;
+        }
+        _ui_screen_change(&ui_dashboard, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, &ui_dashboard_screen_init);
     }
 }
+
 
 void ui_init(void)
 {
@@ -271,33 +301,20 @@ void ui_init(void)
     lv_disp_set_theme(dispp, theme);
  
     ui_Intro_screen_init();
-
     ui_qrcode_screen_init();
-
     ui_owl_screen_init();
+    ui_matter_screen_init();
     ui_dashboard_screen_init();
-
     ui_Tempgraph_screen_init();
-
-    
     ui_Humdgraph_screen_init();
-
     ui_PM25graph_screen_init();
-    
     ui_PM10graph_screen_init();
-
     ui_TVOCgraph_screen_init();
-
-    
     ui_eCO2graph_screen_init();
-
     ui_ota_screen_init();
+
     ui____initial_actions0 = lv_obj_create(NULL);
     lv_disp_load_scr(ui_Intro);
-
-    lv_obj_t * test_label = lv_label_create(ui_Intro);
-    lv_label_set_text(test_label, "AIROWL 3.0 - UI Ready!");
-    lv_obj_align(test_label, LV_ALIGN_TOP_MID, 0, 10);
 
 }
 
@@ -305,6 +322,7 @@ void ui_destroy(void)
 {
     ui_Intro_screen_destroy();
     ui_qrcode_screen_destroy();
+    ui_matter_screen_destroy();
     ui_owl_screen_destroy();
     ui_dashboard_screen_destroy();
     ui_Tempgraph_screen_destroy();
