@@ -65,19 +65,16 @@ AHT::Error AHT::read(Data* data) {
         return lastError;
     }
 
-    Serial.println("[AHT][HAL] Reading sensors...");
-
     sensors_event_t humidityEvent, tempEvent;
     aht.getEvent(&humidityEvent, &tempEvent);
 
     if (!ens160.available()) {
-        Serial.println("[ENS160][HAL] Not available, attempting to restore...");
+        // Serial.println("[ENS160][HAL] Not available, attempting to restore...");
         ens160.setMode(ENS160_OPMODE_STD);
-        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
-    Serial.printf("[AHT][HAL] Temp=%.2f °C, Humidity=%.2f %%RH\n",
-                  tempEvent.temperature, humidityEvent.relative_humidity);
+    // Serial.printf("[AHT][HAL] Temp=%.2f °C, Humidity=%.2f %%RH\n",
+    //               tempEvent.temperature, humidityEvent.relative_humidity);
 
     ens160.set_envdata(tempEvent.temperature, humidityEvent.relative_humidity);
     ens160.measure(true);
@@ -107,8 +104,8 @@ AHT::Error AHT::read(Data* data) {
         lastReading = *data;
         newDataAvailable = true;
 
-        Serial.printf("[ENS160][HAL] AQI=%d, TVOC=%d ppb, eCO2=%d ppm\n",
-                      data->aqi, data->tvoc, data->eco2);
+        // Serial.printf("[ENS160][HAL] AQI=%d, TVOC=%d ppb, eCO2=%d ppm\n",
+        //               data->aqi, data->tvoc, data->eco2);
     }
 
     lastError = Error::NONE;

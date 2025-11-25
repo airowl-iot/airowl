@@ -416,7 +416,6 @@ bool MQTTService::publishSensorData(const char* deviceId, float pm25, float pm10
 
     Serial.printf("[MQTT] Publishing to topic: %s\n", topic);
     Serial.printf("[MQTT] Payload: %s\n", payload);
-    Serial.printf("[MQTT] Payload size: %d bytes\n", written);
 
     bool result = publish(topic, payload, QoS::AT_LEAST_ONCE, false);
 

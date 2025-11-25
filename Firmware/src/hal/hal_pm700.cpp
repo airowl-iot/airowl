@@ -127,18 +127,19 @@ PM700::Error PM700::read(Data* data) {
         framesProcessed++;
 
         unsigned long now = millis();
-        bool shouldLogErrors = (now - lastInvalidFrameLog >= 10000);
+        bool shouldLogErrors = (now - lastInvalidFrameLog >= 30000); 
 
         if (parseFrame(buffer, 20, data, shouldLogErrors)) {
             lastReading = *data;
             newDataAvailable = true;
             lastError = Error::NONE;
 
-            if (invalidFrameCount > 0 || checksumErrorCount > 0) {
+            if (shouldLogErrors && (invalidFrameCount > 0 || checksumErrorCount > 0)) {
                 Serial.printf("[PM700][HAL] Valid frame received after %u invalid frames and %u checksum errors\n",
                               invalidFrameCount, checksumErrorCount);
                 invalidFrameCount = 0;
                 checksumErrorCount = 0;
+                lastInvalidFrameLog = now;
             }
 
             return Error::NONE;
@@ -149,7 +150,7 @@ PM700::Error PM700::read(Data* data) {
 
     static unsigned long lastNoDataLog = 0;
     unsigned long now = millis();
-    if (now - lastNoDataLog >= 5000) {
+    if (now - lastNoDataLog >= 30000) { 
         lastNoDataLog = now;
 
         if (invalidFrameCount > 0 || checksumErrorCount > 0) {
@@ -157,7 +158,7 @@ PM700::Error PM700::read(Data* data) {
                           invalidFrameCount, checksumErrorCount, framesProcessed);
             lastInvalidFrameLog = now;
         } else {
-            Serial.println("[PM700][HAL] No valid frame yet - no data available");
+            // Serial.println("[PM700][HAL] No valid frame yet - no data available");
         }
     }
 

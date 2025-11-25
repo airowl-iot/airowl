@@ -213,12 +213,10 @@ void SensorManager::calculatePMAverages(float& avgPM25, float& avgPM10) {
 }
 
 float SensorManager::getPM25() {
-    // Instantaneous PM2.5 from the PM700 device
     return lastPM700Data.pm25;
 }
 
 float SensorManager::getPM25Avg() {
-    // Averaged PM2.5 using the same 2-minute MQTT buffer
     if (pmBufferCount == 0) {
         return lastPM700Data.pm25;
     }
@@ -231,12 +229,10 @@ float SensorManager::getPM25Avg() {
 }
 
 float SensorManager::getPM10() {
-    // Instantaneous PM10 from the PM700 device
     return lastPM700Data.pm10;
 }
 
 float SensorManager::getPM10Avg() {
-    // Averaged PM10 using the same 2-minute MQTT buffer
     if (pmBufferCount == 0) {
         return lastPM700Data.pm10;
     }
@@ -249,12 +245,10 @@ float SensorManager::getPM10Avg() {
 }
 
 float SensorManager::getTVOC() {
-    // Instantaneous TVOC from the ENS160 sensor (in ppb)
     return (float)lastAHTData.tvoc;
 }
 
 float SensorManager::getCO2() {
-    // Instantaneous eCO2 from the ENS160 sensor (in ppm)
     return (float)lastAHTData.eco2;
 }
 
@@ -293,6 +287,8 @@ void SensorManager::publishMqttAverages() {
                   MQTT_PUBLISH_INTERVAL);
 
     if (SVC::MQTTService::getState() == SVC::MQTTService::State::CONNECTED) {
+        esp_task_wdt_reset();
+        
         String deviceId = HAL::WiFi::generateApName();
 
         float avgPM25, avgPM10, avgTemp, avgHumd, avgTvoc, avgECo2;
