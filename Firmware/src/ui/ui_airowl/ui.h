@@ -28,12 +28,9 @@ extern "C" {
 #include "screens/ui_matter.h"
 #include "screens/ui_owl.h"
 #include "screens/ui_dashboard.h"
-#include "screens/ui_Tempgraph.h"
-#include "screens/ui_Humdgraph.h"
+#include "screens/ui_PM1graph.h"
 #include "screens/ui_PM25graph.h"
 #include "screens/ui_PM10graph.h"
-#include "screens/ui_TVOCgraph.h"
-#include "screens/ui_eCO2graph.h"
 #include "screens/ui_ota.h"
 
 ///////////////////// VARIABLES ////////////////////
@@ -53,11 +50,16 @@ extern lv_obj_t * ui____initial_actions0;
 
 // FONTS
 LV_FONT_DECLARE(ui_font_Inter12);
+LV_FONT_DECLARE(ui_font_Inter14);
+LV_FONT_DECLARE(ui_font_Inter22);
+LV_FONT_DECLARE(ui_font_Inter28);
+LV_FONT_DECLARE(ui_font_Inter26);
 LV_FONT_DECLARE(ui_font_Inter15);
 LV_FONT_DECLARE(ui_font_Inter16);
 LV_FONT_DECLARE(ui_font_Inter20);
 LV_FONT_DECLARE(ui_font_Inter38);
 LV_FONT_DECLARE(ui_font_Inter40);
+LV_FONT_DECLARE(ui_font_Inter44);
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_airowl_logo_png);    // assets/oizom_logo.png

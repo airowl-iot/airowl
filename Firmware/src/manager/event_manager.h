@@ -106,22 +106,6 @@ namespace CORE {
         String message;
     };
 
-    class MatterAttributeUpdatedEvent : public Event {
-    public:
-        MatterAttributeUpdatedEvent(float t, float h, float aqi)
-            : Event(Type::MATTER_ATTRIBUTE_UPDATED),
-            temperature(t), humidity(h), aqiValue(aqi) {}
-
-        float getTemperature() const { return temperature; }
-        float getHumidity() const { return humidity; }
-        float getAQI() const { return aqiValue; }
-
-    private:
-        float temperature;
-        float humidity;
-        float aqiValue;
-    };
-
     class MQTTStateChangedEvent : public Event {
     public:
         enum class MQTTState { DISCONNECTED, CONNECTING, CONNECTED, FAILED, RECONNECTING };
@@ -143,7 +127,6 @@ namespace CORE {
     public:
         enum class SensorType {
             PM700,
-            AHT,
             OTHER
         };
 

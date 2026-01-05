@@ -7,7 +7,6 @@ SET(SOURCES ui_Intro.c
     ui_PM4graph.c
     ui_PM25graph.c
     ui_PM10graph.c
-    ui_TVOCgraph.c
     ui.c
     ui_comp_hook.c
     ui_helpers.c

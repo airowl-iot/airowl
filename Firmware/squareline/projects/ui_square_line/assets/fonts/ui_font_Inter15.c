@@ -4,7 +4,7 @@
  * Opts: --bpp 1 --size 15 --font E:/airowl_3.0/squareline/projects/ui_square_line/assets/fonts/Inter-VariableFont_opsz,wght.ttf -o E:/airowl_3.0/squareline/projects/ui_square_line/assets/fonts\ui_font_Inter15.c --format lvgl -r 0x20-0x7f --no-compress --no-prefilter
  ******************************************************************************/
 
-#include "../ui.h"
+#include "ui.h"
 
 #ifndef UI_FONT_INTER15
 #define UI_FONT_INTER15 1

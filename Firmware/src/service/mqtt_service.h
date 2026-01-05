@@ -119,10 +119,9 @@ public:
      * @param deviceId Device identifier
      * @param pm25 PM2.5 value
      * @param pm10 PM10.0 value
-     * @param tvoc TVOC value
      * @return true if publish was successful, false otherwise
      */
-    static bool publishSensorData(const char* deviceId, float pm25, float pm10, float temperature, float humidity, float eco2, float tvoc);
+    static bool publishSensorData(const char* deviceId, float pm1, float pm25, float pm10);
     
     /**
      * @brief Register message callback

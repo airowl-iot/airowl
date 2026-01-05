@@ -22,12 +22,9 @@ namespace APP{
         {"qrcode", ui_qrcode},
         {"matter", ui_matter},
         {"owl", ui_owl},
-        {"tempgraph", ui_tempgraph},
+        {"pm1graph", ui_PM1graph},
         {"pm25graph", ui_PM25graph},
-        {"humdgraph", ui_Humdgraph},
         {"pm10graph", ui_PM10graph},
-        {"tvocgraph", ui_TVOCgraph},
-        {"co2graph", ui_eCO2graph},
         {"ota", ui_ota}
     };
    
@@ -45,9 +42,7 @@ namespace APP{
     uint32_t wifiStateSubscriptionId = 0;
     uint32_t otaProgressSubscriptionId = 0;
 
-    static float lastPM25 = 0.0, lastPM10 = 0.0;
-    static float lastTemp = 0.0, lastHumidity = 0.0;
-    static float lastTVOC = 0.0, lastEco2 = 0.0;
+    static float lastPM1 = 0.0, lastPM25 = 0.0, lastPM10 = 0.0;
 
     static void ui_event_WifiIcon(lv_event_t * e) { 
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
@@ -62,6 +57,11 @@ namespace APP{
     
     #define CHART_DATA_LENGTH 12
 
+    lv_chart_series_t *ui_PM1chart_series_1 = nullptr;
+    static lv_coord_t ui_PM1chart_series_1_array[CHART_DATA_LENGTH] = {0};
+    static float pm1_sum = 0.0;
+    static int pm1_count = 0;
+
     lv_chart_series_t *ui_PM25chart_series_1 = nullptr;
     static lv_coord_t ui_PM25chart_series_1_array[CHART_DATA_LENGTH] = {0};
     static float pm25_sum = 0.0;
@@ -72,26 +72,6 @@ namespace APP{
     static float pm10_sum = 0.0;
     static int pm10_count = 0;
 
-      lv_chart_series_t *ui_Tempchart_series_1 = nullptr;
-    static lv_coord_t ui_Tempchart_series_1_array[CHART_DATA_LENGTH] = {0};
-    static float temp_sum = 0.0;
-    static int temp_count = 0;
-
-      lv_chart_series_t *ui_Humdchart_series_1 = nullptr;
-    static lv_coord_t ui_Humdchart_series_1_array[CHART_DATA_LENGTH] = {0};
-    static float humd_sum = 0.0;
-    static int humd_count = 0;
-
-      lv_chart_series_t *ui_Tvocchart_series_1 = nullptr;
-    static lv_coord_t ui_Tvocchart_series_1_array[CHART_DATA_LENGTH] = {0};
-    static float tvoc_sum = 0.0;
-    static int tvoc_count = 0;
-
-      lv_chart_series_t *ui_eCo2chart_series_1 = nullptr;
-    static lv_coord_t ui_eCo2chart_series_1_array[CHART_DATA_LENGTH] = {0};
-    static float eCo2_sum = 0.0;
-    static int eCo2_count = 0;
-
     struct AQIBreakpoint {
         float low;
         float high;
@@ -99,6 +79,15 @@ namespace APP{
         int aqiHigh;
     };
     
+    const AQIBreakpoint pm1Bps[] = {
+    {0.0, 10.0, 0, 50},      // Good
+    {10.1, 20.0, 51, 100},  // Moderate
+    {20.1, 30.0, 101, 150}, // Unhealthy for Sensitive
+    {30.1, 50.0, 151, 200}, // Unhealthy
+    {50.1, 75.0, 201, 300}, // Very Unhealthy
+    {75.1, 500.0, 301, 500} // Hazardous
+    };
+
     const AQIBreakpoint pm25Bps[] = {
         {0.0, 15.9, 0, 50},      // Good: 0-15.9 µg/m³
         {16.0, 25.9, 51, 100},   // Moderate: 16-25.9 µg/m³
@@ -127,9 +116,49 @@ namespace APP{
     }
     
     int calculateSubIndex(float value, const AQIBreakpoint& bp) {
-        return ((bp.aqiHigh - bp.aqiLow) / (bp.high - bp.low)) * (value - bp.low) + bp.aqiLow;
+    return (int)(((float)(bp.aqiHigh - bp.aqiLow) / (bp.high - bp.low)) * (value - bp.low) + bp.aqiLow);
     }
-    
+
+    void UIController::setupPM1Chart() {
+        
+        if (ui_pm1Chart != nullptr) {
+            lv_chart_set_type(ui_pm1Chart, LV_CHART_TYPE_LINE);
+            lv_chart_set_point_count(ui_pm1Chart, CHART_DATA_LENGTH);
+            lv_chart_set_range(ui_pm1Chart, LV_CHART_AXIS_PRIMARY_Y, 0, 150); 
+
+            ui_PM1chart_series_1 = lv_chart_add_series(
+                ui_pm1Chart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
+            lv_chart_set_ext_y_array(ui_pm1Chart, ui_PM1chart_series_1,
+                                   ui_PM1chart_series_1_array);
+
+           for (int i = 0; i < CHART_DATA_LENGTH; i++) ui_PM1chart_series_1_array[i] = 0;
+
+        Serial.println("[UIController] PM1 Chart initialized");
+    }
+}
+
+    void UIController::updatePM1Chart(float pm1_value) {
+
+        if (ui_PM1chart_series_1 != nullptr && ui_pm1Chart != nullptr) {
+            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
+                ui_PM1chart_series_1_array[i] = ui_PM1chart_series_1_array[i + 1];
+            }
+            ui_PM1chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm1_value);
+
+            pm1_sum += pm1_value;
+            pm1_count++;
+            float pm1_avg = pm1_sum / pm1_count;
+
+            if (ui_pm1maxvalue != nullptr) {
+                char avgBuffer[8];
+                dtostrf(pm1_avg, 4, 1, avgBuffer);
+                lv_label_set_text(ui_pm1maxvalue, avgBuffer);
+            }
+
+            lv_chart_refresh(ui_pm1Chart);
+        }
+
+}
    void UIController::setupPM25Chart() {
         
         if (ui_Chart3 != nullptr) {
@@ -215,199 +244,15 @@ namespace APP{
 
 }
 
-
-void UIController::setupTempChart() {
-        
-        if (ui_tempChart != nullptr) {
-            lv_chart_set_type(ui_tempChart, LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(ui_tempChart, CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_tempChart, LV_CHART_AXIS_PRIMARY_Y, 0, 50); 
-
-            ui_Tempchart_series_1 = lv_chart_add_series(
-                ui_tempChart, lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-            lv_chart_set_ext_y_array(ui_tempChart, ui_Tempchart_series_1,
-                                   ui_Tempchart_series_1_array);
-
-            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
-                ui_Tempchart_series_1_array[i] = 0;
-            }
-            
-            Serial.println("[UIController] Temp Chart initialized");
-        }
-        
-    }
-    
-    void UIController::updateTempChart(float temp_value) {
-
-        if (ui_Tempchart_series_1 != nullptr && ui_tempChart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_Tempchart_series_1_array[i] = ui_Tempchart_series_1_array[i + 1];
-            }
-            ui_Tempchart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(temp_value);
-
-            temp_sum += temp_value;
-            temp_count++;
-            float temp_avg = temp_sum / temp_count;
-
-            if (ui_tempgmaxvalue != nullptr) {
-                char avgBuffer[8];
-                dtostrf(temp_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_tempgmaxvalue, avgBuffer);
-            }
-
-            lv_chart_refresh(ui_tempChart);
-        }
-
-}
-
-
-void UIController::setupHumdChart() {
-        
-        if (ui_Chart2  != nullptr) {
-            lv_chart_set_type(ui_Chart2 , LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(ui_Chart2 , CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_Chart2 , LV_CHART_AXIS_PRIMARY_Y, 0, 100); 
-
-            ui_Humdchart_series_1 = lv_chart_add_series(
-                ui_Chart2 , lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-            lv_chart_set_ext_y_array(ui_Chart2 , ui_Humdchart_series_1,
-                                   ui_Humdchart_series_1_array);
-
-            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
-                ui_Humdchart_series_1_array[i] = 0;
-            }
-            
-            Serial.println("[UIController] Humd Chart initialized");
-        }
-        
-    }
-    
-    void UIController::updateHumdChart(float humd_value) {
-
-        if (ui_Humdchart_series_1 != nullptr && ui_Chart2 != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_Humdchart_series_1_array[i] = ui_Humdchart_series_1_array[i + 1];
-            }
-            ui_Humdchart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(humd_value);
-
-            humd_sum += humd_value;
-            humd_count++;
-            float humd_avg = humd_sum / humd_count;
-
-            if (ui_Humdmaxvalue1 != nullptr) {
-                char avgBuffer[8];
-                dtostrf(humd_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_Humdmaxvalue1, avgBuffer);
-            }
-
-            lv_chart_refresh(ui_Chart2 );
-        }
-
-}
-
-
-void UIController::setupTvocChart() {
-        
-        if (ui_TVOCchart  != nullptr) {
-            lv_chart_set_type(ui_TVOCchart , LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(ui_TVOCchart , CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_TVOCchart , LV_CHART_AXIS_PRIMARY_Y, 0, 1000); 
-
-            ui_Tvocchart_series_1 = lv_chart_add_series(
-                ui_TVOCchart , lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-            lv_chart_set_ext_y_array(ui_TVOCchart , ui_Tvocchart_series_1,
-                                   ui_Tvocchart_series_1_array);
-
-            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
-                ui_Tvocchart_series_1_array[i] = 0;
-            }
-            
-            Serial.println("[UIController] Tvoc Chart initialized");
-        }
-        
-    }
-    
-    void UIController::updateTvocChart(float tvoc_value) {
-
-        if (ui_Tvocchart_series_1 != nullptr && ui_TVOCchart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_Tvocchart_series_1_array[i] = ui_Tvocchart_series_1_array[i + 1];
-            }
-            ui_Tvocchart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(tvoc_value);
-
-            tvoc_sum += tvoc_value;
-            tvoc_count++;
-            float tvoc_avg = tvoc_sum / tvoc_count;
-
-            if (ui_tvocmaxvalue != nullptr) {
-                char avgBuffer[8];
-                dtostrf(tvoc_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_tvocmaxvalue, avgBuffer);
-            }
-
-            lv_chart_refresh(ui_TVOCchart);
-        }
-
-}
-
-
-void UIController::setupeCo2Chart() {
-        
-        if (ui_eCO2chart  != nullptr) {
-            lv_chart_set_type(ui_eCO2chart , LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(ui_eCO2chart , CHART_DATA_LENGTH);
-            lv_chart_set_range(ui_eCO2chart , LV_CHART_AXIS_PRIMARY_Y, 0, 4000); 
-
-            ui_eCo2chart_series_1 = lv_chart_add_series(
-                ui_eCO2chart , lv_color_hex(0x41b4d1), LV_CHART_AXIS_PRIMARY_Y);
-            lv_chart_set_ext_y_array(ui_eCO2chart , ui_eCo2chart_series_1,
-                                   ui_eCo2chart_series_1_array);
-
-            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
-                ui_eCo2chart_series_1_array[i] = 0;
-            }
-
-            Serial.println("[UIController] eCO2 Chart initialized");
-        }
-        
-    }
-    
-    void UIController::updateeCo2Chart(float eco2_value) {
-
-        if (ui_eCo2chart_series_1 != nullptr && ui_eCO2chart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_eCo2chart_series_1_array[i] = ui_eCo2chart_series_1_array[i + 1];
-            }
-            ui_eCo2chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(eco2_value);
-
-            eCo2_sum += eco2_value;
-            eCo2_count++;
-            float eCo2_avg = eCo2_sum / eCo2_count;
-
-            if (ui_eco2max2 != nullptr) {
-                char avgBuffer[8];
-                dtostrf(eCo2_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_eco2max2, avgBuffer);
-            }
-
-            lv_chart_refresh(ui_eCO2chart);
-        }
-
-}
- 
-
 void UIController::showOTAScreen() {
     Serial.println("[UIController] OTA mode activated - freezing UI updates");
 
-    // Set flag FIRST to prevent any further UI updates
     otaInProgress = true;
 
-    // Delete all LVGL animations to stop scheduled screen transitions
     lv_anim_del_all();
     Serial.println("[UIController] Cleared all LVGL animations");
 
     if (ui_ota != nullptr) {
-        // Load OTA screen immediately without animation
         lv_scr_load(ui_ota);
         Serial.println("[UIController] Switched to OTA screen (locked)");
     } else {
@@ -438,21 +283,15 @@ bool UIController::init() {
     ui_matter_screen_init();
     ui_owl_screen_init();
     ui_dashboard_screen_init();
-    ui_Tempgraph_screen_init();
-    ui_Humdgraph_screen_init();
+    ui_PM1graph_screen_init();
     ui_PM25graph_screen_init();
     ui_PM10graph_screen_init();
-    ui_TVOCgraph_screen_init();
-    ui_eCO2graph_screen_init();
     ui_ota_screen_init();
     Serial.println("[UIController] All UI screens initialized");
 
+    setupPM1Chart();
     setupPM25Chart();
     setupPM10Chart();
-    setupTempChart();
-    setupHumdChart();
-    setupTvocChart();
-    setupeCo2Chart();
 
     if (ui_Intro != nullptr) {
         lv_disp_load_scr(ui_Intro);
@@ -566,53 +405,25 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
         case CORE::SensorReadingEvent::SensorType::PM700:
             if (values.size() >= 4) {
                 
-                char  pm25buffer[16], pm10buffer[16];
-                dtostrf(values[0], 6, 1, pm25buffer); 
-                dtostrf(values[1], 6, 1, pm10buffer);
+                char pm1buffer[16],  pm25buffer[16], pm10buffer[16];
+                dtostrf(values[0], 6, 1, pm1buffer);
+                dtostrf(values[1], 6, 1, pm25buffer); 
+                dtostrf(values[2], 6, 1, pm10buffer);
                 
+                lv_label_set_text(ui_pm1value, pm1buffer);
                 lv_label_set_text(ui_pm25value, pm25buffer);
                 lv_label_set_text(ui_pm10value, pm10buffer);
 
-                updatePM25Chart(values[0]);
-                updatePM10Chart(values[1]);
-                lastPM25 = values[0];
-                lastPM10 = values[1];
+                updatePM1Chart(values[0]);
+                updatePM25Chart(values[1]);
+                updatePM10Chart(values[2]);
+                
+                lastPM1 = values[0];
+                lastPM25 = values[1];
+                lastPM10 = values[2];
 
                 updateSensorColors(values.data());
                 
-            }
-            break;
-            
-        case CORE::SensorReadingEvent::SensorType::AHT:
-            if (values.size() >= 4) {
-                
-                char tempbuffer[16];
-                char humbuffer[16]; 
-                char tvocbuffer[16];
-                char eco2buffer[16];   
-
-                dtostrf(values[0], 4, 1, tempbuffer);
-                dtostrf(values[1], 4, 1, humbuffer);
-                dtostrf(values[2], 4, 1, tvocbuffer);
-                dtostrf(values[3], 4, 1, eco2buffer);
-
-                lv_label_set_text(ui_tempvalue, tempbuffer);
-                lv_label_set_text(ui_humdvalue, humbuffer);
-                lv_label_set_text(ui_tvocvalue, tvocbuffer);
-                lv_label_set_text(ui_eCO2value, eco2buffer);
-
-                updateTempChart(values[0]);
-                updateHumdChart(values[1]);
-                updateTvocChart(values[2]);
-                updateeCo2Chart(values[3]);
-
-                lastTemp = values[0];
-                lastHumidity = values[1];
-                lastTVOC =  values[2];
-                lastEco2 =  values[3];
-
-                Serial.printf("[UIController] Updated display - T:%.1f°C, H:%.1f%%, TVOC:%d ppb, eCO2:%d ppm\n",
-                              values[0], values[1], (int)values[2], (int)values[3]);
             }
             break;
         default:
@@ -679,23 +490,28 @@ void UIController::updateQRCode() {
 void UIController::updateSensorColors(const float* pmValues) {
     if (!running) return;
     
-    AQIBreakpoint pm25Bp = getBreakpoint(pmValues[0], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
-    AQIBreakpoint pm10Bp = getBreakpoint(pmValues[1], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
+    AQIBreakpoint pm1Bp = getBreakpoint(pmValues[0], pm1Bps, sizeof(pm1Bps) / sizeof(pm1Bps[0]));
+    AQIBreakpoint pm25Bp = getBreakpoint(pmValues[1], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
+    AQIBreakpoint pm10Bp = getBreakpoint(pmValues[2], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
  
-    int pm25Index = calculateSubIndex(pmValues[0], pm25Bp);
-    int pm10Index = calculateSubIndex(pmValues[1], pm10Bp);
-    uint32_t  pm25_color, pm10_color;
+    int pm1Index = calculateSubIndex(pmValues[0], pm1Bp);
+    int pm25Index = calculateSubIndex(pmValues[1], pm25Bp);
+    int pm10Index = calculateSubIndex(pmValues[2], pm10Bp);
+    uint32_t  pm1_color, pm25_color, pm10_color;
 
     if (millis() - bootTime < EYE_COLOR_ACTIVATION_DELAY) {
-       pm25_color = pm10_color =  0xFFFFFF; 
+       pm1_color = pm25_color = pm10_color =  0xFFFFFF; 
     } else {
+        pm1_color = getAQIColor(pm1Index);
         pm25_color = getAQIColor(pm25Index);
         pm10_color = getAQIColor(pm10Index);
     }
+    lv_obj_set_style_text_color(ui_pm1value, lv_color_hex(pm1_color), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(ui_pm25value, lv_color_hex(pm25_color), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(ui_pm10value, lv_color_hex(pm10_color), LV_PART_MAIN | LV_STATE_DEFAULT);
 
     int overallAQI = max(pm25Index, pm10Index);
+
     uint32_t eyeColor = (millis() - bootTime < EYE_COLOR_ACTIVATION_DELAY) ? 0xFFFFFF : getAQIColor(overallAQI);
     updateEyeColors(eyeColor);
     
@@ -710,19 +526,23 @@ void UIController::updateEyeColors(uint32_t color) {
 }
 
 uint32_t UIController::getAQIColor(int aqi) {
-    if (aqi <= 50) return 0x00E400;      // Good - Green (#00E400)
-    else if (aqi <= 100) return 0xFFFF00; // Moderate - Yellow (#FFFF00)
-    else if (aqi <= 150) return 0xFF7E00; // Unhealthy for Sensitive - Orange (#FF7E00)
-    else if (aqi <= 200) return 0xFF0000; // Unhealthy - Red (#FF0000)
-    else if (aqi <= 300) return 0x8F3F97; // Very Unhealthy - Purple (#8F3F97)
-    else return 0x7E0023;                 // Hazardous - Maroon (#7E0023)
+    if (aqi <= 50) return 0x00B050;   
+    else if (aqi <= 100) return 0x92D050;   
+    else if (aqi <= 200) return 0xFFFF00;   // Moderate (Yellow)
+    else if (aqi <= 300) return 0xFF9900;   // Poor (Orange)
+    else if (aqi <= 400) return 0xFF0000;   // Very Poor (Red)
+    else return 0x7E0023;   // Severe (Maroon)
 }
 
 int UIController::calculateAQI(const float* pmValues) {
-    AQIBreakpoint pm25Bp = getBreakpoint(pmValues[0], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
-    AQIBreakpoint pm10Bp = getBreakpoint(pmValues[1], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
-    int pm25Index = calculateSubIndex(pmValues[0], pm25Bp);
-    int pm10Index = calculateSubIndex(pmValues[1], pm10Bp);
+    AQIBreakpoint pm1Bp  = getBreakpoint(pmValues[0], pm1Bps, sizeof(pm1Bps) / sizeof(pm1Bps[0]));
+    AQIBreakpoint pm25Bp = getBreakpoint(pmValues[1], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
+    AQIBreakpoint pm10Bp = getBreakpoint(pmValues[2], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
+
+    int pm1Index  = calculateSubIndex(pmValues[0], pm1Bp);
+    int pm25Index = calculateSubIndex(pmValues[1], pm25Bp);
+    int pm10Index = calculateSubIndex(pmValues[2], pm10Bp);
+
     return max(pm25Index, pm10Index);
 }
 

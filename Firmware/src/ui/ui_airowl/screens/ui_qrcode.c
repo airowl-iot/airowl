@@ -39,7 +39,7 @@ void ui_qrcode_screen_init(void)
     lv_label_set_text(ui_qrcodename, "");
     lv_obj_set_style_text_color(ui_qrcodename, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_qrcodename, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_qrcodename, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_qrcodename, &ui_font_Inter14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_qrcode, ui_event_qrcode, LV_EVENT_ALL, NULL);
 

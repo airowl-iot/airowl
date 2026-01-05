@@ -11,36 +11,22 @@ bool SensorManager::initialized = false;
 bool SensorManager::running = false;
 TaskHandle_t SensorManager::sensorTaskHandle = nullptr;
 
-float SensorManager::AQI = 0.0f;
-float SensorManager::temperature = 0.0f;
-float SensorManager::humidity = 0.0f;
-
 SensorManager::SensorConfig SensorManager::pm700Config;
-SensorManager::SensorConfig SensorManager::ahtConfig;
 
 unsigned long SensorManager::lastPM700Read = 0;
-unsigned long SensorManager::lastAHTRead = 0;
 unsigned long SensorManager::lastPM700Publish = 0;
-unsigned long SensorManager::lastAHTPublish = 0;
 
 HAL::PM700::Data SensorManager::lastPM700Data;
-HAL::AHT::Data SensorManager::lastAHTData;
 
 bool SensorManager::newPM700Data = false;
-bool SensorManager::newAHTData = false;
 
 // Averaging buffers initialization
+float SensorManager::pm1Buffer[SENSOR_BUFFER_SIZE] = {0};
 float SensorManager::pm25Buffer[SENSOR_BUFFER_SIZE] = {0};
 float SensorManager::pm10Buffer[SENSOR_BUFFER_SIZE] = {0};
-float SensorManager::tempBuffer[SENSOR_BUFFER_SIZE] = {0};
-float SensorManager::humdBuffer[SENSOR_BUFFER_SIZE] = {0};
-float SensorManager::tvocBuffer[SENSOR_BUFFER_SIZE] = {0};
-float SensorManager::eco2Buffer[SENSOR_BUFFER_SIZE] = {0};
 
 int SensorManager::pmBufferIndex = 0;
 int SensorManager::pmBufferCount = 0;
-int SensorManager::ahtBufferIndex = 0;
-int SensorManager::ahtBufferCount = 0;
 
 unsigned long SensorManager::lastMqttPublish = 0;
 
@@ -58,21 +44,17 @@ bool SensorManager::init() {
 
     bool any = false;
     if (pm700Config.enabled) any |= HAL::PM700::init();
-    if (ahtConfig.enabled) any |= HAL::AHT::init();
 
     initialized = any;
     return initialized;
 }
 
-bool SensorManager::init(const SensorConfig& pm700Cfg,
-                         const SensorConfig& ahtCfg) {
+bool SensorManager::init(const SensorConfig& pm700Cfg) {
     if (initialized) return true;
     pm700Config = pm700Cfg;
-    ahtConfig = ahtCfg;
    
 
-    initialized = (pm700Cfg.enabled && HAL::PM700::init()) ||
-                  (ahtCfg.enabled && HAL::AHT::init()) ;
+    initialized = (pm700Cfg.enabled && HAL::PM700::init()) ;
     return initialized;
 }
 
@@ -92,14 +74,11 @@ void SensorManager::updateConfigFromManager() {
     loadConfigsFromManager();
 }
 
-void SensorManager::updateConfig(const SensorConfig& pm700Cfg,
-                                 const SensorConfig& ahtCfg) {
+void SensorManager::updateConfig(const SensorConfig& pm700Cfg) {
     pm700Config = pm700Cfg;
-    ahtConfig = ahtCfg;
 }
 
 const SensorManager::SensorConfig& SensorManager::getPM700Config() { return pm700Config; }
-const SensorManager::SensorConfig& SensorManager::getAHTConfig() { return ahtConfig; }
 
 // -------- Sensor read handlers --------
 
@@ -113,9 +92,10 @@ void SensorManager::readPM700Sensor() {
     if (result == HAL::PM700::Error::NONE &&
         HAL::PM700::isDataAvailable()) {
         newPM700Data = true;
-        float vals[] = { lastPM700Data.pm25, lastPM700Data.pm10,
-                         lastPM700Data.p03, lastPM700Data.pm1 };
+        float vals[] = {lastPM700Data.pm1, lastPM700Data.pm25, lastPM700Data.pm10,
+                         lastPM700Data.p03};
 
+        pm1Buffer[pmBufferIndex] = lastPM700Data.pm1;
         pm25Buffer[pmBufferIndex] = lastPM700Data.pm25;
         pm10Buffer[pmBufferIndex] = lastPM700Data.pm10;
         pmBufferIndex = (pmBufferIndex + 1) % SENSOR_BUFFER_SIZE;
@@ -137,47 +117,6 @@ void SensorManager::readPM700Sensor() {
     }
 }
 
-void SensorManager::readAHTSensor() {
-    if (!ahtConfig.enabled || !running) return;
-    auto now = millis();
-    if (now - lastAHTRead < ahtConfig.readInterval) return;
-
-    lastAHTRead = now;
-    HAL::AHT::Error result = HAL::AHT::read(&lastAHTData);
-    if (result == HAL::AHT::Error::NONE &&
-        HAL::AHT::isDataAvailable()) {
-        newAHTData = true;
-        
-        float vals[] = { lastAHTData.temperature, lastAHTData.humidity,
-                        (float)lastAHTData.tvoc, (float)lastAHTData.eco2 };
-
-        tempBuffer[ahtBufferIndex] = lastAHTData.temperature;
-        humdBuffer[ahtBufferIndex] = lastAHTData.humidity;
-        tvocBuffer[ahtBufferIndex] = (float)lastAHTData.tvoc;
-        eco2Buffer[ahtBufferIndex] = (float)lastAHTData.eco2;
-        ahtBufferIndex = (ahtBufferIndex + 1) % SENSOR_BUFFER_SIZE;
-        if (ahtBufferCount < SENSOR_BUFFER_SIZE) {
-            ahtBufferCount++;
-        }
-
-        temperature = lastAHTData.temperature;
-        humidity = lastAHTData.humidity;
-        AQI = (float)lastAHTData.aqi;
-
-        auto event = std::make_shared<CORE::SensorReadingEvent>(
-            CORE::SensorReadingEvent::SensorType::AHT,
-            0,  // sensorId
-            vals,
-            4
-        );
-        CORE::EventBus::getInstance().publish(event);
-        // Serial.printf("[SensorManager] Published AHT data: Temp=%.1f°C, Humidity=%.1f%%\n",
-        //               lastAHTData.temperature, lastAHTData.humidity);
-    } else if (result != HAL::AHT::Error::NONE) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-    }
-}
-
 template<typename DataT>
 void SensorManager::publishData(CORE::Event::Type type,
                               const DataT& data,
@@ -192,24 +131,43 @@ void SensorManager::publishData(CORE::Event::Type type,
     CORE::EventBus::getInstance().publish(event);
 }
 
-void SensorManager::calculatePMAverages(float& avgPM25, float& avgPM10) {
+void SensorManager::calculatePMAverages(float& avgPM1, float& avgPM25, float& avgPM10) {
     if (pmBufferCount == 0) {
+        avgPM1 = lastPM700Data.pm1;
         avgPM25 = lastPM700Data.pm25;
         avgPM10 = lastPM700Data.pm10;
         return;
     }
 
-    float sumPM25 = 0, sumPM10 = 0;
+    float sumPM1 = 0, sumPM25 = 0, sumPM10 = 0;
     for (int i = 0; i < pmBufferCount; i++) {
+        sumPM1 += pm1Buffer[i];
         sumPM25 += pm25Buffer[i];
         sumPM10 += pm10Buffer[i];
     }
 
+    avgPM1 = sumPM1 / pmBufferCount;
     avgPM25 = sumPM25 / pmBufferCount;
     avgPM10 = sumPM10 / pmBufferCount;
 
     Serial.printf("[SensorManager] Calculated 2-min averages from %d readings - "
-                  "PM2.5: %.2f, PM10: %.2f\n", pmBufferCount, avgPM25, avgPM10);
+                  "PM1.0: %.2f, PM2.5: %.2f, PM10: %.2f\n", pmBufferCount, avgPM1, avgPM25, avgPM10);
+}
+
+float SensorManager::getPM1() {
+    return lastPM700Data.pm1;
+} 
+
+float SensorManager::getPM1Avg() {
+    if (pmBufferCount == 0) {
+        return lastPM700Data.pm1;
+    }
+
+    float sum = 0;
+    for (int i = 0; i < pmBufferCount; i++) {
+        sum += pm1Buffer[i];
+    }
+    return sum / pmBufferCount;
 }
 
 float SensorManager::getPM25() {
@@ -244,41 +202,6 @@ float SensorManager::getPM10Avg() {
     return sum / pmBufferCount;
 }
 
-float SensorManager::getTVOC() {
-    return (float)lastAHTData.tvoc;
-}
-
-float SensorManager::getCO2() {
-    return (float)lastAHTData.eco2;
-}
-
-void SensorManager::calculateAHTAverages(float& avgTemp, float& avgHumd,
-                                        float& avgTvoc, float& avgECo2) {
-    if (ahtBufferCount == 0) {
-        avgTemp = lastAHTData.temperature;
-        avgHumd = lastAHTData.humidity;
-        avgTvoc = (float)lastAHTData.tvoc;
-        avgECo2 = (float)lastAHTData.eco2;
-        return;
-    }
-
-    float sumTemp = 0, sumHumd = 0, sumTvoc = 0, sumECo2 = 0;
-    for (int i = 0; i < ahtBufferCount; i++) {
-        sumTemp += tempBuffer[i];
-        sumHumd += humdBuffer[i];
-        sumTvoc += tvocBuffer[i];
-        sumECo2 += eco2Buffer[i];
-    }
-
-    avgTemp = sumTemp / ahtBufferCount;
-    avgHumd = sumHumd / ahtBufferCount;
-    avgTvoc = sumTvoc / ahtBufferCount;
-    avgECo2 = sumECo2 / ahtBufferCount;
-
-    Serial.printf("[SensorManager] Calculated 2-min averages from %d readings - "
-                  "Temp: %.2f, Humd: %.2f, TVOC: %.2f, eCO2: %.2f\n",
-                  ahtBufferCount, avgTemp, avgHumd, avgTvoc, avgECo2);
-}
 
 void SensorManager::publishMqttAverages() {
     if (millis() - lastMqttPublish < MQTT_PUBLISH_INTERVAL) return;
@@ -291,25 +214,18 @@ void SensorManager::publishMqttAverages() {
         
         String deviceId = HAL::WiFi::generateApName();
 
-        float avgPM25, avgPM10, avgTemp, avgHumd, avgTvoc, avgECo2;
-        calculatePMAverages(avgPM25, avgPM10);
-        calculateAHTAverages(avgTemp, avgHumd, avgTvoc, avgECo2);
+        float avgPM1, avgPM25, avgPM10;
+        calculatePMAverages(avgPM1, avgPM25, avgPM10);
 
-        float avgPM1 = 0;
         float avgPM4 = 0;
 
-        Serial.printf("[SensorManager] Publishing 2-minute averaged sensor data for device: %s\n",
-                      deviceId.c_str());
-        Serial.printf("[SensorManager] Averaged values - PM2.5: %.2f, PM10: %.2f, "
-                      "Temp: %.2f, Humd: %.2f, TVOC: %.2f, eCO2: %.2f\n",
-                      avgPM25, avgPM10, avgTemp, avgHumd, avgTvoc, avgECo2);
+        Serial.printf("[SensorManager] Publishing 2-minute averaged sensor data for device: %s\n", deviceId.c_str());
+        Serial.printf("[SensorManager] Averaged values - PM1.0: %.2f, PM2.5: %.2f, PM10: %.2f\n", avgPM1, avgPM25, avgPM10);
 
-        if (SVC::MQTTService::publishSensorData(deviceId.c_str(), avgPM25, avgPM10, avgTemp, avgHumd, avgECo2, avgTvoc)) {
+        if (SVC::MQTTService::publishSensorData(deviceId.c_str(), avgPM1, avgPM25, avgPM10)) {
             Serial.println("[SensorManager] ✓ 2-minute averaged sensor data published to MQTT successfully");
             pmBufferCount = 0;
             pmBufferIndex = 0;
-            ahtBufferCount = 0;
-            ahtBufferIndex = 0;
             Serial.println("[SensorManager] Reset averaging buffers for next 2-minute period");
         } else {
             Serial.println("[SensorManager] ✗ Failed to publish 2-minute averaged sensor data to MQTT");
@@ -329,13 +245,7 @@ void SensorManager::task(void*) {
             esp_task_wdt_reset();
 
             readPM700Sensor();
-
             esp_task_wdt_reset();
-
-            readAHTSensor();
-
-            esp_task_wdt_reset();
-
             publishMqttAverages();
         }
 
@@ -383,7 +293,6 @@ bool SensorManager::loadConfigsFromManager() {
     for (const auto& s : cfg->getAllSensors()) {
         String t = s.type; t.toUpperCase();
         if (t.startsWith("PM700")) pm700Config = convertConfig(s);
-        else if (t.startsWith("AHT")) ahtConfig = convertConfig(s);
     }
     return true;
 }

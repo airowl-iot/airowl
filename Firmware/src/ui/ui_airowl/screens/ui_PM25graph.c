@@ -57,7 +57,7 @@ void ui_PM25graph_screen_init(void)
 
     lv_obj_set_style_text_color(ui_Chart3, lv_color_hex(0xFFFFFF), LV_PART_TICKS | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_Chart3, 255, LV_PART_TICKS | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_Chart3, &lv_font_montserrat_16, LV_PART_TICKS | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Chart3, &ui_font_Inter16, LV_PART_TICKS | LV_STATE_DEFAULT);
 
     ui_Container3 = lv_obj_create(ui_PM25graph);
     lv_obj_remove_style_all(ui_Container3);
@@ -81,7 +81,7 @@ void ui_PM25graph_screen_init(void)
     lv_obj_set_style_text_color(ui_templabel2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_templabel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_templabel2, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_templabel2, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_templabel2, &ui_font_Inter20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_gpunit2 = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_gpunit2, LV_SIZE_CONTENT);   /// 1
@@ -92,7 +92,7 @@ void ui_PM25graph_screen_init(void)
     lv_label_set_text(ui_gpunit2, "ug/m");
     lv_obj_set_style_text_color(ui_gpunit2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_gpunit2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_gpunit2, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_gpunit2, &ui_font_Inter16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_cube2 = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_cube2, LV_SIZE_CONTENT);   /// 1
@@ -103,7 +103,7 @@ void ui_PM25graph_screen_init(void)
     lv_label_set_text(ui_cube2, "3");
     lv_obj_set_style_text_color(ui_cube2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_cube2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_cube2, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_cube2, &ui_font_Inter15, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_maxlabel2 = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_maxlabel2, LV_SIZE_CONTENT);   /// 1
@@ -114,7 +114,7 @@ void ui_PM25graph_screen_init(void)
     lv_label_set_text(ui_maxlabel2, "avg : ");
     lv_obj_set_style_text_color(ui_maxlabel2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_maxlabel2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_maxlabel2, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_maxlabel2, &ui_font_Inter16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_pm25maxvalue = lv_label_create(ui_Container3);
     lv_obj_set_width(ui_pm25maxvalue, LV_SIZE_CONTENT);   /// 1
@@ -125,7 +125,7 @@ void ui_PM25graph_screen_init(void)
     lv_label_set_text(ui_pm25maxvalue, "-");
     lv_obj_set_style_text_color(ui_pm25maxvalue, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_pm25maxvalue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_pm25maxvalue, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_pm25maxvalue, &ui_font_Inter20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_return2 = lv_btn_create(ui_PM25graph);
     lv_obj_set_width(ui_return2, 223);
@@ -146,7 +146,7 @@ void ui_PM25graph_screen_init(void)
     lv_label_set_text(ui_Label4, "RETURN");
     lv_obj_set_style_text_color(ui_Label4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_Label4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_Label4, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_Label4, &ui_font_Inter20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_return2, ui_event_return2, LV_EVENT_ALL, NULL);
 

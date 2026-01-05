@@ -42,12 +42,12 @@ bool MatterAirQualitySensor::begin(uint8_t _enabledMeasurements) {
     setEndPointId(endpoint::get_id(endpoint));
     log_i("Air Quality Sensor created with Endpoint ID %d", getEndPointId());
 
-    if (enabledMeasurements & ENABLE_CO2) {
-        addCarbonDioxideConcentrationMeasurementCluster();
-    }
-    if (enabledMeasurements & ENABLE_TVOC) {
-        addTotalVolatileOrganicCompoundsConcentrationMeasurementCluster();
-    }
+    // if (enabledMeasurements & ENABLE_CO2) {
+    //     addCarbonDioxideConcentrationMeasurementCluster();
+    // }
+    // if (enabledMeasurements & ENABLE_TVOC) {
+    //     addTotalVolatileOrganicCompoundsConcentrationMeasurementCluster();
+    // }
     if (enabledMeasurements & ENABLE_PM1) {
         addPm1ConcentrationMeasurementCluster();
     }
@@ -63,47 +63,47 @@ bool MatterAirQualitySensor::begin(uint8_t _enabledMeasurements) {
     return true;
 }
 
-void MatterAirQualitySensor::addCarbonDioxideConcentrationMeasurementCluster() {
-    carbon_dioxide_concentration_measurement::config_t cluster_config;
-    cluster_config.measurement_medium = static_cast<uint8_t>(CarbonDioxideConcentrationMeasurement::MeasurementMediumEnum::kAir);
+// void MatterAirQualitySensor::addCarbonDioxideConcentrationMeasurementCluster() {
+//     carbon_dioxide_concentration_measurement::config_t cluster_config;
+//     cluster_config.measurement_medium = static_cast<uint8_t>(CarbonDioxideConcentrationMeasurement::MeasurementMediumEnum::kAir);
     
-    cluster_t* cluster = carbon_dioxide_concentration_measurement::create(
-        endpoint::get(node::get(), getEndPointId()), 
-        &cluster_config, 
-        CLUSTER_FLAG_SERVER
-    );
+//     cluster_t* cluster = carbon_dioxide_concentration_measurement::create(
+//         endpoint::get(node::get(), getEndPointId()), 
+//         &cluster_config, 
+//         CLUSTER_FLAG_SERVER
+//     );
 
-    if (cluster) {
-        carbon_dioxide_concentration_measurement::feature::numeric_measurement::config_t numeric_config;
-        numeric_config.measurement_unit = static_cast<uint8_t>(CarbonDioxideConcentrationMeasurement::MeasurementUnitEnum::kPpm);
-        carbon_dioxide_concentration_measurement::feature::numeric_measurement::add(cluster, &numeric_config);
+//     if (cluster) {
+//         carbon_dioxide_concentration_measurement::feature::numeric_measurement::config_t numeric_config;
+//         numeric_config.measurement_unit = static_cast<uint8_t>(CarbonDioxideConcentrationMeasurement::MeasurementUnitEnum::kPpm);
+//         carbon_dioxide_concentration_measurement::feature::numeric_measurement::add(cluster, &numeric_config);
         
-        log_i("Added CO2 Concentration Measurement cluster");
-    } else {
-        log_e("Failed to add CO2 Concentration Measurement cluster");
-    }
-}
+//         log_i("Added CO2 Concentration Measurement cluster");
+//     } else {
+//         log_e("Failed to add CO2 Concentration Measurement cluster");
+//     }
+// }
 
-void MatterAirQualitySensor::addTotalVolatileOrganicCompoundsConcentrationMeasurementCluster() {
-    total_volatile_organic_compounds_concentration_measurement::config_t cluster_config;
-    cluster_config.measurement_medium = static_cast<uint8_t>(TotalVolatileOrganicCompoundsConcentrationMeasurement::MeasurementMediumEnum::kAir);
+// void MatterAirQualitySensor::addTotalVolatileOrganicCompoundsConcentrationMeasurementCluster() {
+//     total_volatile_organic_compounds_concentration_measurement::config_t cluster_config;
+//     cluster_config.measurement_medium = static_cast<uint8_t>(TotalVolatileOrganicCompoundsConcentrationMeasurement::MeasurementMediumEnum::kAir);
     
-    cluster_t* cluster = total_volatile_organic_compounds_concentration_measurement::create(
-        endpoint::get(node::get(), getEndPointId()), 
-        &cluster_config, 
-        CLUSTER_FLAG_SERVER
-    );
+//     cluster_t* cluster = total_volatile_organic_compounds_concentration_measurement::create(
+//         endpoint::get(node::get(), getEndPointId()), 
+//         &cluster_config, 
+//         CLUSTER_FLAG_SERVER
+//     );
 
-    if (cluster) {
-        total_volatile_organic_compounds_concentration_measurement::feature::numeric_measurement::config_t numeric_config;
-        numeric_config.measurement_unit = static_cast<uint8_t>(TotalVolatileOrganicCompoundsConcentrationMeasurement::MeasurementUnitEnum::kPpb);
-        total_volatile_organic_compounds_concentration_measurement::feature::numeric_measurement::add(cluster, &numeric_config);
+//     if (cluster) {
+//         total_volatile_organic_compounds_concentration_measurement::feature::numeric_measurement::config_t numeric_config;
+//         numeric_config.measurement_unit = static_cast<uint8_t>(TotalVolatileOrganicCompoundsConcentrationMeasurement::MeasurementUnitEnum::kPpb);
+//         total_volatile_organic_compounds_concentration_measurement::feature::numeric_measurement::add(cluster, &numeric_config);
         
-        log_i("Added TVOC Concentration Measurement cluster");
-    } else {
-        log_e("Failed to add TVOC Concentration Measurement cluster");
-    }
-}
+//         log_i("Added TVOC Concentration Measurement cluster");
+//     } else {
+//         log_e("Failed to add TVOC Concentration Measurement cluster");
+//     }
+// }
 
 void MatterAirQualitySensor::addPm1ConcentrationMeasurementCluster() {
     pm1_concentration_measurement::config_t cluster_config;
@@ -168,50 +168,30 @@ void MatterAirQualitySensor::addPm10ConcentrationMeasurementCluster() {
     }
 }
 
-bool MatterAirQualitySensor::setCO2(float co2_ppm) {
-    if (!started || !(enabledMeasurements & ENABLE_CO2)) {
-        log_e("CO2 measurement not enabled or sensor not started");
-        return false;
-    }
+// bool MatterAirQualitySensor::setCO2(float co2_ppm) {
+//     if (!started || !(enabledMeasurements & ENABLE_CO2)) {
+//         log_e("CO2 measurement not enabled or sensor not started");
+//         return false;
+//     }
 
-    co2Value = co2_ppm;
+//     co2Value = co2_ppm;
     
-    esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-    val.type = ESP_MATTER_VAL_TYPE_FLOAT;
-    val.val.f = co2_ppm;
+//     esp_matter_attr_val_t val = esp_matter_invalid(NULL);
+//     val.type = ESP_MATTER_VAL_TYPE_FLOAT;
+//     val.val.f = co2_ppm;
 
-    if (!updateAttributeVal(CarbonDioxideConcentrationMeasurement::Id, 
-                           CarbonDioxideConcentrationMeasurement::Attributes::MeasuredValue::Id, &val)) {
-        log_e("Failed to update CO2 attribute");
-        return false;
-    }
+//     if (!updateAttributeVal(CarbonDioxideConcentrationMeasurement::Id, 
+//                            CarbonDioxideConcentrationMeasurement::Attributes::MeasuredValue::Id, &val)) {
+//         log_e("Failed to update CO2 attribute");
+//         return false;
+//     }
 
-    updateAirQualityEnum();
-    log_v("CO2 set to %.1f ppm", co2_ppm);
-    return true;
-}
+//     updateAirQualityEnum();
+//     log_v("CO2 set to %.1f ppm", co2_ppm);
+//     return true;
+// }
 
-bool MatterAirQualitySensor::setTVOC(float tvoc_ppb) {
-    if (!started || !(enabledMeasurements & ENABLE_TVOC)) {
-        log_e("TVOC measurement not enabled or sensor not started");
-        return false;
-    }
 
-    tvocValue = tvoc_ppb;
-    
-    esp_matter_attr_val_t val = esp_matter_invalid(NULL);
-    val.type = ESP_MATTER_VAL_TYPE_FLOAT;
-    val.val.f = tvoc_ppb;
-
-    if (!updateAttributeVal(TotalVolatileOrganicCompoundsConcentrationMeasurement::Id, 
-                           TotalVolatileOrganicCompoundsConcentrationMeasurement::Attributes::MeasuredValue::Id, &val)) {
-        log_e("Failed to update TVOC attribute");
-        return false;
-    }
-
-    log_v("TVOC set to %.1f ppb", tvoc_ppb);
-    return true;
-}
 
 bool MatterAirQualitySensor::setPM1(float pm1_ugm3) {
     if (!started || !(enabledMeasurements & ENABLE_PM1)) {
@@ -282,11 +262,13 @@ bool MatterAirQualitySensor::setPM10(float pm10_ugm3) {
 }
 
 void MatterAirQualitySensor::updateAirQualityEnum() {
-    uint8_t co2Quality = classifyAirQualityByCO2(co2Value);
+    // uint8_t co2Quality = classifyAirQualityByCO2(co2Value);
+    uint8_t pm1Quality = classifyAirQualityByPM1(pm1Value);
     uint8_t pm25Quality = classifyAirQualityByPM25(pm25Value);
     uint8_t pm10Quality = classifyAirQualityByPM10(pm10Value);
 
-    airQualityEnum = co2Quality;
+    // airQualityEnum = co2Quality;
+    if (pm1Quality > airQualityEnum) airQualityEnum = pm1Quality;
     if (pm25Quality > airQualityEnum) airQualityEnum = pm25Quality;
     if (pm10Quality > airQualityEnum) airQualityEnum = pm10Quality;
 
@@ -298,14 +280,24 @@ void MatterAirQualitySensor::updateAirQualityEnum() {
     log_d("Air Quality updated to: %d", airQualityEnum);
 }
 
-uint8_t MatterAirQualitySensor::classifyAirQualityByCO2(float co2) {
-    if (co2 < 400) return 0;  
-    if (co2 <= 600) return 1;  // Good
-    if (co2 <= 800) return 2;  // Fair
-    if (co2 <= 1000) return 3; // Moderate
-    if (co2 <= 1500) return 4; // Poor
-    if (co2 <= 2000) return 5; // Very Poor
-    return 6;                   // Extremely Poor
+// uint8_t MatterAirQualitySensor::classifyAirQualityByCO2(float co2) {
+//     if (co2 < 400) return 0;  
+//     if (co2 <= 600) return 1;  // Good
+//     if (co2 <= 800) return 2;  // Fair
+//     if (co2 <= 1000) return 3; // Moderate
+//     if (co2 <= 1500) return 4; // Poor
+//     if (co2 <= 2000) return 5; // Very Poor
+//     return 6;                   // Extremely Poor
+// }
+
+uint8_t MatterAirQualitySensor::classifyAirQualityByPM1(float pm1) {
+
+    if (pm1 <= 12.0) return 1;   // Good
+    if (pm1 <= 35.4) return 2;   // Fair
+    if (pm1 <= 55.4) return 3;   // Moderate
+    if (pm1 <= 150.4) return 4;  // Poor
+    if (pm1 <= 250.4) return 5;  // Very Poor
+    return 6;                      // Extremely Poor
 }
 
 uint8_t MatterAirQualitySensor::classifyAirQualityByPM25(float pm25) {

@@ -1,14 +1,14 @@
 {
   "device_profile": "AIROWL",
   "hardware": {
-    "firmwareVersion": "4.0.0",
+    "firmwareVersion": "3.0.0",
     "display": "ST7789_240x320",
     "touch_controller": "CST816S"
   },
   "sensors": [
     {
       "type": "aht20",
-      "enabled": true,
+      "enabled": false,
       "read_interval": 10000,
       "publish_interval": 120000
     },
@@ -32,14 +32,14 @@
     },
     "mqtt": {
       "enabled": true,
-      "server": "xxxx",
-      "username": "xxxx",
-      "password" : "xxxx"
+      "server": "mqtt.oizom.com",
+      "username": "oizom",
+      "password" : "12345678"
     },
     "ota": {
       "enabled": true,
-      "versionURL" : "  ",
-      "firmwareURL" :" "
+      "versionURL" : "http://socket.oizom.com/airowl/latest",
+      "firmwareURL" :"http://socket.oizom.com/airowl/firmware.bin"
     },
     "matter": {
       "enabled": true

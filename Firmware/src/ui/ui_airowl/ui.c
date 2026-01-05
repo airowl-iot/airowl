@@ -305,12 +305,9 @@ void ui_init(void)
     ui_owl_screen_init();
     ui_matter_screen_init();
     ui_dashboard_screen_init();
-    ui_Tempgraph_screen_init();
-    ui_Humdgraph_screen_init();
+    ui_PM1graph_screen_init();
     ui_PM25graph_screen_init();
     ui_PM10graph_screen_init();
-    ui_TVOCgraph_screen_init();
-    ui_eCO2graph_screen_init();
     ui_ota_screen_init();
 
     ui____initial_actions0 = lv_obj_create(NULL);
@@ -325,11 +322,8 @@ void ui_destroy(void)
     ui_matter_screen_destroy();
     ui_owl_screen_destroy();
     ui_dashboard_screen_destroy();
-    ui_Tempgraph_screen_destroy();
-    ui_Humdgraph_screen_destroy();
+    ui_PM1graph_screen_destroy();
     ui_PM25graph_screen_destroy();
     ui_PM10graph_screen_destroy();
-    ui_TVOCgraph_screen_destroy();
-    ui_eCO2graph_screen_destroy();
     ui_ota_screen_destroy();
 }

@@ -1,0 +1,16 @@
+{
+  "codename": "Inter28",
+  "ttf_path": "/assets/fonts/Inter-VariableFont_opsz,wght.ttf",
+  "bin_path": "/assets/fonts\\ui_font_Inter28.bin",
+  "c_path": "/assets/fonts\\ui_font_Inter28.c",
+  "cfg_path": "/assets/fonts\\ui_font_Inter28.fcfg",
+  "size": 28,
+  "bpp": 1,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7f"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}

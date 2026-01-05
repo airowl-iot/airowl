@@ -53,7 +53,7 @@ void ui_Intro_screen_init(void)
     lv_label_set_text(ui_firmwareversion, "Version- 3.0.0");
     lv_obj_set_style_text_color(ui_firmwareversion, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_firmwareversion, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_firmwareversion, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_firmwareversion, &ui_font_Inter14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_devicename = lv_label_create(ui_Intro);
     lv_obj_set_width(ui_devicename, LV_SIZE_CONTENT);   
@@ -64,7 +64,7 @@ void ui_Intro_screen_init(void)
     lv_label_set_text(ui_devicename, "OIZOM AIROWL");
     lv_obj_set_style_text_color(ui_devicename, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_devicename, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_devicename, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_devicename, &ui_font_Inter14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(ui_logo, ui_event_logo, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_Intro, ui_event_Intro, LV_EVENT_ALL, NULL);

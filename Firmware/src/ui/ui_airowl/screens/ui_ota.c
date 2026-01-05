@@ -25,7 +25,7 @@ void ui_ota_screen_init(void)
     lv_obj_set_y(ui_otalabel, -93);
     lv_obj_set_align(ui_otalabel, LV_ALIGN_CENTER);
     lv_label_set_text(ui_otalabel, "OTA IN PROGRESS");
-    lv_obj_set_style_text_font(ui_otalabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_otalabel, &ui_font_Inter22, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_otaimage = lv_img_create(ui_ota);
     lv_img_set_src(ui_otaimage, &ui_img_ota_icon_png);
