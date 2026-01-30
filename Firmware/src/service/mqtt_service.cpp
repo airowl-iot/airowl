@@ -399,7 +399,7 @@ bool MQTTService::publishSensorData(const char* deviceId, float pm1, float pm25,
         "{\"deviceId\":\"%s\","
         "\"p1\":%.2f,"      // PM2.5
         "\"p2\":%.2f,"      // PM10
-        "\"p10\":%.2f}",     // pm1
+        "\"p3\":%.2f}",     // pm1
         deviceId ? deviceId : "unknown",
         pm25, pm10, pm1
     );
