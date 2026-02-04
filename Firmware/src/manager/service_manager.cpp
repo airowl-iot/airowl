@@ -4,6 +4,7 @@
 #include "service/mqtt_service.h"
 #include "service/ota_service.h"
 #include "service/matter_service.h"
+#include "service/mcp_server.h"
 #include <WiFi.h>
 
 namespace APP {
@@ -46,12 +47,16 @@ bool ServiceManager::init() {
         }
     }
 
-    if (isServiceEnabled(ServiceType::OTA)) {
-        
+    if (isServiceEnabled(ServiceType::MCP)) {
+    Serial.println("[SERVICE] MCP service enabled, will initialize after WiFi connection");
+    SVC::MCPServer::init();
+    }
+
+    if (isServiceEnabled(ServiceType::OTA)) {    
         Serial.println("[SERVICE] OTA service enabled (HAL not yet implemented)");
     }
-    if (isServiceEnabled(ServiceType::MATTER)) {
 
+    if (isServiceEnabled(ServiceType::MATTER)) {
          Serial.println("[SERVICE] Matter service enabled, will initialize after WiFi connection");
     }
 
@@ -90,6 +95,10 @@ bool ServiceManager::start() {
         if (config.enabled) {
             if (type == ServiceType::MQTT) {
                 Serial.println("[SERVICE] MQTT service will start after WiFi connection");
+                continue;
+            }
+            if (type == ServiceType::MCP) {
+                Serial.println("[SERVICE] MCP service will start after WiFi connection");
                 continue;
             }
             if (type == ServiceType::OTA) {
@@ -151,6 +160,7 @@ const ServiceManager::ServiceConfig* ServiceManager::getServiceConfig(ServiceTyp
 ServiceManager::ServiceType ServiceManager::stringToServiceType(const String& type) {
     if (type == "wifi") return ServiceType::WIFI;
     if (type == "mqtt") return ServiceType::MQTT;
+    if (type == "mcp") return ServiceType::MCP;
     if (type == "ota") return ServiceType::OTA;
     if (type == "matter") return ServiceType::MATTER;
     return ServiceType::UNKNOWN;
@@ -160,6 +170,7 @@ String ServiceManager::serviceTypeToString(ServiceType type) {
     switch (type) {
         case ServiceType::WIFI: return "wifi";
         case ServiceType::MQTT: return "mqtt";
+        case ServiceType::MCP: return "mcp";
         case ServiceType::OTA: return "ota";
         case ServiceType::MATTER: return "matter";
         default: return "unknown";
@@ -286,6 +297,27 @@ bool ServiceManager::startService(ServiceType type) {
             return true;
         }
 
+        case ServiceType::MCP: {
+            if (WiFi.status() != WL_CONNECTED) {
+                Serial.println("[SERVICE] MCP requires WiFi connection, deferring initialization");
+                return false;
+            }
+
+            Serial.println("[SERVICE] Starting MCP service...");
+            if (!SVC::MCPServer::start()) {
+                Serial.println("[SERVICE] Failed to start MCP server");
+                return false;
+            }
+
+            if (!SVC::MCPServer::startTask()) {
+                Serial.println("[SERVICE] Failed to start MCP task");
+                return false;
+            }
+
+            Serial.println("[SERVICE] MCP service and task started successfully");
+            return true;
+        }
+
         case ServiceType::OTA: {
             static bool otaServiceStarted = false;
             if (otaServiceStarted) {
@@ -391,6 +423,11 @@ bool ServiceManager::stopService(ServiceType type) {
             return false;
         }
 
+        case ServiceType::MCP: {
+            Serial.println("[SERVICE] MCP stop not implemented (noop)");
+            return true;
+        }
+
         case ServiceType::OTA: {
             Serial.println("[SERVICE] OTA stop not yet implemented");
             return false;
@@ -473,12 +510,23 @@ void ServiceManager::onWiFiConnected() {
 
     if (isServiceEnabled(ServiceType::MATTER)) {
         Serial.println("[SERVICE] Matter service is enabled, attempting to start...");
+        delay(5000);
         if (startService(ServiceType::MATTER)) {
             Serial.println("[SERVICE] Matter service started successfully after WiFi connection");
         } else {
             Serial.println("[SERVICE] Failed to start Matter service after WiFi connection");
         }
     }
+
+    if (isServiceEnabled(ServiceType::MCP)) {
+        Serial.println("[SERVICE] MCP service is enabled, attempting to start...");
+        if (startService(ServiceType::MCP)) {
+            Serial.println("[SERVICE] MCP service started successfully after WiFi connection");
+        } else {
+            Serial.println("[SERVICE] Failed to start MCP service after WiFi connection");
+        }
+    }
+
 
 }
 

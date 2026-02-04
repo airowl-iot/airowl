@@ -76,7 +76,7 @@ bool Display::init() {
         return false;
     }
     gfx->setRotation(2);
-    gfx->fillScreen(WHITE);
+    // gfx->fillScreen(WHITE);
 
     pinMode(TFT_BL, OUTPUT);
     digitalWrite(TFT_BL, HIGH);

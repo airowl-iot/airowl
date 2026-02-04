@@ -214,7 +214,6 @@ bool MQTTService::connect(const char* server, uint16_t port,
     mqttPassword = password ? password : "";
 
     if (wifiClient.connected()) {
-        Serial.println("[MQTT] Closing existing WiFiClient connection");
         wifiClient.stop();
         vTaskDelay(pdMS_TO_TICKS(100)); 
     }
@@ -314,7 +313,6 @@ bool MQTTService::publish(const char* topic, const uint8_t* payload,
 bool MQTTService::publish(const char* topic, const char* message, 
                           QoS qos, bool retain) {
     if (!initialized) {
-        Serial.println("[MQTT] ERROR: Service not initialized for publish");
         return false;
     }
     
@@ -324,7 +322,6 @@ bool MQTTService::publish(const char* topic, const char* message,
     }
     
     if (currentState != State::CONNECTED) {
-        Serial.printf("[MQTT] WARNING: Not connected for publish (state: %d)\n", (int)currentState);
         return false;
     }
     
@@ -337,7 +334,6 @@ bool MQTTService::publish(const char* topic, const char* message,
                 return true; 
             }
             catch (...) {
-                Serial.println("[MQTT] Exception adding to pending messages");
                 return false;
             }
         }

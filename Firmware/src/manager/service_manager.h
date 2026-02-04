@@ -14,6 +14,7 @@ public:
     enum class ServiceType {
         WIFI,
         MQTT,
+        MCP,
         OTA,
         MATTER,
         UNKNOWN

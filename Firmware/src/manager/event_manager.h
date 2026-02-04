@@ -22,7 +22,10 @@ namespace CORE {
             MQTT_STATE_CHANGED,
             MATTER_COMMISSIONED,
             MATTER_STATE_CHANGED,
-            MATTER_ATTRIBUTE_UPDATED
+            MATTER_ATTRIBUTE_UPDATED,
+            MCP_COMMAND_RECEIVED,
+            MCP_CLIENT_CONNECTED,
+            MCP_CLIENT_DISCONNECTED
         };
 
         explicit Event(Type type) : type_(type), timestamp_(millis()) {}
@@ -138,6 +141,37 @@ namespace CORE {
         String broker_;
         uint16_t port_;
     };
+
+class MCPCommandEvent : public Event {
+public:
+    MCPCommandEvent(const String& tool, const String& payload = "")
+        : Event(Type::MCP_COMMAND_RECEIVED),
+          toolName_(tool),
+          payload_(payload) {}
+
+    const String& getTool() const { return toolName_; }
+    const String& getPayload() const { return payload_; }
+
+private:
+    String toolName_;
+    String payload_;
+};
+
+class MCPClientEvent : public Event {
+public:
+    enum class State { CONNECTED, DISCONNECTED };
+
+    MCPClientEvent(State state)
+        : Event(state == State::CONNECTED
+                    ? Type::MCP_CLIENT_CONNECTED
+                    : Type::MCP_CLIENT_DISCONNECTED),
+          state_(state) {}
+
+    State getState() const { return state_; }
+
+private:
+    State state_;
+};
 
     class SensorReadingEvent : public Event {
     public:
