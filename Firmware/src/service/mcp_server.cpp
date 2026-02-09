@@ -2,13 +2,15 @@
 
 #include <Arduino.h>
 #include <mcpesp.h>
-
+#include <WebServer.h> 
 #include "manager/sensor_manager.h"
 #include "manager/config_manager.h"
 
 namespace SVC {
 
 static Mcpesp mcp;
+static WebServer aliasServer(8080); 
+
 static bool initialized = false;
 static bool running = false;
 
@@ -74,6 +76,12 @@ bool MCPServer::start()
     mcp.begin("Airowl", "1.0.0", 8080);
     registerTools();
 
+    aliasServer.on("/mcp", HTTP_ANY, []() {
+        mcp.handleClient();   
+    });
+
+    aliasServer.begin();
+
     running = true;
     Serial.println("[MCP] MCP server is LIVE on port 8080");
     return true;
@@ -85,9 +93,10 @@ static void mcpTask(void* parameter)
     
     while (true) {
         if (running) {
-            MCPServer::loop();
+             mcp.handleClient();
+            aliasServer.handleClient();
         }
-        vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to prevent watchdog issues
+        vTaskDelay(pdMS_TO_TICKS(10)); 
     }
 }
 
@@ -120,6 +129,7 @@ bool MCPServer::startTask()
 void MCPServer::loop()
 {
     mcp.handleClient();
+    aliasServer.handleClient();  
 }
 
 } // namespace SVC
