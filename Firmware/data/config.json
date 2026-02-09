@@ -1,7 +1,7 @@
 {
   "device_profile": "AIROWL",
   "hardware": {
-    "firmwareVersion": "4.0.0",
+    "firmwareVersion": "3.0.0",
     "display": "ST7789_240x320",
     "touch_controller": "CST816S"
   },
@@ -31,18 +31,21 @@
       "ap_timeout": 120000
     },
     "mqtt": {
-      "enabled": true,
-      "server": "xxxx",
-      "username": "xxxx",
-      "password" : "xxxx"
+      "enabled": false,
+      "server": " ",
+      "username": " ",
+      "password": " "
+    },
+    "mcp": {
+      "enabled": true
     },
     "ota": {
       "enabled": true,
-      "versionURL" : "  ",
-      "firmwareURL" :" "
+      "versionURL": " ",
+      "firmwareURL": " "
     },
     "matter": {
-      "enabled": true
+      "enabled": false
     }
   }
 }
