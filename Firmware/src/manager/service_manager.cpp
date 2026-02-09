@@ -94,19 +94,19 @@ bool ServiceManager::start() {
     for (const auto& [type, config] : services) {
         if (config.enabled) {
             if (type == ServiceType::MQTT) {
-                Serial.println("[SERVICE] MQTT service will start after WiFi connection");
+                Serial.println("[SERVICE] mqtt service is WiFi-dependent (starts on WiFi event)");
                 continue;
             }
             if (type == ServiceType::MCP) {
-                Serial.println("[SERVICE] MCP service will start after WiFi connection");
+                Serial.println("[SERVICE] mcp service is WiFi-dependent (starts on WiFi event)");
                 continue;
             }
             if (type == ServiceType::OTA) {
-                Serial.println("[SERVICE] OTA service will start after WiFi connection");
+                Serial.println("[SERVICE] ota service is WiFi-dependent (starts on WiFi event)");
                 continue;
             }
             if (type == ServiceType::MATTER) {
-                Serial.println("[SERVICE] MATTER service will start after WiFi connection");
+                Serial.println("[SERVICE] matter service is WiFi-dependent (starts on WiFi event)");
                 continue;
             }
 

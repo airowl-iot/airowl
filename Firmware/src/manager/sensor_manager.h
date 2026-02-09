@@ -44,6 +44,12 @@ public:
     static float getPM10();     // instantaneous PM10
     static float getPM10Avg();  // averaged 2-minute PM10
 
+    // Historical data accessors
+    static int getPM25History(float* buffer, int maxCount);  // Returns actual count
+    static int getPM10History(float* buffer, int maxCount);  // Returns actual count
+    static int getTempHistory(float* buffer, int maxCount);  // Returns actual count
+    static int getHumdHistory(float* buffer, int maxCount);  // Returns actual count
+
     // Gas concentration accessors
     static float getTVOC();     // instantaneous TVOC in ppb
     static float getCO2();      // instantaneous eCO2 in ppm
@@ -94,19 +100,31 @@ private:
     static float temperature;
     static float humidity;
 
-    // Averaging buffers for MQTT (2-minute window)
-    static constexpr int SENSOR_BUFFER_SIZE = 60;  
-    static float pm25Buffer[SENSOR_BUFFER_SIZE];
-    static float pm10Buffer[SENSOR_BUFFER_SIZE];
-    static float tempBuffer[SENSOR_BUFFER_SIZE];
-    static float humdBuffer[SENSOR_BUFFER_SIZE];
-    static float tvocBuffer[SENSOR_BUFFER_SIZE];
-    static float eco2Buffer[SENSOR_BUFFER_SIZE];
+    // Historical data buffers (2-hour history: 60 x 2-minute averages)
+    static constexpr int HISTORY_BUFFER_SIZE = 60;
+    static float pm25History[HISTORY_BUFFER_SIZE];
+    static float pm10History[HISTORY_BUFFER_SIZE];
+    static float tempHistory[HISTORY_BUFFER_SIZE];
+    static float humdHistory[HISTORY_BUFFER_SIZE];
+    static float tvocHistory[HISTORY_BUFFER_SIZE];
+    static float eco2History[HISTORY_BUFFER_SIZE];
 
-    static int pmBufferIndex;
-    static int pmBufferCount;
-    static int ahtBufferIndex;
-    static int ahtBufferCount;
+    static int historyIndex;      // Circular buffer index
+    static int historyCount;      // Number of valid entries (0-60)
+
+    // Temporary accumulators for 2-minute averaging
+    static constexpr int TEMP_BUFFER_SIZE = 120;  // Store up to 2 minutes of readings
+    static float pm25TempBuffer[TEMP_BUFFER_SIZE];
+    static float pm10TempBuffer[TEMP_BUFFER_SIZE];
+    static float tempTempBuffer[TEMP_BUFFER_SIZE];
+    static float humdTempBuffer[TEMP_BUFFER_SIZE];
+    static float tvocTempBuffer[TEMP_BUFFER_SIZE];
+    static float eco2TempBuffer[TEMP_BUFFER_SIZE];
+
+    static int pmTempIndex;
+    static int pmTempCount;
+    static int ahtTempIndex;
+    static int ahtTempCount;
 
     // Mutex for buffer protection
     static SemaphoreHandle_t bufferMutex;

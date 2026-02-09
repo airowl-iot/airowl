@@ -5,20 +5,37 @@ lv_obj_t * ui_qrcode = NULL;
 lv_obj_t * ui_qrcodename = NULL;
 lv_obj_t * ui_name = NULL;
 
+// Forward declarations for C++ helper functions (defined in ui_manager.cpp)
+#ifdef __cplusplus
+extern "C" {
+#endif
+    bool isMatterEnabled(void);
+#ifdef __cplusplus
+}
+#endif
+
 void ui_event_qrcode(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if(event_code == LV_EVENT_SCREEN_LOADED) {
-        // Check Matter commissioning status at boot (ONE TIME)
-        bool commissioned = is_matter_commissioned();
-        
-        if (commissioned) {
-            // Already commissioned - go directly to owl animation
+        // Check if Matter is enabled using C-compatible helper
+        bool matterEnabled = isMatterEnabled();
+
+        if (!matterEnabled) {
+            // Matter disabled - skip to owl animation
             _ui_screen_change(&ui_owl, LV_SCR_LOAD_ANIM_FADE_ON, 500, 8000, &ui_owl_screen_init);
         } else {
-            // Not commissioned - show Matter QR code
-            _ui_screen_change(&ui_matter, LV_SCR_LOAD_ANIM_FADE_ON, 500, 8000, &ui_matter_screen_init);
+            // Matter enabled - check commissioning status
+            bool commissioned = is_matter_commissioned();
+
+            if (commissioned) {
+                // Already commissioned - go directly to owl animation
+                _ui_screen_change(&ui_owl, LV_SCR_LOAD_ANIM_FADE_ON, 500, 8000, &ui_owl_screen_init);
+            } else {
+                // Not commissioned - show Matter QR code
+                _ui_screen_change(&ui_matter, LV_SCR_LOAD_ANIM_FADE_ON, 500, 8000, &ui_matter_screen_init);
+            }
         }
     }
 }

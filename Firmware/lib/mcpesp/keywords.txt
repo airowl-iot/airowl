@@ -1,0 +1,34 @@
+#######################################
+# Syntax Coloring Map For Mcpesp
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+Mcpesp	KEYWORD1
+Schema	KEYWORD1
+McpTool	KEYWORD1
+toolCallback	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+addTool	KEYWORD2
+handleClient	KEYWORD2
+getServer	KEYWORD2
+setServerInfo	KEYWORD2
+setProtocolVersion	KEYWORD2
+isInitialized	KEYWORD2
+addStringProperty	KEYWORD2
+addStringEnumProperty	KEYWORD2
+addNumberProperty	KEYWORD2
+addBooleanProperty	KEYWORD2
+getSchema	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

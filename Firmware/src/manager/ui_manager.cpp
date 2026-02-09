@@ -9,26 +9,27 @@
 #include "../service/ota_service.h"
 #include "ui/ui_airowl/ui.h"
 #include "manager/config_manager.h"
+#include "sensor_manager.h"
 
 namespace APP{
 
     struct ScreenMap {
     const char* name;
-    lv_obj_t* screen;
+    lv_obj_t** screen;  // Changed to pointer-to-pointer
     };
     static ScreenMap screens[] = {
-        {"dashboard", ui_dashboard},
-        {"intro", ui_Intro},
-        {"qrcode", ui_qrcode},
-        {"matter", ui_matter},
-        {"owl", ui_owl},
-        {"tempgraph", ui_tempgraph},
-        {"pm25graph", ui_PM25graph},
-        {"humdgraph", ui_Humdgraph},
-        {"pm10graph", ui_PM10graph},
-        {"tvocgraph", ui_TVOCgraph},
-        {"co2graph", ui_eCO2graph},
-        {"ota", ui_ota}
+        {"dashboard", &ui_dashboard},
+        {"intro", &ui_Intro},
+        {"qrcode", &ui_qrcode},
+        {"matter", &ui_matter},
+        {"owl", &ui_owl},
+        {"tempgraph", &ui_tempgraph},
+        {"pm25graph", &ui_PM25graph},
+        {"humdgraph", &ui_Humdgraph},
+        {"pm10graph", &ui_PM10graph},
+        {"tvocgraph", &ui_TVOCgraph},
+        {"co2graph", &ui_eCO2graph},
+        {"ota", &ui_ota}
     };
    
     bool initialized = false;
@@ -60,7 +61,7 @@ namespace APP{
     unsigned long bootTime = 0;
     const unsigned long EYE_COLOR_ACTIVATION_DELAY = 60000; 
     
-    #define CHART_DATA_LENGTH 12
+    #define CHART_DATA_LENGTH 60  // Match history buffer size
 
     lv_chart_series_t *ui_PM25chart_series_1 = nullptr;
     static lv_coord_t ui_PM25chart_series_1_array[CHART_DATA_LENGTH] = {0};
@@ -150,23 +151,35 @@ namespace APP{
     }
     
 
-     void UIController::updatePM25Chart(float pm25_value) {
+     void UIController::refreshPM25Chart() {
 
         if (ui_PM25chart_series_1 != nullptr && ui_Chart3 != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_PM25chart_series_1_array[i] = ui_PM25chart_series_1_array[i + 1];
+            // Get history data from SensorManager
+            float history[CHART_DATA_LENGTH];
+            int count = SensorManager::getPM25History(history, CHART_DATA_LENGTH);
+
+            // Copy history to chart array
+            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+                if (i < count) {
+                    ui_PM25chart_series_1_array[i] = (lv_coord_t)(history[i]);
+                } else {
+                    ui_PM25chart_series_1_array[i] = 0;
+                }
             }
 
-            ui_PM25chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm25_value);
+            // Calculate average from history
+            if (count > 0) {
+                float sum = 0;
+                for (int i = 0; i < count; i++) {
+                    sum += history[i];
+                }
+                float pm25_avg = sum / count;
 
-            pm25_sum += pm25_value;
-            pm25_count++;
-            float pm25_avg = pm25_sum / pm25_count;
-
-            if (ui_pm25maxvalue != nullptr) {
-                char avgBuffer[8];
-                dtostrf(pm25_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_pm25maxvalue, avgBuffer);
+                if (ui_pm25maxvalue != nullptr) {
+                    char avgBuffer[8];
+                    dtostrf(pm25_avg, 4, 1, avgBuffer);
+                    lv_label_set_text(ui_pm25maxvalue, avgBuffer);
+                }
             }
 
             lv_chart_refresh(ui_Chart3);
@@ -192,22 +205,35 @@ namespace APP{
     }
 }
 
-    void UIController::updatePM10Chart(float pm10_value) {
+    void UIController::refreshPM10Chart() {
 
         if (ui_PM10chart_series_1 != nullptr && ui_pmChart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_PM10chart_series_1_array[i] = ui_PM10chart_series_1_array[i + 1];
+            // Get history data from SensorManager
+            float history[CHART_DATA_LENGTH];
+            int count = SensorManager::getPM10History(history, CHART_DATA_LENGTH);
+
+            // Copy history to chart array
+            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+                if (i < count) {
+                    ui_PM10chart_series_1_array[i] = (lv_coord_t)(history[i]);
+                } else {
+                    ui_PM10chart_series_1_array[i] = 0;
+                }
             }
-            ui_PM10chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(pm10_value);
 
-            pm10_sum += pm10_value;
-            pm10_count++;
-            float pm10_avg = pm10_sum / pm10_count;
+            // Calculate average from history
+            if (count > 0) {
+                float sum = 0;
+                for (int i = 0; i < count; i++) {
+                    sum += history[i];
+                }
+                float pm10_avg = sum / count;
 
-            if (ui_pm10maxvalue != nullptr) {
-                char avgBuffer[8];
-                dtostrf(pm10_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_pm10maxvalue, avgBuffer);
+                if (ui_pm10maxvalue != nullptr) {
+                    char avgBuffer[8];
+                    dtostrf(pm10_avg, 4, 1, avgBuffer);
+                    lv_label_set_text(ui_pm10maxvalue, avgBuffer);
+                }
             }
 
             lv_chart_refresh(ui_pmChart);
@@ -533,18 +559,31 @@ bool UIController::isRunning() {
 }
 
 bool UIController::switchScreen(const char* screenName) {
-    for (auto& s : screens) {
-        if (strcmp(s.name, screenName) == 0&& s.screen != nullptr) {
-            lv_scr_load(s.screen);
+    Serial.printf("[UIController] switchScreen called with: '%s'\n", screenName);
 
-            if (strcmp(screenName, "qrcode") == 0) {
-                updateQRCode();
+    for (auto& s : screens) {
+        lv_obj_t* screenPtr = s.screen ? *s.screen : nullptr;
+        Serial.printf("[UIController] Checking screen: '%s', ptr: %p\n", s.name, screenPtr);
+
+        if (strcmp(s.name, screenName) == 0) {
+            if (screenPtr != nullptr) {
+                Serial.printf("[UIController] Screen found and valid, loading...\n");
+                lv_scr_load(screenPtr);
+
+                if (strcmp(screenName, "qrcode") == 0) {
+                    updateQRCode();
+                }
+
+                return true;
+            } else {
+                Serial.printf("[UIController] Screen found but screen pointer is NULL!\n");
+                return false;
             }
-            
-            return true;
         }
     }
-    return false; 
+
+    Serial.printf("[UIController] Screen '%s' not found in screens array\n", screenName);
+    return false;
 }
 
 void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sensorType,
@@ -573,8 +612,7 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                 lv_label_set_text(ui_pm25value, pm25buffer);
                 lv_label_set_text(ui_pm10value, pm10buffer);
 
-                updatePM25Chart(values[0]);
-                updatePM10Chart(values[1]);
+                // Note: Charts now refresh from history buffer, not live data
                 lastPM25 = values[0];
                 lastPM10 = values[1];
 
@@ -866,3 +904,20 @@ TaskHandle_t UIController::getTaskHandle() {
 }
 
 } // namespace APP
+
+// C-compatible helper functions for use in .c files
+extern "C" {
+    bool isWiFiConnected(void) {
+        return HAL::WiFi::getStatus() == HAL::WiFi::Status::CONNECTED;
+    }
+
+    bool isMatterEnabled(void) {
+        // ConfigManager is singleton in global namespace
+        ServiceConfig cfg = ConfigManager::getInstance()->getServiceConfig("matter");
+        return cfg.enabled;
+    }
+
+    void debugLog(const char* msg) {
+        Serial.println(msg);
+    }
+}

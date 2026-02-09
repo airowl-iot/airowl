@@ -5,12 +5,74 @@ lv_obj_t * ui_logo = NULL;
 lv_obj_t * ui_firmwareversion = NULL;
 lv_obj_t * ui_devicename = NULL;
 
+// Forward declarations for C++ helper functions (defined in ui_manager.cpp)
+#ifdef __cplusplus
+extern "C" {
+#endif
+    bool isWiFiConnected(void);
+    bool isMatterEnabled(void);
+    void debugLog(const char* msg);  // Simple logging helper
+#ifdef __cplusplus
+}
+#endif
+
+// WiFi check retry counter
+static int wifi_check_attempts = 0;
+static const int MAX_WIFI_CHECKS = 5;  // Check up to 5 times (10 seconds total)
+
+// Timer callback to check WiFi after delay (with retries)
+static void wifi_check_timer_cb(lv_timer_t * timer)
+{
+    wifi_check_attempts++;
+
+    // Check WiFi status
+    bool wifiConnected = isWiFiConnected();
+
+    if (wifiConnected) {
+        // WiFi connected - delete timer and proceed
+        debugLog("[ui_Intro] WiFi CONNECTED!");
+        lv_timer_del(timer);
+        wifi_check_attempts = 0;  // Reset for next boot
+
+        // Check Matter next
+        bool matterEnabled = isMatterEnabled();
+        debugLog(matterEnabled ? "[ui_Intro] Matter ENABLED" : "[ui_Intro] Matter DISABLED");
+
+        if (!matterEnabled) {
+            // Matter disabled - go directly to owl animation
+            debugLog("[ui_Intro] -> OWL screen");
+            _ui_screen_change(&ui_owl, LV_SCR_LOAD_ANIM_FADE_ON, 500, 6000, &ui_owl_screen_init);
+        } else {
+            // Matter enabled - check commissioning
+            debugLog("[ui_Intro] -> QRCODE screen (Matter check)");
+            _ui_screen_change(&ui_qrcode, LV_SCR_LOAD_ANIM_FADE_ON, 500, 6000, &ui_qrcode_screen_init);
+        }
+    } else if (wifi_check_attempts >= MAX_WIFI_CHECKS) {
+        // Timeout - WiFi not connected after multiple attempts
+        debugLog("[ui_Intro] WiFi timeout, showing AP QR");
+        lv_timer_del(timer);
+        wifi_check_attempts = 0;  // Reset for next boot
+
+        // Show WiFi QR code (AP mode)
+        debugLog("[ui_Intro] -> QRCODE screen (AP mode)");
+        _ui_screen_change(&ui_qrcode, LV_SCR_LOAD_ANIM_FADE_ON, 500, 6000, &ui_qrcode_screen_init);
+    } else {
+        // Still waiting for WiFi, timer will fire again
+        debugLog("[ui_Intro] WiFi check: not connected, waiting...");
+    }
+}
+
 void ui_event_Intro(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
 
     if(event_code == LV_EVENT_SCREEN_LOADED) {
-        _ui_screen_change(&ui_qrcode, LV_SCR_LOAD_ANIM_FADE_ON, 500, 8000, &ui_qrcode_screen_init);
+        debugLog("[ui_Intro] Screen loaded, starting WiFi checks");
+        wifi_check_attempts = 0;
+
+        // Check WiFi status every 2 seconds, up to 5 times (10 seconds total)
+        // Timer will auto-delete when WiFi connects or timeout
+        lv_timer_create(wifi_check_timer_cb, 2000, NULL);
     }
 }
 

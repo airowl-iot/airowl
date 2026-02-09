@@ -30,9 +30,9 @@ public:
     static int calculateAQI(const float* pmValues);
     static void updateTimeDisplay();
     static void setupPM25Chart();
-    static void updatePM25Chart(float pm25_value);
+    static void refreshPM25Chart();  // Refresh chart from history buffer
     static void setupPM10Chart();
-    static void updatePM10Chart(float pm10_value);
+    static void refreshPM10Chart();  // Refresh chart from history buffer
     static void setupTempChart();
     static void setupHumdChart();
     static void setupTvocChart();

@@ -8,7 +8,7 @@
   "sensors": [
     {
       "type": "aht20",
-      "enabled": true,
+      "enabled": false,
       "read_interval": 10000,
       "publish_interval": 120000
     },
@@ -40,7 +40,7 @@
       "enabled": true
     },
     "ota": {
-      "enabled": true,
+      "enabled": false,
       "versionURL": " ",
       "firmwareURL": " "
     },
