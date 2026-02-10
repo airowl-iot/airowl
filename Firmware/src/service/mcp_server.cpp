@@ -62,6 +62,24 @@ static void registerTools()
     );
 
     mcp.addTool(
+        "get_tvoc",
+        "Get tvoc",
+        empty,
+        [](JsonObject, JsonObject out) {
+            out["value"] = APP::SensorManager::getTVOC();
+        }
+    );
+
+    mcp.addTool(
+        "get_eco2",
+        "Get eCO2",
+        empty,
+        [](JsonObject, JsonObject out) {
+            out["value"] = APP::SensorManager::getCO2();
+        }
+    );
+    
+    mcp.addTool(
         "get_pm25_history",
         "Get PM2.5 historical data (2-hour history, 2-minute intervals)",
         empty,
