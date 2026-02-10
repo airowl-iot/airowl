@@ -71,8 +71,8 @@ static void registerTools()
     );
 
     mcp.addTool(
-        "get_eco2",
-        "Get eCO2",
+        "get_co2",
+        "Get CO2",
         empty,
         [](JsonObject, JsonObject out) {
             out["value"] = APP::SensorManager::getCO2();
@@ -112,6 +112,41 @@ static void registerTools()
             out["interval_minutes"] = 2;
         }
     );
+
+    mcp.addTool(
+        "get_tvoc_history",
+        "Get tvoc historical data (2-hour history, 2-minute intervals)",
+        empty,
+        [](JsonObject, JsonObject out) {
+            float history[60];
+            int count = APP::SensorManager::getTvocHistory(history, 60);
+
+            JsonArray values = out.createNestedArray("values");
+            for (int i = 0; i < count; i++) {
+                values.add(history[i]);
+            }
+            out["count"] = count;
+            out["interval_minutes"] = 2;
+        }
+    );
+
+    mcp.addTool(
+        "get_co2_history",
+        "Get co2 historical data (2-hour history, 2-minute intervals)",
+        empty,
+        [](JsonObject, JsonObject out) {
+            float history[60];
+            int count = APP::SensorManager::geteCo2History(history, 60);
+
+            JsonArray values = out.createNestedArray("values");
+            for (int i = 0; i < count; i++) {
+                values.add(history[i]);
+            }
+            out["count"] = count;
+            out["interval_minutes"] = 2;
+        }
+    );
+
 
     mcp.addTool(
         "change_screen",

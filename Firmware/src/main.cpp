@@ -65,13 +65,13 @@ void setup()
   Wire.begin(TOUCH_SDA, TOUCH_SCL);
   Wire.setClock(400000);
 
-  Wire1.begin(CONFIG_AHT_SDA, CONFIG_AHT_SCL);
+  Wire1.begin(CONFIG_SDA, CONFIG_SCL);
   Wire1.setClock(100000);
 
   vTaskDelay(pdMS_TO_TICKS(100));
 
   scanI2CBus(Wire, "I2C0 (Display/Touch)", TOUCH_SDA, TOUCH_SCL);
-  scanI2CBus(Wire1, "I2C1 (Sensors)", CONFIG_AHT_SDA, CONFIG_AHT_SCL);
+  scanI2CBus(Wire1, "I2C1 (Sensors)", CONFIG_SDA, CONFIG_SCL);
 
   if (!ConfigManager::getInstance()->initialize()) Serial.println("[BOOT] ConfigManager init failed!");
   else ConfigManager::getInstance()->printConfig();

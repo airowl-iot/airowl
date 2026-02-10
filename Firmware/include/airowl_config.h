@@ -26,7 +26,7 @@
 #define PMS_SERIAL_BAUD 9600
 #define PMS_RX_PIN 44
 
-#define CONFIG_AHT_SDA 10 
-#define CONFIG_AHT_SCL 11 
+#define CONFIG_SDA 10 
+#define CONFIG_SCL 11 
 
 #endif
