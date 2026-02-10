@@ -267,29 +267,38 @@ void UIController::setupTempChart() {
         
     }
     
-    void UIController::updateTempChart(float temp_value) {
+    void UIController::refreshTempChart() {
 
         if (ui_Tempchart_series_1 != nullptr && ui_tempChart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_Tempchart_series_1_array[i] = ui_Tempchart_series_1_array[i + 1];
-            }
-            ui_Tempchart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(temp_value);
 
-            temp_sum += temp_value;
-            temp_count++;
-            float temp_avg = temp_sum / temp_count;
+            float history[CHART_DATA_LENGTH];
+            int count = SensorManager::getTempHistory(history, CHART_DATA_LENGTH);
+
+            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+                if (i < count) { 
+                    ui_Tempchart_series_1_array[i] = (lv_coord_t)(history[i]);
+                    } else {
+                     ui_Tempchart_series_1_array[i] = 0;
+                }
+            }
+
+             if (count > 0) {
+                float sum = 0;
+                for (int i = 0; i < count; i++) {
+                    sum += history[i];
+                }
+
+            float temp_avg = sum / count;
 
             if (ui_tempgmaxvalue != nullptr) {
                 char avgBuffer[8];
                 dtostrf(temp_avg, 4, 1, avgBuffer);
                 lv_label_set_text(ui_tempgmaxvalue, avgBuffer);
             }
-
+        }
             lv_chart_refresh(ui_tempChart);
         }
-
-}
-
+    }
 
 void UIController::setupHumdChart() {
         
@@ -312,29 +321,37 @@ void UIController::setupHumdChart() {
         
     }
     
-    void UIController::updateHumdChart(float humd_value) {
+    void UIController::refreshHumdChart() {
 
         if (ui_Humdchart_series_1 != nullptr && ui_Chart2 != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_Humdchart_series_1_array[i] = ui_Humdchart_series_1_array[i + 1];
-            }
-            ui_Humdchart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(humd_value);
 
-            humd_sum += humd_value;
-            humd_count++;
-            float humd_avg = humd_sum / humd_count;
+            float history[CHART_DATA_LENGTH];
+            int count = SensorManager::getHumdHistory(history, CHART_DATA_LENGTH);
+
+            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+                if (i < count) {
+                ui_Humdchart_series_1_array[i] = (lv_coord_t)(history[i]);
+                } else {
+                    ui_Humdchart_series_1_array[i] = 0;
+                }
+            }
+
+             if (count > 0) {
+                float sum = 0;
+                for (int i = 0; i < count; i++) {
+                    sum += history[i];
+                }
+            float humd_avg = sum /count;
 
             if (ui_Humdmaxvalue1 != nullptr) {
                 char avgBuffer[8];
                 dtostrf(humd_avg, 4, 1, avgBuffer);
                 lv_label_set_text(ui_Humdmaxvalue1, avgBuffer);
             }
-
+        }
             lv_chart_refresh(ui_Chart2 );
         }
-
-}
-
+    }
 
 void UIController::setupTvocChart() {
         
@@ -357,29 +374,40 @@ void UIController::setupTvocChart() {
         
     }
     
-    void UIController::updateTvocChart(float tvoc_value) {
+ void UIController::refreshTvocChart() {
 
         if (ui_Tvocchart_series_1 != nullptr && ui_TVOCchart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_Tvocchart_series_1_array[i] = ui_Tvocchart_series_1_array[i + 1];
+            // Get history data from SensorManager
+            float history[CHART_DATA_LENGTH];
+            int count = SensorManager::getTvocHistory(history, CHART_DATA_LENGTH);
+
+            // Copy history to chart array
+            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+                if (i < count) {
+                    ui_Tvocchart_series_1_array[i] = (lv_coord_t)(history[i]);
+                } else {
+                    ui_Tvocchart_series_1_array[i] = 0;
+                }
             }
-            ui_Tvocchart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(tvoc_value);
 
-            tvoc_sum += tvoc_value;
-            tvoc_count++;
-            float tvoc_avg = tvoc_sum / tvoc_count;
+            // Calculate average from history
+            if (count > 0) {
+                float sum = 0;
+                for (int i = 0; i < count; i++) {
+                    sum += history[i];
+                }
+                float tvoc_avg = sum / count;
 
-            if (ui_tvocmaxvalue != nullptr) {
-                char avgBuffer[8];
-                dtostrf(tvoc_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_tvocmaxvalue, avgBuffer);
+                if (ui_tvocmaxvalue != nullptr) {
+                    char avgBuffer[8];
+                    dtostrf(tvoc_avg, 4, 1, avgBuffer);
+                    lv_label_set_text(ui_tvocmaxvalue, avgBuffer);
+                }
             }
 
             lv_chart_refresh(ui_TVOCchart);
         }
-
-}
-
+    }
 
 void UIController::setupeCo2Chart() {
         
@@ -402,29 +430,40 @@ void UIController::setupeCo2Chart() {
         
     }
     
-    void UIController::updateeCo2Chart(float eco2_value) {
+     void UIController::refresheCO2Chart() {
 
         if (ui_eCo2chart_series_1 != nullptr && ui_eCO2chart != nullptr) {
-            for (int i = 0; i < CHART_DATA_LENGTH - 1; i++) {
-                ui_eCo2chart_series_1_array[i] = ui_eCo2chart_series_1_array[i + 1];
+            // Get history data from SensorManager
+            float history[CHART_DATA_LENGTH];
+            int count = SensorManager::geteCo2History(history, CHART_DATA_LENGTH);
+
+            // Copy history to chart array
+            for (int i = 0; i < CHART_DATA_LENGTH; i++) {
+                if (i < count) {
+                    ui_eCo2chart_series_1_array[i] = (lv_coord_t)(history[i]);
+                } else {
+                    ui_eCo2chart_series_1_array[i] = 0;
+                }
             }
-            ui_eCo2chart_series_1_array[CHART_DATA_LENGTH - 1] = (lv_coord_t)(eco2_value);
 
-            eCo2_sum += eco2_value;
-            eCo2_count++;
-            float eCo2_avg = eCo2_sum / eCo2_count;
+            // Calculate average from history
+            if (count > 0) {
+                float sum = 0;
+                for (int i = 0; i < count; i++) {
+                    sum += history[i];
+                }
+                float eCo2_avg = sum / count;
 
-            if (ui_eco2max2 != nullptr) {
-                char avgBuffer[8];
-                dtostrf(eCo2_avg, 4, 1, avgBuffer);
-                lv_label_set_text(ui_eco2max2, avgBuffer);
+                if (ui_eco2max2 != nullptr) {
+                    char avgBuffer[8];
+                    dtostrf(eCo2_avg, 4, 1, avgBuffer);
+                    lv_label_set_text(ui_eco2max2, avgBuffer);
+                }
             }
 
             lv_chart_refresh(ui_eCO2chart);
         }
-
-}
- 
+    }
 
 void UIController::showOTAScreen() {
     Serial.println("[UIController] OTA mode activated - freezing UI updates");
@@ -643,11 +682,6 @@ void UIController::updateSensorDisplay(CORE::SensorReadingEvent::SensorType sens
                 lv_label_set_text(ui_tvocvalue, tvocbuffer);
                 lv_label_set_text(ui_eCO2value, eco2buffer);
 
-                updateTempChart(values[0]);
-                updateHumdChart(values[1]);
-                updateTvocChart(values[2]);
-                updateeCo2Chart(values[3]);
-
                 lastTemp = values[0];
                 lastHumidity = values[1];
                 lastTVOC =  values[2];
@@ -686,6 +720,20 @@ void UIController::updateWiFiStatus() {
             lv_obj_add_flag(ui_wifi, LV_OBJ_FLAG_CLICKABLE);
         }
     }
+
+    if (ui_IPlabel != nullptr) {
+        if (isConnected) {
+            HAL::WiFi::ConnectionInfo info;
+            if (HAL::WiFi::getConnectionInfo(&info)) {
+                lv_label_set_text(ui_IPlabel, info.ip.toString().c_str());
+            } else {
+                lv_label_set_text(ui_IPlabel, "--");
+            }
+        } else {
+            lv_label_set_text(ui_IPlabel, "--");
+        }
+    }
+
 }
 
 void UIController::updateQRCode() {

@@ -49,6 +49,8 @@ public:
     static int getPM10History(float* buffer, int maxCount);  // Returns actual count
     static int getTempHistory(float* buffer, int maxCount);  // Returns actual count
     static int getHumdHistory(float* buffer, int maxCount);  // Returns actual count
+    static int getTvocHistory(float* buffer, int maxCount); 
+    static int geteCo2History(float* buffer, int maxCount); 
 
     // Gas concentration accessors
     static float getTVOC();     // instantaneous TVOC in ppb

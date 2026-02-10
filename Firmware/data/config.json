@@ -8,22 +8,24 @@
   "sensors": [
     {
       "type": "aht20",
-      "enabled": false,
-      "read_interval": 10000,
-      "publish_interval": 120000
+      "enabled": true,
+      "read_interval": 10000
     },
     {
       "type": "pms",
       "enabled": false,
-      "read_interval": 1000,
-      "publish_interval": 60000
+      "read_interval": 1000
     },
     {
       "type": "pm700",
       "enabled": true,
-      "read_interval": 1000,
-      "publish_interval": 60000
-    }
+      "read_interval": 1000
+    },
+    {
+      "type": "sen66",
+      "enabled": false,
+      "read_interval": 1000
+   }
   ],
   "services": {
     "wifi": {
@@ -34,7 +36,8 @@
       "enabled": false,
       "server": " ",
       "username": " ",
-      "password": " "
+      "password": " ",
+       "publish_interval": 60000
     },
     "mcp": {
       "enabled": true

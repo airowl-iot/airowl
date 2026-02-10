@@ -330,8 +330,12 @@ void SensorManager::publishMqttAverages() {
     // Refresh charts to show updated history
     APP::UIController::refreshPM25Chart();
     APP::UIController::refreshPM10Chart();
+    APP::UIController::refreshTempChart();
+    APP::UIController::refreshHumdChart();
+    APP::UIController::refreshTvocChart();
+    APP::UIController::refresheCO2Chart();
 
-    // Reset temporary buffers for next 2-minute period
+   // Reset temporary buffers for next 2-minute period
     pmTempCount = 0;
     pmTempIndex = 0;
     ahtTempCount = 0;
@@ -475,6 +479,31 @@ int SensorManager::getHumdHistory(float* buffer, int maxCount) {
     int readIndex = (historyIndex - historyCount + HISTORY_BUFFER_SIZE) % HISTORY_BUFFER_SIZE;
     for (int i = 0; i < count; i++) {
         buffer[i] = humdHistory[readIndex];
+        readIndex = (readIndex + 1) % HISTORY_BUFFER_SIZE;
+    }
+
+    return count;
+}
+
+
+    int SensorManager::getTvocHistory(float* buffer, int maxCount) {
+    int count = min(historyCount, maxCount);
+
+    int readIndex = (historyIndex - historyCount + HISTORY_BUFFER_SIZE) % HISTORY_BUFFER_SIZE;
+    for (int i = 0; i < count; i++) {
+        buffer[i] = tvocHistory[readIndex];
+        readIndex = (readIndex + 1) % HISTORY_BUFFER_SIZE;
+    }
+
+    return count;
+}
+
+int SensorManager::geteCo2History(float* buffer, int maxCount) {
+    int count = min(historyCount, maxCount);
+
+    int readIndex = (historyIndex - historyCount + HISTORY_BUFFER_SIZE) % HISTORY_BUFFER_SIZE;
+    for (int i = 0; i < count; i++) {
+        buffer[i] = eco2History[readIndex];
         readIndex = (readIndex + 1) % HISTORY_BUFFER_SIZE;
     }
 

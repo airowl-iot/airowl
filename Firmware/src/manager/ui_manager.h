@@ -33,13 +33,13 @@ public:
     static void setupPM10Chart();
     static void refreshPM10Chart();  // Refresh chart from history buffer
     static void setupTempChart();
+    static void refreshTempChart(); 
     static void setupHumdChart();
+    static void refreshHumdChart(); 
     static void setupTvocChart();
+    static void refreshTvocChart(); 
     static void setupeCo2Chart();
-    static void updateTempChart(float temp_value);
-    static void updateHumdChart(float humd_value);
-    static void updateTvocChart(float tvoc_value);
-    static void updateeCo2Chart(float eco2_value);
+    static void refresheCO2Chart(); 
     static void task(void* parameter);
     static bool startTask();
     static bool restartTask();
