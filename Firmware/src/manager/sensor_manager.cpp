@@ -427,8 +427,7 @@ bool SensorManager::loadConfigsFromManager() {
 SensorManager::SensorConfig SensorManager::convertConfig(const ::SensorConfig& cfg) {
     return SensorConfig{
         .enabled = cfg.enabled,
-        .readInterval = cfg.read_interval,
-        .publishInterval = cfg.publish_interval
+        .readInterval = cfg.read_interval
     };
 }
 

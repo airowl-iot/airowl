@@ -27,7 +27,6 @@ public:
     static void updateSensorColors(const float* pmValues);
     static void updateEyeColors(uint32_t color);
     static uint32_t getAQIColor(int aqi);
-    static int calculateAQI(const float* pmValues);
     static void updateTimeDisplay();
     static void setupPM25Chart();
     static void refreshPM25Chart();  // Refresh chart from history buffer

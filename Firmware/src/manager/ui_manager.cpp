@@ -101,22 +101,23 @@ namespace APP{
     };
     
     const AQIBreakpoint pm25Bps[] = {
-        {0.0, 15.9, 0, 50},      // Good: 0-15.9 µg/m³
-        {16.0, 25.9, 51, 100},   // Moderate: 16-25.9 µg/m³
-        {26.0, 37.9, 101, 150},  // Unhealthy for Sensitive: 26-37.9 µg/m³
-        {38.0, 50.9, 151, 200},  // Unhealthy: 38-50.9 µg/m³
-        {51.0, 75.9, 201, 300},  // Very Unhealthy: 51-75.9 µg/m³
-        {76.0, 500.0, 301, 500}  // Hazardous: 76+ µg/m³
+        {0.0, 30.0, 0, 50},        // Good
+        {31.0, 60.0, 51, 100},     // Satisfactory
+        {61.0, 90.0, 101, 200},    // Moderate
+        {91.0, 120.0, 201, 300},   // Poor
+        {121.0, 250.0, 301, 400},  // Very Poor
+        {251.0, 500.0, 401, 500}   // Severe
     };
     
     const AQIBreakpoint pm10Bps[] = {
-        {0.0, 54.9, 0, 50},
-        {55.0, 154.9, 51, 100},
-        {155.0, 254.9, 101, 150},
-        {255.0, 354.9, 151, 200},
-        {355.0, 424.9, 201, 300},
-        {425.0, 604.9, 301, 500}
+        {0.0, 50.0, 0, 50},        // Good
+        {51.0, 100.0, 51, 100},    // Satisfactory
+        {101.0, 250.0, 101, 200},  // Moderate
+        {251.0, 350.0, 201, 300},  // Poor
+        {351.0, 430.0, 301, 400},  // Very Poor
+        {431.0, 600.0, 401, 500}   // Severe
     };
+
     
     AQIBreakpoint getBreakpoint(float value, const AQIBreakpoint* breakpoints, int count) {
         for (int i = 0; i < count; i++) {
@@ -128,8 +129,13 @@ namespace APP{
     }
     
     int calculateSubIndex(float value, const AQIBreakpoint& bp) {
-        return ((bp.aqiHigh - bp.aqiLow) / (bp.high - bp.low)) * (value - bp.low) + bp.aqiLow;
-    }
+        return (int)(
+        ( (float)(bp.aqiHigh - bp.aqiLow) /
+          (bp.high - bp.low) ) *
+        (value - bp.low) +
+        bp.aqiLow
+    );
+}
     
    void UIController::setupPM25Chart() {
         
@@ -150,7 +156,6 @@ namespace APP{
         
     }
     
-
      void UIController::refreshPM25Chart() {
 
         if (ui_PM25chart_series_1 != nullptr && ui_Chart3 != nullptr) {
@@ -240,7 +245,6 @@ namespace APP{
         }
 
 }
-
 
 void UIController::setupTempChart() {
         
@@ -719,7 +723,7 @@ void UIController::updateSensorColors(const float* pmValues) {
     
     AQIBreakpoint pm25Bp = getBreakpoint(pmValues[0], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
     AQIBreakpoint pm10Bp = getBreakpoint(pmValues[1], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
- 
+
     int pm25Index = calculateSubIndex(pmValues[0], pm25Bp);
     int pm10Index = calculateSubIndex(pmValues[1], pm10Bp);
     uint32_t  pm25_color, pm10_color;
@@ -748,21 +752,14 @@ void UIController::updateEyeColors(uint32_t color) {
 }
 
 uint32_t UIController::getAQIColor(int aqi) {
-    if (aqi <= 50) return 0x00E400;      // Good - Green (#00E400)
-    else if (aqi <= 100) return 0xFFFF00; // Moderate - Yellow (#FFFF00)
-    else if (aqi <= 150) return 0xFF7E00; // Unhealthy for Sensitive - Orange (#FF7E00)
-    else if (aqi <= 200) return 0xFF0000; // Unhealthy - Red (#FF0000)
-    else if (aqi <= 300) return 0x8F3F97; // Very Unhealthy - Purple (#8F3F97)
-    else return 0x7E0023;                 // Hazardous - Maroon (#7E0023)
-}
+        if (aqi <= 50)       return 0x009966; // Good (Green)
+        else if (aqi <= 100) return 0x66CC66; // Satisfactory (Light Green)
+        else if (aqi <= 200) return 0xFFDE33; // Moderate (Yellow)
+        else if (aqi <= 300) return 0xFF9933; // Poor (Orange)
+        else if (aqi <= 400) return 0xCC0033; // Very Poor (Red)
+        else                 return 0x660099; // Severe (Maroon)
+    }
 
-int UIController::calculateAQI(const float* pmValues) {
-    AQIBreakpoint pm25Bp = getBreakpoint(pmValues[0], pm25Bps, sizeof(pm25Bps) / sizeof(pm25Bps[0]));
-    AQIBreakpoint pm10Bp = getBreakpoint(pmValues[1], pm10Bps, sizeof(pm10Bps) / sizeof(pm10Bps[0]));
-    int pm25Index = calculateSubIndex(pmValues[0], pm25Bp);
-    int pm10Index = calculateSubIndex(pmValues[1], pm10Bp);
-    return max(pm25Index, pm10Index);
-}
 
 void UIController::updateTimeDisplay() {
     if (!running || !ui_time) return;

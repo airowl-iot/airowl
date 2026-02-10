@@ -19,7 +19,6 @@ struct SensorConfig {
     String type;
     bool enabled;
     unsigned long read_interval;
-    unsigned long publish_interval;
     std::map<String, String> additional_params;
 };
 
@@ -70,7 +69,6 @@ public:
     bool isSensorEnabled(const String& sensorType) const;
     SensorConfig getSensorConfig(const String& sensorType) const;
     unsigned long getSensorReadInterval(const String& sensorType) const;
-    unsigned long getSensorPublishInterval(const String& sensorType) const;
     std::map<String, String> getSensorAdditionalParams(const String& sensorType) const;
     String getSensorParam(const String& sensorType, const String& key) const;
 

@@ -114,8 +114,7 @@ void ConfigManager::parseSensorsConfig(JsonArray& sensors) {
         sensor.type            = sensorObj["type"] | "";
         sensor.enabled         = sensorObj["enabled"] | false;
         sensor.read_interval   = sensorObj["read_interval"] | 5000;
-        sensor.publish_interval= sensorObj["publish_interval"] | 60000;
-
+      
         for (JsonPair kv : sensorObj) {
             String key = kv.key().c_str();
             if (key != "type" && key != "enabled" && key != "read_interval" && key != "publish_interval") {
@@ -178,9 +177,7 @@ SensorConfig ConfigManager::getSensorConfig(const String& sensorType) const {
 unsigned long ConfigManager::getSensorReadInterval(const String& type) const {
     return getSensorConfig(type).read_interval;
 }
-unsigned long ConfigManager::getSensorPublishInterval(const String& type) const {
-    return getSensorConfig(type).publish_interval;
-}
+
 std::map<String, String> ConfigManager::getSensorAdditionalParams(const String& type) const {
     return getSensorConfig(type).additional_params;
 }
@@ -247,7 +244,7 @@ bool ConfigManager::saveConfigToFile() {
         obj["type"] = s.type;
         obj["enabled"] = s.enabled;
         obj["read_interval"] = s.read_interval;
-        obj["publish_interval"] = s.publish_interval;
+       
         for (auto& kv : s.additional_params) obj[kv.first] = kv.second;
     }
 
@@ -285,7 +282,7 @@ void ConfigManager::printConfig() const {
     Serial.println("\nEnabled Sensors:");
     for (auto& s : getEnabledSensors()) {
         Serial.printf("  - %s (Read: %lums, Publish: %lums)\n", 
-                      s.type.c_str(), s.read_interval, s.publish_interval);
+                      s.type.c_str(), s.read_interval);
     }
 
     Serial.println("\nEnabled Services:");
