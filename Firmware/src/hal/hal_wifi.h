@@ -65,6 +65,28 @@ public:
     static bool startConfigPortal(const char* apName = nullptr, uint32_t timeout_ms = 120000);
 
     /**
+     * @brief Service a non-blocking WiFiManager configuration portal
+     * @return true when the station has connected to WiFi
+     */
+    static bool process();
+
+    /**
+     * @brief Check whether the configuration portal is currently active
+     */
+    static bool isConfigPortalActive();
+
+    /**
+     * @brief Stop active station retries while preserving saved credentials
+     */
+    static void enterOfflineMode();
+
+    /**
+     * @brief Reconnect only when the saved SSID is visible in a WiFi scan
+     * @return true when a connection attempt was started
+     */
+    static bool reconnectIfNetworkAvailable();
+
+    /**
      * @brief Disconnect from WiFi network
      * @return true if disconnection was successful, false otherwise
      */

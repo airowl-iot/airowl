@@ -182,11 +182,18 @@ bool ServiceManager::startService(ServiceType type) {
             }
 
             String hostname = "airowl";
+            uint32_t provisioningTimeoutMs = 120000;
             if (cfg->params.count("hostname")) {
                 hostname = cfg->params.at("hostname");
             }
+            if (cfg->params.count("ap_timeout")) {
+                uint32_t configuredTimeout = cfg->params.at("ap_timeout").toInt();
+                if (configuredTimeout > 0) {
+                    provisioningTimeoutMs = configuredTimeout;
+                }
+            }
 
-            if (!SVC::WiFiService::init(hostname.c_str())) {
+            if (!SVC::WiFiService::init(hostname.c_str(), provisioningTimeoutMs)) {
                 Serial.println("[SERVICE] WiFi service init failed");
                 return false;
             }

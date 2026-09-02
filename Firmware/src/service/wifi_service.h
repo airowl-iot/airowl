@@ -28,9 +28,10 @@ public:
     /**
      * @brief Initialize WiFi service
      * @param hostname Device hostname
+     * @param provisioningTimeoutMs Configuration portal timeout in milliseconds
      * @return true if initialization was successful, false otherwise
      */
-    static bool init(const char* hostname = "AIROWL");
+    static bool init(const char* hostname = "AIROWL", uint32_t provisioningTimeoutMs = 120000);
     
     /**
      * @brief Start WiFi connection process

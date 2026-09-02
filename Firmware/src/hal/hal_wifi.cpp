@@ -13,8 +13,6 @@ namespace
     ::WiFiManager wm;
     bool wifiEventsRegistered = false;
 
-    // -------------------- Provisioning helpers --------------------
-
     int selectProvisioningChannel()
     {
         uint8_t mac[6];
@@ -22,21 +20,6 @@ namespace
 
         const int channels[] = {1, 6, 11};
         return channels[mac[5] % 3];
-    }
-
-    // NOTE: channel is now passed in (important)
-    void startProvisioningSoftAP(const String &ssid, int channel)
-    {
-        delay(esp_random() % 1500); // stagger startup
-
-        WiFi.mode(WIFI_AP_STA);
-        WiFi.softAP(ssid.c_str(), "12345678", channel, false, 1);
-
-        esp_wifi_set_max_tx_power(40);
-
-        Serial.printf(
-            "[HAL][WiFi] SoftAP started: %s (channel %d)\n",
-            ssid.c_str(), channel);
     }
 
     // -------------------- WiFi events --------------------
@@ -52,9 +35,12 @@ namespace
             break;
 
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-            Serial.println("[HAL][WiFi] Disconnected");
-            if (currentStatus == HAL::WiFi::Status::CONNECTED)
-                currentStatus = HAL::WiFi::Status::DISCONNECTED;
+            if (currentStatus == HAL::WiFi::Status::CONNECTED ||
+                currentStatus == HAL::WiFi::Status::CONNECTING)
+            {
+                Serial.println("[HAL][WiFi] Disconnected; device remains available offline");
+            }
+            currentStatus = HAL::WiFi::Status::DISCONNECTED;
             break;
 
         case ARDUINO_EVENT_WIFI_STA_START:
@@ -182,23 +168,23 @@ String WiFi::generateApName(const char *baseName)
 bool WiFi::autoConnect(const char *apName, uint32_t timeout_ms)
 {
     String fullApName = generateApName(apName ? apName : "AIROWL");
-    int channel = selectProvisioningChannel();   // <<< FIX
+    int channel = selectProvisioningChannel();
 
     Serial.printf("[HAL][WiFi] Starting autoConnect as: %s\n", fullApName.c_str());
 
-    startProvisioningSoftAP(fullApName, channel);
-
     WiFiManagerNS::init(&wm, nullptr);
-    wm.setWiFiAPChannel(channel);                // <<< FIX (THE IMPORTANT LINE)
-    wm.setConfigPortalBlocking(true);
+    wm.setWiFiAPChannel(channel);
+    wm.setConfigPortalBlocking(false);
     wm.setConfigPortalTimeout(timeout_ms / 1000);
-    wm.setConnectTimeout(30);
-    wm.setConnectRetries(3);
+    wm.setConnectTimeout(15);
+    wm.setConnectRetries(1);
     wm.setEnableConfigPortal(true);
     wm.setDebugOutput(true);
 
     bool connected = wm.autoConnect(fullApName.c_str(), "12345678");
-    currentStatus = connected ? Status::CONNECTED : Status::FAILED;
+    currentStatus = connected
+        ? Status::CONNECTED
+        : (wm.getConfigPortalActive() ? Status::CONNECTING : Status::DISCONNECTED);
     return connected;
 }
 
@@ -209,20 +195,94 @@ bool WiFi::startConfigPortal(const char *apName, uint32_t timeout_ms)
 
     Serial.printf("[HAL][WiFi] Starting Config Portal as: %s\n", fullApName.c_str());
 
-    startProvisioningSoftAP(fullApName, channel);
-
     WiFiManagerNS::init(&wm, nullptr);
-    wm.setWiFiAPChannel(channel);             
-    wm.setConfigPortalBlocking(true);
+    wm.setWiFiAPChannel(channel);
+    wm.setConfigPortalBlocking(false);
     wm.setConfigPortalTimeout(timeout_ms / 1000);
-    wm.setConnectTimeout(30);
-    wm.setConnectRetries(3);
+    wm.setConnectTimeout(15);
+    wm.setConnectRetries(1);
     wm.setEnableConfigPortal(true);
     wm.setDebugOutput(true);
 
     bool connected = wm.startConfigPortal(fullApName.c_str(), "12345678");
-    currentStatus = connected ? Status::CONNECTED : Status::FAILED;
+    currentStatus = connected
+        ? Status::CONNECTED
+        : (wm.getConfigPortalActive() ? Status::CONNECTING : Status::DISCONNECTED);
     return connected;
+}
+
+bool WiFi::process()
+{
+    if (wm.getConfigPortalActive())
+    {
+        if (wm.process() || ::WiFi.status() == WL_CONNECTED)
+        {
+            if (wm.getConfigPortalActive())
+            {
+                wm.stopConfigPortal();
+            }
+            currentStatus = Status::CONNECTED;
+            return true;
+        }
+
+        currentStatus = wm.getConfigPortalActive()
+            ? Status::CONNECTING
+            : Status::DISCONNECTED;
+    }
+
+    if (::WiFi.status() == WL_CONNECTED)
+    {
+        currentStatus = Status::CONNECTED;
+        return true;
+    }
+
+    return false;
+}
+
+bool WiFi::isConfigPortalActive()
+{
+    return wm.getConfigPortalActive();
+}
+
+void WiFi::enterOfflineMode()
+{
+    ::WiFi.setAutoReconnect(false);
+    ::WiFi.disconnect(false, false);
+    currentStatus = Status::DISCONNECTED;
+}
+
+bool WiFi::reconnectIfNetworkAvailable()
+{
+    wifi_config_t stationConfig = {};
+    if (esp_wifi_get_config(WIFI_IF_STA, &stationConfig) != ESP_OK || stationConfig.sta.ssid[0] == '\0')
+    {
+        return false;
+    }
+
+    char savedSSID[sizeof(stationConfig.sta.ssid) + 1] = {};
+    memcpy(savedSSID, stationConfig.sta.ssid, sizeof(stationConfig.sta.ssid));
+
+    int networkCount = ::WiFi.scanNetworks(false, true);
+    bool savedNetworkFound = false;
+    for (int i = 0; i < networkCount; ++i)
+    {
+        if (::WiFi.SSID(i) == savedSSID)
+        {
+            savedNetworkFound = true;
+            break;
+        }
+    }
+    ::WiFi.scanDelete();
+
+    if (!savedNetworkFound)
+    {
+        return false;
+    }
+
+    Serial.printf("[HAL][WiFi] Saved network %s is available; reconnecting\n", savedSSID);
+    ::WiFi.setAutoReconnect(false);
+    currentStatus = Status::CONNECTING;
+    return ::WiFi.reconnect();
 }
 
 // -------------------- Utilities --------------------
